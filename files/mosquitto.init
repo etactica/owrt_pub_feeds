@@ -9,8 +9,11 @@ SERVICE_DAEMONIZE=1
 SERVICE_WRITE_PID=1
 
 start() {
+        CONF=/tmp/mosquitto.converted.$$.conf
         user_exists mosquitto 200 || user_add mosquitto 200
-        service_start $APP -c /etc/mosquitto/mosquitto.conf
+        mosquitto.uci.convert -f $CONF
+        #service_start $APP -c /etc/mosquitto/mosquitto.conf
+        service_start $APP -c $CONF
 }
 
 stop() {
