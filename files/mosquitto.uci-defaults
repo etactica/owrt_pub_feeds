@@ -27,7 +27,7 @@ add_depends () {
 
 # First install our own init script links....
 BLAH=$(uci -q get ucitrack.@${THISAPP}[-1])
-if [ $? = 1 ]; then
+if [ $? -eq 1 ]; then
     # section doesn't exist....
     uci add ucitrack ${THISAPP}
 fi
