@@ -80,6 +80,8 @@ define Package/mosquitto/install
 	$(INSTALL_BIN) ./files/mosquitto.init $(1)/etc/init.d/mosquitto
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/mosquitto.uci.convert $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/mosquitto.uci-defaults $(1)/etc/uci-defaults
 endef
 
 define Package/mosquitto-client/install
