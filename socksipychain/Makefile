@@ -39,6 +39,8 @@ endef
 
 define Build/Compile
 	$(call Build/Compile/PyMod,.,install --prefix=/usr --root=$(PKG_INSTALL_DIR),)
+	# Make sure generated scripts try to use the right python...
+	$(SED) 's,#!$(HOST_PYTHON_BIN),#!/usr/bin/$(PYTHON),' $(PKG_INSTALL_DIR)/usr/bin/*
 endef
 
 define Package/socksipychain/install
@@ -46,6 +48,11 @@ define Package/socksipychain/install
 	$(CP) \
 	    $(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/* \
 	    $(1)$(PYTHON_PKG_DIR)/
+
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) \
+	    $(PKG_INSTALL_DIR)/usr/bin/* \
+	    $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,socksipychain))
