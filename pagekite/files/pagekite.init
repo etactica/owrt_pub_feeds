@@ -1,0 +1,20 @@
+#!/bin/sh /etc/rc.common
+# May, 2012, karlp@remake.is
+# Considered to be released into the public domain
+
+START=80
+APP=pagekite.py
+PID_FILE=/var/run/$APP.pid
+
+start() {
+        start-stop-daemon -S -x $APP -p $PID_FILE -m -b
+        # please make me an OOM victim!
+        sleep 1
+        PID=$(cat $PID_FILE)
+        echo 10 > /proc/$PID/oom_adj
+}
+
+stop() {
+        start-stop-daemon -K -n $APP -p $PID_FILE -s TERM
+        rm -rf $PID_FILE
+}
