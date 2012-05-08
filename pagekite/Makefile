@@ -18,18 +18,23 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://pagekite.net/pk/src/$(PKG_SOURCE)
 PKG_MD5SUM:=28c28a0c9225dae0ce4e553868168e86
 
+# See if this can mean we don't need distribute on the target!
 #PKG_BUILD_DEPENDS:=python distribute/host
-#PKG_BUILD_DEPENDS:=python
+PKG_BUILD_DEPENDS:=python
 
+
+#include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)
+
+#HOST_CONFIGURE_ARGS += --with-threads
 
 define Package/pagekite
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Make localhost servers publicly visible.
   URL:=http://pagekite.net
-  DEPENDS+=+python +pyopenssl +socksipychain @BROKEN
+  DEPENDS+=+python-openssl +socksipychain +distribute
 endef
 
 define Package/pagekite/description
@@ -50,11 +55,18 @@ define Package/pagekite/conffiles
 /etc/pagekite.d/pagekite.rc
 endef
 
-define Build/Compile
-	#$(call Build/Compile/PyMod,,install --prefix=/usr --root=$(PKG_INSTALL_DIR))
-	$(call Build/Compile/PyMod,.,install --prefix=/usr --root=$(PKG_INSTALL_DIR),)
+define Build/Configure
+	$(call Build/Configure/Default,)
+	# the very skanky alternative to a "patches" subdir, because I find quilt awkward
+	$(SED) 's!from pagekite import APPVER!APPVER="$(PKG_VERSION)" #patched ;) !' $(PKG_BUILD_DIR)/setup.py
+	$(SED) 's#prefix = /usr#; no overriding prefix! bad setup!#' $(PKG_BUILD_DIR)/setup.cfg
+	$(SED) 's#install_lib =#; no overriding install_lib! bad setup!#' $(PKG_BUILD_DIR)/setup.cfg
+endef
 
-	#$(SED) 's,#!$(STAGING_DIR)/host/bin/$(PYTHON),#!/usr/bin/$(PYTHON),' $(PKG_INSTALL_DIR)/usr/bin/*
+define Build/Compile
+	$(call Build/Compile/PyMod,.,install --prefix=/usr --root=$(PKG_INSTALL_DIR),)
+	# Make sure generated scripts try to use the right python...
+	$(SED) 's,#!$(HOST_PYTHON_BIN),#!/usr/bin/$(PYTHON),' $(PKG_INSTALL_DIR)/usr/bin/*
 endef
 
 define Package/pagekite/install
@@ -63,8 +75,8 @@ define Package/pagekite/install
 	    $(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/* \
 	    $(1)$(PYTHON_PKG_DIR)/
 
-	#$(INSTALL_DIR) $(1)/usr/bin
-	#$(CP) \
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) \
 	    $(PKG_INSTALL_DIR)/usr/bin/* \
 	    $(1)/usr/bin/
 
@@ -72,4 +84,6 @@ define Package/pagekite/install
 	$(INSTALL_BIN) ./files/pagekite.init $(1)/etc/init.d/pagekite
 endef
 
+# Shouldn't be necessary
+#$(eval $(call HostBuild))
 $(eval $(call BuildPackage,pagekite))
