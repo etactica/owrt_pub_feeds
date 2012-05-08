@@ -29,7 +29,7 @@ define Package/pagekite
   CATEGORY:=Network
   TITLE:=Make localhost servers publicly visible.
   URL:=http://pagekite.net
-  DEPENDS+=+python +pyopenssl +SocksipyChain
+  DEPENDS+=+python +pyopenssl +socksipychain @BROKEN
 endef
 
 define Package/pagekite/description
