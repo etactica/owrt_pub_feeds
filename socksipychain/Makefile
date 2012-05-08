@@ -27,7 +27,7 @@ define Package/socksipychain
   CATEGORY:=Languages
   TITLE:=Chaining support for socksipy
   URL:=https://pagekite.net/wiki/Floss/PySocksipyChain/
-  DEPENDS+=+python
+  DEPENDS+=+python +distribute
 endef
 
 define Package/socksipychain/description
