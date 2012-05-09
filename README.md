@@ -13,3 +13,7 @@ Howto
 2. ./scripts/feeds/update -a
 3. ./scripts/feeds/install -a
 4. make menuconfig and choose the new packages :)
+
+TODO
+====
+Make them not require distribute to be installed on the target.
