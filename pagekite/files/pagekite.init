@@ -3,11 +3,11 @@
 # Considered to be released into the public domain
 
 START=80
-APP=pagekite.py
+APP=pagekite
 PID_FILE=/var/run/$APP.pid
 
 start() {
-        start-stop-daemon -S -x $APP -p $PID_FILE -m -b
+        $APP --daemonize --pidfile=$PID_FILE --optdir=/etc/pagekite.d
         # please make me an OOM victim!
         sleep 1
         PID=$(cat $PID_FILE)

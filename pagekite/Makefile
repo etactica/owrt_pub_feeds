@@ -27,8 +27,6 @@ PKG_BUILD_DEPENDS:=python
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)
 
-#HOST_CONFIGURE_ARGS += --with-threads
-
 define Package/pagekite
   SECTION:=net
   CATEGORY:=Network
@@ -82,8 +80,8 @@ define Package/pagekite/install
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/pagekite.init $(1)/etc/init.d/pagekite
+	$(INSTALL_DIR) $(1)/etc/pagekite.d
+	$(INSTALL_CONF) ./files/pagekite.rc $(1)/etc/pagekite.d/pagekite.rc
 endef
 
-# Shouldn't be necessary
-#$(eval $(call HostBuild))
 $(eval $(call BuildPackage,pagekite))
