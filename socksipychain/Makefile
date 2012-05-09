@@ -21,6 +21,8 @@ PKG_MD5SUM:=50dc1d72575ff97edaa38d9af4c2993e
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)
 
+PKG_BUILD_DEPENDS:=python
+
 define Package/socksipychain
   SUBMENU:=Python
   SECTION:=lang
