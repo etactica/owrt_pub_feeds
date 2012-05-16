@@ -12,7 +12,6 @@ start() {
         CONF=/tmp/mosquitto.converted.$$.conf
         user_exists mosquitto 200 || user_add mosquitto 200
         mosquitto.uci.convert -f $CONF
-        #service_start $APP -c /etc/mosquitto/mosquitto.conf
         service_start $APP -c $CONF
 }
 
