@@ -4,14 +4,19 @@
 
 START=80
 APP=`which mosquitto`
+USE_LUCI_CONFIG=$(uci get mosquitto.owrt.use_luci)
 
 SERVICE_DAEMONIZE=1
 SERVICE_WRITE_PID=1
 
 start() {
-        CONF=/tmp/mosquitto.converted.$$.conf
         user_exists mosquitto 200 || user_add mosquitto 200
-        mosquitto.uci.convert -f $CONF
+        if [ $USE_LUCI_CONFIG -eq 1 ]; then
+            CONF=/tmp/mosquitto.converted.$$.conf
+            mosquitto.uci.convert -f $CONF
+        else
+            CONF=/etc/mosquitto/mosquitto.conf
+        fi
         service_start $APP -c $CONF
 }
 

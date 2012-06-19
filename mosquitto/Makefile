@@ -63,7 +63,7 @@ server, such as IBM's RSMB, in addition to Mosquitto
 endef
 
 
-# TODO - do we still need to keep both?
+# We need to keep both, so people without the luci app still save configs
 define Package/mosquitto/conffiles
 /etc/mosquitto/mosquitto.conf
 /etc/config/mosquitto
