@@ -2,7 +2,7 @@
 # Converts a uci config file into an appropriate mosquitto.conf snippet
 # expected to be used in an init file to generate a config file to run from
 # Karl Palsson <karlp@remake.is> 2012.
-# Apache Licensed
+# Considered to be released into the public domain
 
 TCONF=/tmp/mosquitto.generated.$$.conf
 while getopts "f:" o; do
