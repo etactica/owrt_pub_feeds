@@ -63,10 +63,8 @@ server, such as IBM's RSMB, in addition to Mosquitto
 endef
 
 
-# We need to keep both, so people without the luci app still save configs
 define Package/mosquitto/conffiles
 /etc/mosquitto/mosquitto.conf
-/etc/config/mosquitto
 endef
 
 define Package/mosquitto/install
@@ -74,14 +72,8 @@ define Package/mosquitto/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mosquitto $(1)/usr/sbin/mosquitto
 	$(INSTALL_DIR) $(1)/etc/mosquitto
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/mosquitto.conf $(1)/etc/mosquitto/mosquitto.conf
-	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) ./files/etc/config/mosquitto $(1)/etc/config/mosquitto
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/mosquitto.init $(1)/etc/init.d/mosquitto
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) ./files/mosquitto.uci.convert $(1)/usr/bin
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) ./files/mosquitto.uci-defaults $(1)/etc/uci-defaults
 endef
 
 define Package/mosquitto-client/install

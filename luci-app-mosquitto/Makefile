@@ -20,7 +20,12 @@ endef
 
 define Package/$(PKG_NAME)/description
  Provides a webadmin for some basic mosquitto parameters. (Not even close to
-all of them)
+all of them) Also provides a uci -> mosquitto config converter and init
+script replacement to use the uci config.
+endef
+
+define Package/$(PKG_NAME)/conffiles
+/etc/config/mosquitto
 endef
 
 
@@ -57,6 +62,12 @@ define Package/$(PKG_NAME)/install
           $(INSTALL_DIR) $(1)/ && \
           cp -pR $(PKG_BUILD_DIR)/root/* $(1)/ \
           || true
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/etc/config/mosquitto $(1)/etc/config/mosquitto
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/mosquitto.uci-defaults $(1)/etc/uci-defaults
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) ./files/mosquitto.uci.convert $(1)/usr/bin
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
