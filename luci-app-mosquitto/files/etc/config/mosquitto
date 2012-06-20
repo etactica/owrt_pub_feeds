@@ -1,4 +1,4 @@
 config owrt owrt
-    use_luci 0
+    use_uci 0
 
 config mosquitto mosquitto
