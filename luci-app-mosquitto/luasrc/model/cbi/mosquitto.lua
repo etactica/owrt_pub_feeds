@@ -19,10 +19,11 @@ MQTT messaging broker.  Note, only some of the available configuration files
  
 s = m:section(TypedSection, "owrt", "OpenWRT")
 s.anonymous = true
-p = s:option(Flag, "use_luci", "Use this LuCI configuration page",
+p = s:option(Flag, "use_uci", "Use this LuCI configuration page",
 	[[If checked, mosquitto runs with a config generated
-	from this page.  If unchecked, mosquitto runs with the config in
-	/etc/mosquitto/mosquitto.conf (and this page is ignored)]])
+	from this page. (Or from UCI directly)  If unchecked, mosquitto
+        runs with the config in /etc/mosquitto/mosquitto.conf
+        (and this page is ignored)]])
 
 s = m:section(TypedSection, "mosquitto", "Mosquitto")
 s.anonymous = true

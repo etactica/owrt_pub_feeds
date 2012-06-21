@@ -1,4 +1,4 @@
 config owrt owrt
-    use_uci 0
+    option use_uci 0
 
 config mosquitto mosquitto
