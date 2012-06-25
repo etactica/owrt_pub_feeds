@@ -1,0 +1,25 @@
+#!/bin/sh
+# Set up any defaults for UCI, run once post installation
+# Simple version, doesn't support dependencies
+# Karl Palsson, OpenWrt.org, 2012
+THISAPP=pagekite
+# Optional, defaults to $THISAPP
+#THISAPP_INIT=
+
+#### Should not need any changes below here........
+
+# First install our own init script links....
+BLAH=$(uci -q get ucitrack.@${THISAPP}[-1])
+if [ $? -eq 1 ]; then
+    # section doesn't exist....
+    uci add ucitrack ${THISAPP}
+fi
+INIT=$(uci -q get ucitrack.@${THISAPP}[-1].init)
+if [ $? -eq 1 ]; then
+    # section existed, but not the init entry..."
+    uci set ucitrack.@${THISAPP}[-1].init=${THISAPP_INIT:-${THISAPP}}
+else
+    echo "${THISAPP} section in ucitrack already exists, skipping"
+fi
+
+uci commit ucitrack
