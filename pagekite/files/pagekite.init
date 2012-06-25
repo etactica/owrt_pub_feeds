@@ -4,7 +4,6 @@
 
 START=80
 APP=pagekite
-PID_FILE=/var/run/$APP.pid
 USE_UCI_CONFIG=$(uci -q get pagekite.owrt.use_uci)
 if [ $? -eq 1 ]; then
     USE_UCI_CONFIG=0
@@ -17,14 +16,9 @@ start() {
         else
             CONF=/etc/pagekite.d/pagekite.rc
         fi
-        $APP --daemonize --pidfile=$PID_FILE --optfile=$CONF
-        # please make me an OOM victim!
-        sleep 1
-        PID=$(cat $PID_FILE)
-        echo 10 > /proc/$PID/oom_adj
+        $APP --daemonize --optfile=$CONF
 }
 
 stop() {
-        start-stop-daemon -K -n $APP -p $PID_FILE -s TERM
-        rm -rf $PID_FILE
+        start-stop-daemon -K -n $APP -s TERM
 }
