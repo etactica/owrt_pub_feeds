@@ -5,9 +5,19 @@
 START=80
 APP=pagekite
 PID_FILE=/var/run/$APP.pid
+USE_UCI_CONFIG=$(uci -q get pagekite.owrt.use_uci)
+if [ $? -eq 1 ]; then
+    USE_UCI_CONFIG=0
+fi
 
 start() {
-        $APP --daemonize --pidfile=$PID_FILE --optdir=/etc/pagekite.d
+        if [ "$USE_UCI_CONFIG" -eq 1]; then
+            CONF=/tmp/pagekite.converted.$$.rc
+            pagekite.uci.convert -f $CONF
+        else
+            CONF=/etc/pagekite.d/pagekite.rc
+        fi
+        $APP --daemonize --pidfile=$PID_FILE --optfile=$CONF
         # please make me an OOM victim!
         sleep 1
         PID=$(cat $PID_FILE)

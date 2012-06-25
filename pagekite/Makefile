@@ -12,7 +12,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pagekite
 PKG_VERSION:=0.4.6a
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://pagekite.net/pk/src/$(PKG_SOURCE)
