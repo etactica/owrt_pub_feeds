@@ -33,6 +33,8 @@ define Package/mosquitto/description
  mosquitto is a message broker that supports v3.1 of the MQ Telemetry
 Transport protocol. MQTT provides a lightweight method for
 messaging using a publish/subscribe model.
+
+This package also includes some basic support for configuring via UCI
 endef
 
 define Package/mosquitto-client
@@ -65,6 +67,7 @@ endef
 
 define Package/mosquitto/conffiles
 /etc/mosquitto/mosquitto.conf
+/etc/config/mosquitto
 endef
 
 define Package/mosquitto/install
@@ -74,6 +77,8 @@ define Package/mosquitto/install
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/mosquitto.conf $(1)/etc/mosquitto/mosquitto.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/mosquitto.init $(1)/etc/init.d/mosquitto
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) ./files/mosquitto.uci.convert $(1)/usr/bin
 endef
 
 define Package/mosquitto-client/install
