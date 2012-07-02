@@ -1,4 +1,5 @@
-Public feeds for openwrt backfire.
+Public feeds for OpenWRT (primarily tested with backfire 10.03,
+but should be ok for trunk too)
 
 Howto
 =====
@@ -14,6 +15,3 @@ Howto
 3. ./scripts/feeds/install -a
 4. make menuconfig and choose the new packages :)
 
-TODO
-====
-Make them not require distribute to be installed on the target.
