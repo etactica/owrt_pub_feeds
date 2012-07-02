@@ -10,7 +10,7 @@ if [ $? -eq 1 ]; then
 fi
 
 start() {
-        if [ "$USE_UCI_CONFIG" -eq 1]; then
+        if [ "$USE_UCI_CONFIG" -eq 1 ]; then
             CONF=/tmp/pagekite.converted.$$.rc
             pagekite.uci.convert -f $CONF
         else
