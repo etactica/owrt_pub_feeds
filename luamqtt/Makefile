@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luamqtt
-PKG_REV:=f565de2bad
+PKG_REV:=aba95ca2f7
 PKG_VERSION:=0.2-$(PKG_REV)
 PKG_RELEASE:=1
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
