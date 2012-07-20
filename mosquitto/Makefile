@@ -13,13 +13,15 @@ PKG_VERSION:=0.15.90
 PKG_RELEASE:=1
 
 #PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE:=99070c59fd04.tar.bz2
+PKG_REV:=4b30e412ab77
+PKG_SOURCE:=$(PKG_REV).tar.bz2
 #PKG_SOURCE_URL:=http://mosquitto.org/files/source/
 PKG_SOURCE_URL:=https://bitbucket.org/oojah/mosquitto/get/
-PKG_BUILD_DIR:=$(BUILD_DIR)/oojah-mosquitto-99070c59fd04
-PKG_MD5SUM:=b3d2e2779939742171805422ee98ceab
+PKG_BUILD_DIR:=$(BUILD_DIR)/oojah-mosquitto-$(PKG_REV)
+PKG_MD5SUM:=111eddcd4752667b70884748bfb43853
 
 include $(INCLUDE_DIR)/package.mk
+MAKE_FLAGS+=WITH_MEMORY_TRACKING=no
 
 define Package/mosquitto/default
   SECTION:=net
