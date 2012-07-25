@@ -20,6 +20,7 @@ PKG_SOURCE_URL:=https://bitbucket.org/oojah/mosquitto/get/
 PKG_BUILD_DIR:=$(BUILD_DIR)/oojah-mosquitto-$(PKG_REV)
 PKG_MD5SUM:=111eddcd4752667b70884748bfb43853
 
+include $(INCLUDE_DIR)/package-version-override.mk
 include $(INCLUDE_DIR)/package.mk
 MAKE_FLAGS+=WITH_MEMORY_TRACKING=no
 
