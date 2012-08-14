@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luamqtt
-PKG_REV:=aba95ca2f7
+PKG_REV:=f63790b980
 PKG_VERSION:=0.2-$(PKG_REV)
 PKG_RELEASE:=1
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
@@ -16,6 +16,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=git@github.com:geekscape/mqtt_lua.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_REV)
+# jow says also try PKG_SOURCE_VERSION:=origin/branchname... (gets HEAD?)
 
 include $(INCLUDE_DIR)/package.mk
 
