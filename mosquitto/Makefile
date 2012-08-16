@@ -9,7 +9,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mosquitto
-PKG_VERSION:=1.0
+PKG_VERSION:=1.0.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -18,12 +18,18 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://mosquitto.org/files/source/
 #PKG_SOURCE_URL:=https://bitbucket.org/oojah/mosquitto/get/
 #PKG_BUILD_DIR:=$(BUILD_DIR)/oojah-mosquitto-$(PKG_REV)
-PKG_MD5SUM:=3365eee116d6904a0688e006a3040045
+PKG_MD5SUM:=2a7930d4252f9b8fb5d4147f8c84ed29
 
-include $(INCLUDE_DIR)/package-version-override.mk
 include $(INCLUDE_DIR)/package.mk
-#TODO - only disable TLS_PSK for backfire and old ssl versions
-MAKE_FLAGS+=WITH_MEMORY_TRACKING=no WITH_TLS_PSK=no
+
+MAKE_FLAGS+=WITH_MEMORY_TRACKING=no
+TARGET_CFLAGS+=-ggdb3
+include $(INCLUDE_DIR)/version.mk
+# The version of libopenssl in backfire doesn't support psk.
+ifeq ($(findstring 10.03,$(VERSION_CODE)),10.03)
+    MAKE_FLAGS += WITH_TLS_PSK=no
+endif
+
 
 define Package/$(PKG_NAME)/default
   SECTION:=net
@@ -99,6 +105,7 @@ define Package/libmosquitto/default
     $(Package/mosquitto/default)
     SECTION:=libs
     CATEGORY:=Libraries
+    DEPENDS:=+libpthread
     TITLE:= mosquitto - client library
 endef
 
