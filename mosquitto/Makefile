@@ -173,7 +173,7 @@ define Build/InstallDev
 	$(CP) $(PKG_BUILD_DIR)/lib/mosquitto.h $(1)/usr/include
 	$(INSTALL_DIR) $(1)/usr/lib
 	# This should just get symlinked, but I can't work out the magic syntax :(
-	$(CP) $(PKG_BUILD_DIR)/lib/libmosquitto.so.1 $(1)/usr/lib/libmosquitto.so
+	$(CP) $(PKG_BUILD_DIR)/lib/libmosquitto.so.1 $(1)/usr/lib/
 endef
 
 # This installs files on the target.  Compare with Build/InstallDev
