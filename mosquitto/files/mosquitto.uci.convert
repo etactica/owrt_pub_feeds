@@ -50,5 +50,16 @@ if [ $HATE_SECTION_COUNT -gt 0 ]; then
         else
             echo "cleansession false" >> $TCONF
         fi
+        TRYPRIV=$(uci -q get mosquitto.@bridge[-$i].tryprivate)
+        if [ $? -eq 0 ]; then
+            if [ "$TRYPRIV" -eq 1 ]; then
+                echo "try_private true" >> $TCONF
+            else
+                echo "try_private false" >> $TCONF
+            fi
+        else
+            # Override default to avoid crashes with 0.15 brokers :(
+            echo "try_private false" >> $TCONF
+        fi
     done
 fi
