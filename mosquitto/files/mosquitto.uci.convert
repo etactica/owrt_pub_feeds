@@ -30,6 +30,13 @@ if [ $? = 0 ]; then
     done
 fi
 
+QQ=$(uci -q get mosquitto.mosquitto.no_remote_access)
+if [ $? = 0 ]; then
+    if [ "$QQ" -eq 1 ]; then
+        echo "bind_address 127.0.0.1" >> $TCONF
+    fi
+fi
+
 HATE_SECTION_COUNT=$(grep config /etc/config/mosquitto | grep bridge | wc -l)
 if [ $HATE_SECTION_COUNT -gt 0 ]; then
     for i in $(seq $HATE_SECTION_COUNT -1 1); do

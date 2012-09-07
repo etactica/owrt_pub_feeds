@@ -36,6 +36,10 @@ p:value("syslog", "syslog")
 p:value("topic", "$SYS/broker/log/[severity]")
 p:value("none", "none")
 
+s:option(Flag, "no_remote_access", "Disallow remote access to this broker",
+	[[Outbound bridges will still work, but this will restrict clients
+	from connecting via anything but localhost]])
+
 -- we want to allow multiple bridge sections
 s = m:section(TypedSection, "bridge", "Bridges",
     "You can configure multiple bridge connections here")
