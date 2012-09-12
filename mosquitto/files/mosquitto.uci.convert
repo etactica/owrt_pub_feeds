@@ -68,5 +68,17 @@ if [ $HATE_SECTION_COUNT -gt 0 ]; then
             # Override default to avoid crashes with 0.15 brokers :(
             echo "try_private false" >> $TCONF
         fi
+        CLIENTID=$(uci -q get mosquitto.@bridge[-$i].clientid)
+        if [ $? -eq 0 ]; then
+            echo "clientid $CLIENTID" >> $TCONF
+        fi
+        BRIDGEID=$(uci -q get mosquitto.@bridge[-$i].identity)
+        if [ $? -eq 0 ]; then
+            echo "bridge_identity $BRIDGEID" >> $TCONF
+        fi
+        BRIDGEPSK=$(uci -q get mosquitto.@bridge[-$i].psk)
+        if [ $? -eq 0 ]; then
+            echo "bridge_psk $BRIDGEPSK" >> $TCONF
+        fi
     done
 fi
