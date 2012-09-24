@@ -10,6 +10,8 @@ You may obtain a copy of the License at
 
 ]]--
 
+local datatypes = require("luci.cbi.datatypes")
+
 m = Map("mosquitto", "Mosquitto MQTT Broker",
     [[mosquitto - the <a href='http://www.mosquitto.org'>blood thirsty</a> 
 MQTT messaging broker.  Note, only some of the available configuration files
@@ -46,15 +48,43 @@ s = m:section(TypedSection, "bridge", "Bridges",
 s.anonymous = true
 s.addremove = true
 
-conn = s:option(Value, "connection", "connection name",
+conn = s:option(Value, "connection", "Connection name",
     "unique name for this bridge configuration")
+
+local function validate_address(self, value)
+    if (datatypes.host(value)) then
+        return value
+    end
+    return nil, "Please enter a hostname or an IP address"
+end
+
 addr = s:option(Value, "address", "address", "address of remote broker")
-addr.datatype = "host"
+addr.datatype = "string"
+addr.validate = validate_address
 
 -- TODO - make the in/out/both a dropdown/radio or something....
 topics = s:option(DynamicList, "topic", "topic",
     "full topic string for mosquitto.conf, eg: 'power/# out 2'")
 
-s:option(Flag, "cleansession", "cleansession")
+-- clientid = s:option(Value, "clientid", "Client Id", "Client id for bridge")
+-- clientid.optional = true
+
+s:option(Flag, "cleansession", "Clean session")
+
+psk_identity = s:option(Value, "identity", "Bridge Identity", "Identity for TLS-PSK")
+psk_identity.datatype = "string"
+
+-- no hex validation available in datatypes
+local function validate_psk_key(self, value)
+    if (value:match("^[a-fA-F0-9]+$")) then
+        return value
+    end
+    return nil, "Only hex numbers are allowed (use A-F characters and 0-9 digits)"
+end
+
+psk_key = s:option(Value, "psk", "Bridge PSK", "Key for TLS-PSK")
+psk_key.password = true
+psk_key.datatype = "string"
+psk_key.validate = validate_psk_key
 
 return m
