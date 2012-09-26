@@ -11,12 +11,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pagekite
-PKG_VERSION:=0.4.6a
-PKG_RELEASE:=2
+PKG_VERSION:=0.5.3a
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://pagekite.net/pk/src/$(PKG_SOURCE)
-PKG_MD5SUM:=28c28a0c9225dae0ce4e553868168e86
+PKG_MD5SUM:=5c6e32e6686a67d8ba1d677ab5e7098a
 
 # See if this can mean we don't need distribute on the target!
 #PKG_BUILD_DEPENDS:=python distribute/host
