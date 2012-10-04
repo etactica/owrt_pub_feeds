@@ -12,7 +12,7 @@ PKG_VERSION:=4.11
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://dist.schmorp.de/libev/
+PKG_SOURCE_URL:=http://dist.schmorp.de/libev/Attic/
 PKG_MD5SUM:=cda69b858a1849dfe6ce17c930cf10cd
 
 PKG_FIXUP:=autoreconf
