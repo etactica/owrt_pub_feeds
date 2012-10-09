@@ -3,7 +3,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-pagekite
-PKG_VERSION:=1.0
+PKG_VERSION:=1.2
 PKG_RELEASE:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -15,17 +15,12 @@ define Package/$(PKG_NAME)
     SUBMENU:=3. Applications
     TITLE:=LuCI support for pagekite configuration
     URL:=http://www.pagekite.net
-    DEPENDS:=+pagekite
+    DEPENDS:=+libpagekite
 endef
 
 define Package/$(PKG_NAME)/description
  Provides a webadmin for some basic pagekite parameters. (Not even close to
-all of them) Also provides a uci -> pagekite config converter and init
-script replacement to use the uci config.
-endef
-
-define Package/$(PKG_NAME)/conffiles
-/etc/config/pagekite
+all of them)
 endef
 
 
@@ -62,12 +57,6 @@ define Package/$(PKG_NAME)/install
           $(INSTALL_DIR) $(1)/ && \
           cp -pR $(PKG_BUILD_DIR)/root/* $(1)/ \
           || true
-	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) ./files/etc/config/pagekite $(1)/etc/config/pagekite
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) ./files/pagekite.uci-defaults $(1)/etc/uci-defaults
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) ./files/pagekite.uci.convert $(1)/usr/bin
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))

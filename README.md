@@ -1,8 +1,8 @@
 Public feeds for OpenWRT.
 
 Eventually these all desire to move upstream, but they start here
-* Primarily tested with backfire 10.03
-* Testing underway with Attitude Adjustment (trunk)
+* All packages work on Attitude Adjustment (trunk)
+* All packages except libpagekite (libev) work with backfire 10.03
 
 Note: This is only a feed, ie, recipes for building.  This does not include
 binaries for any architecture, for any release.
@@ -24,6 +24,5 @@ Howto
 Known issues
 ============
 
-pagekite and in particular socksipychain have some issues with dependencies
-that are normally resolved by rebuilding.  Help wanted?
+pagekite (python) and in particular socksipychain have some issues with dependencies that are normally resolved by rebuilding.  Help wanted?
 

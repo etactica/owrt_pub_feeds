@@ -20,14 +20,6 @@ some very very basic uses of pagekite.  For more complex uses, disable this
 page, and edit /etc/pagekite.d/pagekite.rc directly.</em>
 ]])
  
-s = m:section(TypedSection, "owrt", "OpenWRT")
-s.anonymous = true
-p = s:option(Flag, "use_uci", "Use this LuCI configuration page",
-	[[If checked, pagekite runs with a config generated
-	from this page. (Or from UCI directly)  If unchecked, pagekite
-        runs with the config in /etc/pagekite.d/pagekite.rc
-        (and this page is ignored)]])
-
 s = m:section(TypedSection, "pagekite", "PageKite")
 s.anonymous = true
 

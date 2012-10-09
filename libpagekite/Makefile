@@ -33,9 +33,19 @@ high-performance or embedded applications. It includes a basic command line
 client
 endef
 
+define Package/$(PKG_NAME)/conffiles
+/etc/config/pagekite
+endef
+
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/pagekite $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/pagekite.init $(1)/etc/init.d/pagekite
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/pagekite.config $(1)/etc/config/pagekite
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/pagekite.uci-defaults $(1)/etc/uci-defaults/pagekite
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
