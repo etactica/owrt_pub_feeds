@@ -9,7 +9,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mosquitto
-PKG_VERSION:=1.0.5
+PKG_VERSION:=1.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -18,7 +18,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://mosquitto.org/files/source/
 #PKG_SOURCE_URL:=https://bitbucket.org/oojah/mosquitto/get/
 #PKG_BUILD_DIR:=$(BUILD_DIR)/oojah-mosquitto-$(PKG_REV)
-PKG_MD5SUM:=214f8f6085d32431a1c80e9ace372fbb
+PKG_MD5SUM:=ab51f64eb3f0041402073aa7865f3ec4
 
 include $(INCLUDE_DIR)/package.mk
 
