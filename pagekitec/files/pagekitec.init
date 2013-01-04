@@ -1,27 +1,26 @@
 #!/bin/sh /etc/rc.common
 # Oct 2012, karlp@remake.is
-#set -x
 START=99
-APP=pagekite
+APP=pagekitec
 PID_FILE=/var/run/$APP.pid
-NAME=$(uci -q get pagekite.pagekite.kitename)
-KEY=$(uci -q get pagekite.pagekite.kitesecret)
+NAME=$(uci -q get pagekitec.pagekitec.kitename)
+KEY=$(uci -q get pagekitec.pagekitec.kitesecret)
 if [ "$NAME" = "" ] || [ "$KEY" = "" ]; then
 	echo "Both kitename and kitesecret must be specified!"
 	exit 1
 fi
 ARGS=
-QQ=$(uci -q get pagekite.pagekite.simple_http)
+QQ=$(uci -q get pagekitec.pagekitec.simple_http)
 if [ $? -eq 0 ] && [ $QQ -eq 1 ]; then
 	ARGS="$ARGS 80 http $NAME 80 $KEY"
 fi
-QQ=$(uci -q get pagekite.pagekite.simple_ssh)
+QQ=$(uci -q get pagekitec.pagekitec.simple_ssh)
 if [ $? -eq 0 ] && [ $QQ -eq 1 ]; then
 	ARGS="$ARGS 22 raw $NAME 443 $KEY"
 fi
 
 start() {
-	# later ;) user_exists pagekite 201 || user_add pagekite 201
+	# later ;) user_exists pagekitec 201 || user_add pagekitec 201
 	start-stop-daemon -S -x $APP -p $PID_FILE -m -b	-- $ARGS
 }
 

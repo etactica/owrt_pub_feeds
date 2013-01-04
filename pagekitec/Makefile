@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pagekitec
-PKG_REV:=81c9d8913d740b8f0034b53f03238ac94ad5fe1e
+PKG_REV:=e79bf00c4efd4e37e4941a054e1e6d8fbce5d00a
 PKG_VERSION:=121207C-$(PKG_REV)
 PKG_RELEASE:=1
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
@@ -34,28 +34,28 @@ PageKite is a system for running publicly visible servers (generally
  such as mobile devices or computers behind restrictive firewalls.
  PageKite works around NAT, firewalls and IP-address limitations by
  using a combination of tunnels and reverse proxies.
- .
+
  This package provides an implementation of the PageKite Protocol in C,
  optimized for high-performance or embedded applications.
- .
+
  Basic UCI support for HTTP and SSH servers is also included in this package.
- .
+
  https://pagekite.net/wiki/Floss/LibPageKite/
 endef
 
 define Package/$(PKG_NAME)/conffiles
-/etc/config/pagekite
+/etc/config/$(PKG_NAME)
 endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/pagekite $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(PKG_NAME) $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/pagekite.init $(1)/etc/init.d/pagekite
+	$(INSTALL_BIN) ./files/$(PKG_NAME).init $(1)/etc/init.d/$(PKG_NAME)
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) ./files/pagekite.config $(1)/etc/config/pagekite
+	$(INSTALL_CONF) ./files/$(PKG_NAME).config $(1)/etc/config/$(PKG_NAME)
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) ./files/pagekite.uci-defaults $(1)/etc/uci-defaults/pagekite
+	$(INSTALL_BIN) ./files/$(PKG_NAME).uci-defaults $(1)/etc/uci-defaults/$(PKG_NAME)
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
