@@ -10,7 +10,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=pagekite
+PKG_NAME:=pagekitepy
 PKG_VERSION:=0.5.3a
 PKG_RELEASE:=1
 
@@ -27,7 +27,7 @@ PKG_BUILD_DEPENDS:=python
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)
 
-define Package/pagekite
+define Package/$(PKG_NAME)
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Make localhost servers publicly visible.
@@ -35,7 +35,7 @@ define Package/pagekite
   DEPENDS+=+python-openssl +socksipychain +distribute
 endef
 
-define Package/pagekite/description
+define Package/$(PKG_NAME)/description
 PageKite is a system for running publicly visible servers (generally
  web servers) on machines without a direct connection to the Internet,
  such as mobile devices or computers behind restrictive firewalls.
@@ -47,9 +47,11 @@ PageKite is a system for running publicly visible servers (generally
  .
  Any other TCP-based service, including SSH and VNC, may be exposed
  as well to clients supporting HTTP Proxies.
+
+ This package contains the Python implementation of PageKite
 endef
 
-define Package/pagekite/conffiles
+define Package/$(PKG_NAME)/conffiles
 /etc/pagekite.d/pagekite.rc
 endef
 
@@ -67,7 +69,7 @@ define Build/Compile
 	$(SED) 's,#!$(HOST_PYTHON_BIN),#!/usr/bin/$(PYTHON),' $(PKG_INSTALL_DIR)/usr/bin/*
 endef
 
-define Package/pagekite/install
+define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)
 	$(CP) \
 	    $(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/* \
@@ -84,4 +86,4 @@ define Package/pagekite/install
 	$(INSTALL_CONF) ./files/pagekite.rc $(1)/etc/pagekite.d/pagekite.rc
 endef
 
-$(eval $(call BuildPackage,pagekite))
+$(eval $(call BuildPackage,$(PKG_NAME)))

@@ -7,7 +7,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=libpagekite
+PKG_NAME:=pagekitec
 PKG_REV:=81c9d8913d740b8f0034b53f03238ac94ad5fe1e
 PKG_VERSION:=121207C-$(PKG_REV)
 PKG_RELEASE:=1
@@ -21,16 +21,26 @@ PKG_SOURCE_VERSION:=$(PKG_REV)
 include $(INCLUDE_DIR)/package.mk
 
 define Package/$(PKG_NAME)
-  CATEGORY:=Libraries
-  TITLE:=libpagekite
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=Make localhost servers publicly visible.
   URL:=https://pagekite.net/wiki/Floss/LibPageKite/
   DEPENDS:=+libopenssl +libpthread +libev
 endef
 
 define Package/$(PKG_NAME)/description
-  This library provides implements the PageKite Protocol in C, optimized for
-high-performance or embedded applications. It includes a basic command line
-client
+PageKite is a system for running publicly visible servers (generally
+ web servers) on machines without a direct connection to the Internet,
+ such as mobile devices or computers behind restrictive firewalls.
+ PageKite works around NAT, firewalls and IP-address limitations by
+ using a combination of tunnels and reverse proxies.
+ .
+ This package provides an implementation of the PageKite Protocol in C,
+ optimized for high-performance or embedded applications.
+ .
+ Basic UCI support for HTTP and SSH servers is also included in this package.
+ .
+ https://pagekite.net/wiki/Floss/LibPageKite/
 endef
 
 define Package/$(PKG_NAME)/conffiles
