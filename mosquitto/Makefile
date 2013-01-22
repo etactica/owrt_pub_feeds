@@ -172,14 +172,15 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_BUILD_DIR)/lib/mosquitto.h $(1)/usr/include
 	$(INSTALL_DIR) $(1)/usr/lib
-	# This should just get symlinked, but I can't work out the magic syntax :(
 	$(CP) $(PKG_BUILD_DIR)/lib/libmosquitto.so.1 $(1)/usr/lib/
+	$(LN) libmosquitto.so.1 $(1)/usr/lib/libmosquitto.so
 endef
 
 # This installs files on the target.  Compare with Build/InstallDev
 define Package/libmosquitto/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/libmosquitto.so.1 $(1)/usr/lib/libmosquitto.so.1
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/libmosquitto.so.1 $(1)/usr/lib/
+	$(LN) libmosquitto.so.1 $(1)/usr/lib/libmosquitto.so
 endef
 Package/libmosquitto-nossl/install = $(Package/libmosquitto/install)
 
