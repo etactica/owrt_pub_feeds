@@ -2,8 +2,8 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=luci-app-pagekite
-PKG_VERSION:=1.2
+PKG_NAME:=luci-app-pagekitec
+PKG_VERSION:=1.3
 PKG_RELEASE:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -15,12 +15,13 @@ define Package/$(PKG_NAME)
     SUBMENU:=3. Applications
     TITLE:=LuCI support for pagekite configuration
     URL:=http://www.pagekite.net
-    DEPENDS:=+libpagekite
+    DEPENDS:=+pagekitec
 endef
 
 define Package/$(PKG_NAME)/description
  Provides a webadmin for some basic pagekite parameters. (Not even close to
-all of them)
+all of them) This package targets pagekitec, the C implementation of pagekite,
+most suited for the OpenWrt environment.
 endef
 
 

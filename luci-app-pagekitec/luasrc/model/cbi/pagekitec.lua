@@ -10,7 +10,7 @@ You may obtain a copy of the License at
 
 ]]--
 
-m = Map("pagekite", "PageKite",
+m = Map("pagekitec", "PageKite",
     [[
 <p/>Note: you need a working PageKite account for this form to work. 
 Visit <a href="https://pagekite.net/home/">your account</a> to set up a name for your
@@ -20,7 +20,7 @@ some very very basic uses of pagekite.  For more complex uses, disable this
 page, and edit /etc/pagekite.d/pagekite.rc directly.</em>
 ]])
  
-s = m:section(TypedSection, "pagekite", "PageKite")
+s = m:section(TypedSection, "pagekitec", "PageKite")
 s.anonymous = true
 
 p = s:option(Value, "kitename", "Kite Name")

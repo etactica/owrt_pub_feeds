@@ -12,8 +12,8 @@ You may obtain a copy of the License at
 
 ]]--
 
-module("luci.controller.pagekite", package.seeall)
+module("luci.controller.pagekitec", package.seeall)
 
 function index()
-    entry({"admin", "services", "pagekite"}, cbi("pagekite"), "PageKite")
+    entry({"admin", "services", "pagekitec"}, cbi("pagekitec"), "PageKite")
 end
