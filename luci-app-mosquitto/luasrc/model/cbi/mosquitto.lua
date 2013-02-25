@@ -42,6 +42,20 @@ s:option(Flag, "no_remote_access", "Disallow remote access to this broker",
 	[[Outbound bridges will still work, but this will restrict clients
 	from connecting via anything but localhost]])
 
+local function validate_max_queued_messages(self, value)
+    if datatypes.uinteger(value) then
+        local max_limit = tonumber(value)
+        if max_limit > 0 and (tostring(max_limit) == value) then
+            return value
+        end
+    end
+    return nil, "Must be a number greater than 0"
+end
+
+max_queued_messages = s:option(Value, "max_queued_messages", "Max Queued Messages", "Limit for message queue when offline")
+max_queued_messages.datatype = "string"
+max_queued_messages.validate = validate_max_queued_messages
+
 -- we want to allow multiple bridge sections
 s = m:section(TypedSection, "bridge", "Bridges",
     "You can configure multiple bridge connections here")
