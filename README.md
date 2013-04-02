@@ -2,7 +2,7 @@ Public feeds for OpenWRT.
 
 Eventually these all desire to move upstream, but they start here
 * All packages work on Attitude Adjustment (trunk)
-* All packages except libpagekite (libev) work with backfire 10.03
+* All packages except pagekitec (libev) work with backfire 10.03
 
 Note: This is only a feed, ie, recipes for building.  This does not include
 binaries for any architecture, for any release.
