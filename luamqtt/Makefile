@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luamqtt
-PKG_REV:=f63790b980
+PKG_REV:=65ff11c73b1a12ede6f2f4b550398bcd4a249840
 PKG_VERSION:=0.2-$(PKG_REV)
 PKG_RELEASE:=1
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=git@github.com:geekscape/mqtt_lua.git
+PKG_SOURCE_URL:=git://git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.lua.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_REV)
 # jow says also try PKG_SOURCE_VERSION:=origin/branchname... (gets HEAD?)
@@ -25,7 +25,7 @@ define Package/$(PKG_NAME)
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=LuaMQTT
-  URL:=http://geekscape.github.com/mqtt_lua/
+  URL:=http://eclipse.org/paho/
   DEPENDS:=+luasocket
 endef
 
