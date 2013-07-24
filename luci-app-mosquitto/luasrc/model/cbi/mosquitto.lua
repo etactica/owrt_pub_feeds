@@ -66,13 +66,19 @@ conn = s:option(Value, "connection", "Connection name",
     "unique name for this bridge configuration")
 
 local function validate_address(self, value)
-    if (datatypes.host(value)) then
+    local host, port = unpack(luci.util.split(value, ":"))
+    if (datatypes.host(host)) then
+        if port and #port then
+            if not datatypes.port(port) then
+                return nil, "Please enter a valid port after the :"
+            end
+        end
         return value
     end
     return nil, "Please enter a hostname or an IP address"
 end
 
-addr = s:option(Value, "address", "address", "address of remote broker")
+addr = s:option(Value, "address", "address", "address[:port] of remote broker")
 addr.datatype = "string"
 addr.validate = validate_address
 
