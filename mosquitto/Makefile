@@ -9,7 +9,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mosquitto
-PKG_VERSION:=1.1.2
+PKG_VERSION:=1.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -18,7 +18,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://mosquitto.org/files/source/
 #PKG_SOURCE_URL:=https://bitbucket.org/oojah/mosquitto/get/
 #PKG_BUILD_DIR:=$(BUILD_DIR)/oojah-mosquitto-$(PKG_REV)
-PKG_MD5SUM:=a9e1e9965b729911e643cfa55ab157c3
+PKG_MD5SUM:=424bfd84a7c923ccc2ea36c8bee558b2
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -36,6 +36,7 @@ define Package/$(PKG_NAME)/default
   CATEGORY:=Network
   TITLE:=mosquitto - an MQTT message broker
   URL:=http://www.mosquitto.org/
+  DEPENDS:= +librt
 endef
 
 define Package/$(PKG_NAME)
@@ -105,7 +106,7 @@ define Package/libmosquitto/default
     $(Package/mosquitto/default)
     SECTION:=libs
     CATEGORY:=Libraries
-    DEPENDS:=+libpthread
+    DEPENDS:=+libpthread +librt
     TITLE:= mosquitto - client library
 endef
 
