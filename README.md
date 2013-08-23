@@ -1,8 +1,10 @@
 Public feeds for OpenWRT.
 
 Eventually these all desire to move upstream, but they start here
-* All packages work on Attitude Adjustment (trunk)
+* All packages work on Attitude Adjustment
 * All packages except pagekitec (libev) work with backfire 10.03
+* Barrier Breaker (trunk) has not been extensively tested yet, if you find problems
+  please let us know.
 
 Note: This is only a feed, ie, recipes for building.  This does not include
 binaries for any architecture, for any release.
@@ -26,3 +28,4 @@ Known issues
 
 pagekite (python) and in particular socksipychain have some issues with dependencies that are normally resolved by rebuilding.  Help wanted?
 
+See also the github issues
