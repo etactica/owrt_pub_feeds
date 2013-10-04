@@ -107,4 +107,10 @@ psk_key.password = true
 psk_key.datatype = "string"
 psk_key.validate = validate_psk_key
 
+b_tls_version = s:option(ListValue, "tls_version", "TLS Version",
+    "The remote broker must support the same version of TLS for the connection to succeed.")
+b_tls_version:value("tlsv1")
+b_tls_version:value("tlsv1.1")
+b_tls_version:value("tlsv1.2")
+
 return m

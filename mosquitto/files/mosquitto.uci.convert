@@ -87,5 +87,9 @@ if [ $HATE_SECTION_COUNT -gt 0 ]; then
         if [ $? -eq 0 ]; then
             echo "bridge_psk $BRIDGEPSK" >> $TCONF
         fi
+        BRIDGETLSVERSION=$(uci -q get mosquitto.@bridge[-$i].tls_version)
+        if [ $? -eq 0 ]; then
+            echo "bridge_tls_version $BRIDGETLSVERSION" >> $TCONF
+        fi
     done
 fi
