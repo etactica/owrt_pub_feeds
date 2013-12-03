@@ -19,12 +19,28 @@ Howto
 
    src-link owrt_pub_feeds /where/you/cloned/this/repo
 
-2. ./scripts/feeds/update owrt_pub_feeds
-3. ./scripts/feeds/install -p owrt_pub_feeds -a
+   or
+
+   src-git owrt_pub_feeds git://github.com/remakeelectric/owrt_pub_feeds.git;branch_xx
+
+
+2. ./scripts/feeds update owrt_pub_feeds
+3. ./scripts/feeds install -p owrt_pub_feeds -a
 4. make menuconfig and choose the new packages :)
 
 Known issues
 ============
+
+If any of the packages in this feed are already in the upstream feed, you
+may have problems where running "update" keeps building the same (old)
+version.  This is a common problem for the _mosquitto_ package.  What goes
+wrong is that the owrt build system thinks it already has a definition for
+the mosquitto package installed, from the upstream feed, and only checks
+_that_ feed for any updates.  The workaround is to uninstall the problem
+package, and reinstall it, preferentially from the desired feed.
+
+1. ./scripts/feeds uninstall mosquitto
+2. ./scripts/feeds install -p owrt_pub_feeds mosquitto
 
 pagekite (python) and in particular socksipychain have some issues with dependencies that are normally resolved by rebuilding.  Help wanted?
 
