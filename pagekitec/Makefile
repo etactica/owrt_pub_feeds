@@ -20,6 +20,8 @@ PKG_SOURCE_VERSION:=$(PKG_REV)
 
 include $(INCLUDE_DIR)/package.mk
 
+TARGET_CFLAGS += $(FPIC)
+
 define Package/$(PKG_NAME)
   SECTION:=net
   CATEGORY:=Network
