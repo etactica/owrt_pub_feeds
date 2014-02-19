@@ -24,12 +24,6 @@ include $(INCLUDE_DIR)/package.mk
 
 MAKE_FLAGS+=WITH_MEMORY_TRACKING=no
 TARGET_CFLAGS+=-ggdb3
-include $(INCLUDE_DIR)/version.mk
-# The version of libopenssl in backfire doesn't support psk.
-ifeq ($(findstring 10.03,$(VERSION_CODE)),10.03)
-    MAKE_FLAGS += WITH_TLS_PSK=no
-endif
-
 
 define Package/$(PKG_NAME)/default
   SECTION:=net
