@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lsyslog
-PKG_REV:=1053ba4152213848d0f462e91b624f4c6296cbea
+PKG_REV:=c27308dbf192df43f296fcd751f8285b498e19fa
 PKG_VERSION:=5.1-$(PKG_REV)
 PKG_RELEASE:=1
 
@@ -16,6 +16,7 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=git@github.com:remakeelectric/lsyslog.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_REV)
+PKG_BUILD_DEPENDS:=liblua
 
 include $(INCLUDE_DIR)/package.mk
 
