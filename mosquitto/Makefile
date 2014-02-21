@@ -24,6 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 
 MAKE_FLAGS+=WITH_MEMORY_TRACKING=no
 TARGET_CFLAGS+=-ggdb3
+TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib
 
 define Package/$(PKG_NAME)/default
   SECTION:=net
