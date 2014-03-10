@@ -1,0 +1,17 @@
+--- a/makefile	2012-07-04 15:55:36.000000000 +0000
++++ b/makefile  2014-03-10 18:47:03.694896629 +0000
+@@ -1,6 +1,5 @@
+ # point it to where the compiler can find the Lua header files (lua.h, etc.)
+ # LUADIR = ../lua
+-LUADIR = /usr/include/lua5.1/
+ 
+ # define your own "large" integer type; not defining a proper type
+ # will default to 'long', which may cause problems with 'size_t'
+@@ -17,7 +16,6 @@
+         -Wwrite-strings
+ 
+ CFLAGS = -D_POSIX_SOURCE $(CWARNS) $(INTTYPE) -O2 -I$(LUADIR)
+-CC = gcc
+ 
+ struct.so: struct.c makefile
+ 	$(CC) $(CFLAGS) -shared -fpic -o struct.so struct.c
