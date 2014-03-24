@@ -168,6 +168,11 @@ define Package/mosquitto-client/install
 endef
 Package/mosquitto-client-nossl/install = $(Package/mosquitto-client/install)
 
+define Build/Compile
+	# Don't even _think_ about building documentation
+	$(call Build/Compile/Default,binary)
+endef
+
 # This installs files into ./staging_dir/. so that you can cross compile from the host
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
