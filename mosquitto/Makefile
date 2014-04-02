@@ -36,7 +36,7 @@ define Package/$(PKG_NAME)/default
   CATEGORY:=Network
   TITLE:=mosquitto - an MQTT message broker
   URL:=http://www.mosquitto.org/
-  DEPENDS:= +librt +libcares
+  DEPENDS:= +librt
 endef
 
 define Package/$(PKG_NAME)
@@ -74,6 +74,7 @@ endef
 define Package/mosquitto-client/default
     $(Package/mosquitto/default)
     TITLE:= mosquitto - client tools
+    DEPENDS+=+libcares
 endef
 define Package/mosquitto-client
     $(call Package/mosquitto-client/default)
