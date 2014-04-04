@@ -42,6 +42,4 @@ package, and reinstall it, preferentially from the desired feed.
 1. ./scripts/feeds uninstall mosquitto
 2. ./scripts/feeds install -p owrt_pub_feeds mosquitto
 
-pagekite (python) and in particular socksipychain have some issues with dependencies that are normally resolved by rebuilding.  Help wanted?
-
 See also the github issues
