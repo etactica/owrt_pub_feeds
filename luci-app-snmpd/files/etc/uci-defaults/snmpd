@@ -1,0 +1,12 @@
+#!/bin/sh
+APP=snmpd
+
+# Make sure luci knows how to restart apps if we change config
+uci -q batch <<-EOF >/dev/null
+	add ucitrack $APP
+	set ucitrack.@$APP[-1].init=$APP
+	commit ucitrack
+EOF
+
+rm -f /tmp/luci-indexcache
+exit 0
