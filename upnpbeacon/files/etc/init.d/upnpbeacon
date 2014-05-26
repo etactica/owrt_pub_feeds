@@ -1,0 +1,62 @@
+#!/bin/sh /etc/rc.common
+# Copyright 2014 OpenWrt.org
+START=99
+RUN_D=/var/run
+PID_FILE=$RUN_D/upnpbeacon.pid
+RUN_C=$RUN_D/upnpbeacon.cfg
+
+upnpbeacon() {
+    local cfg="$1"
+
+    config_get url "$cfg" presentation_url
+    # Required parameter, but can be blank
+    echo "presentation-url = \"$url\";" >> $RUN_C
+
+    config_get port "$cfg" presentation_port
+    [ -n "$port" ] && echo "presentation-port = \"$port\";" >> $RUN_C
+
+    config_get uname "$cfg" upnp_name
+    if [ -n "$uname" ]; then
+        echo "upnp-name = \"$uname\";" >> $RUN_C
+    else
+        local hostname=$(cat /proc/sys/kernel/hostname)
+        echo "upnp-name = \"$hostname\";" >> $RUN_C
+    fi
+
+    config_get manuf "$cfg" manufacturer
+    [ -n "$manuf" ] && echo "manufacturer = \"$manuf\";" >> $RUN_C
+
+    config_get manuf_url "$cfg" manufacturer_url
+    [ -n "$manuf_url" ] && echo "manufacturer-url = \"$manuf_url\";" >> $RUN_C
+
+    config_get mname "$cfg" model_name
+    if [ -n "$mname" ]; then
+        echo "model-name = \"$mname\";" >> $RUN_C
+    else
+        local machine=$(grep '^machine' /proc/cpuinfo | cut -d':' -f2)
+        echo "model-name = \"$machine\";" >> $RUN_C
+    fi
+
+    config_get mdesc "$cfg" model_description
+    [ -n "$mdesc" ] && echo "model-description = \"$mdesc\";" >> $RUN_C
+}
+
+start() {
+    include /lib/functions
+
+    mkdir -p $(dirname $RUN_C)
+    echo "# auto-generated config file from /etc/config/upnpbeacon" > $RUN_C
+
+    config_load upnpbeacon
+    config_foreach upnpbeacon upnpbeacon
+    start-stop-daemon -S -x /usr/bin/upnpbeacon -p $PID_FILE -m -b -- -c $RUN_C
+    
+}
+
+
+
+stop() {
+    start-stop-daemon -K -n upnpbeacon -p $PID_FILE -s TERM
+    rm -rf $PID_FILE
+}
+

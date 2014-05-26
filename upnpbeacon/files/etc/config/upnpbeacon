@@ -1,0 +1,11 @@
+config upnpbeacon
+        # Optional
+        #option presentation_url "/somewhere/else"
+        option presentation_port 80
+        # hostname by default
+        #option upnp_name "OpenWrt"
+        option manufacturer "OpenWrt Developers"
+        option manufacturer_url "http://www.openwrt.org"
+        # cpuinfo machine name by default
+        #option model_name "EG-100"
+        option model_description "OpenWrt is described as a Linux distribution for embedded devices"
