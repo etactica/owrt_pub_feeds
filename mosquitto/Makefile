@@ -23,7 +23,6 @@ PKG_MD5SUM:=5d2fe7c8bf2518eb9829547751c04bbf
 include $(INCLUDE_DIR)/package.mk
 
 MAKE_FLAGS+=WITH_MEMORY_TRACKING=no
-TARGET_CFLAGS+=-ggdb3
 include $(INCLUDE_DIR)/version.mk
 # The version of libopenssl in backfire doesn't support psk.
 ifeq ($(findstring 10.03,$(VERSION_CODE)),10.03)
