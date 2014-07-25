@@ -11,12 +11,12 @@ PKG_NAME:=pagekitec
 PKG_REV:=v140214
 PKG_VERSION:=$(PKG_REV)C
 PKG_RELEASE:=1
+PKG_LICENSE:=Apache-2.0
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=git@github.com:pagekite/libpagekite.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_REV)
-# jow says also try PKG_SOURCE_VERSION:=origin/branchname... (gets HEAD?)
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -28,6 +28,7 @@ define Package/$(PKG_NAME)
   TITLE:=Make localhost servers publicly visible.
   URL:=https://pagekite.net/wiki/Floss/LibPageKite/
   DEPENDS:=+libopenssl +libpthread +libev
+  MAINTAINER:= Karl Palsson <karlp@tweak.net.au>
 endef
 
 define Package/$(PKG_NAME)/description
@@ -56,8 +57,6 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) ./files/$(PKG_NAME).init $(1)/etc/init.d/$(PKG_NAME)
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/$(PKG_NAME).config $(1)/etc/config/$(PKG_NAME)
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) ./files/$(PKG_NAME).uci-defaults $(1)/etc/uci-defaults/$(PKG_NAME)
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
