@@ -35,6 +35,10 @@ include $(INCLUDE_DIR)/version.mk
 ifeq ($(findstring 10.03,$(VERSION_CODE)),10.03)
     MAKE_FLAGS += WITH_TLS_PSK=no
 endif
+# libopenssl prior to Barrier Breaker didn't support elliptic curve crypto
+ifeq ($(findstring Attitude,$(VERSION_CODE)),Attitude)
+    MAKE_FLAGS += WITH_EC=no
+endif
 
 
 define Package/$(PKG_NAME)/default
