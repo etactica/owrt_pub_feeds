@@ -27,7 +27,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSI
 
 include $(INCLUDE_DIR)/package.mk
 
-MAKE_FLAGS+=WITH_MEMORY_TRACKING=no
+MAKE_FLAGS+=WITH_MEMORY_TRACKING=no WITH_DOCS=no
 MAKE_FLAGS+=WITH_WEBSOCKETS=$(if $(CONFIG_MOSQUITTO_LWS),"yes","no")
 
 include $(INCLUDE_DIR)/version.mk
@@ -177,11 +177,6 @@ define Package/mosquitto-client/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/client/mosquitto_sub $(1)/usr/bin/mosquitto_sub
 endef
 Package/mosquitto-client-nossl/install = $(Package/mosquitto-client/install)
-
-define Build/Compile
-	# Don't even _think_ about building documentation
-	$(call Build/Compile/Default,binary)
-endef
 
 # This installs files into ./staging_dir/. so that you can cross compile from the host
 define Build/InstallDev
