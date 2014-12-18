@@ -11,6 +11,7 @@ PKG_NAME:=lua-mosquitto
 PKG_VERSION:=0.1
 PKG_RELEASE:=1
 PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=v$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
@@ -25,7 +26,7 @@ define Package/$(PKG_NAME)
     CATEGORY:=Languages
     TITLE:=Lua-mosquitto
     DEPENDS:=+libmosquitto +lua
-    MAINTAINER:=Bart Van Der Meerssche <bart@flukso.net>
+    MAINTAINER:=Karl Palsson <karlp@remake.is>
 endef
 
 define Package/$(PKG_NAME)/description
