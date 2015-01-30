@@ -46,6 +46,14 @@ config LIBCP210XMANUFACTURING_EXAMPLE
         default no
         help
 	  Installs the original SiLabs demo application
+
+config LIBCP210xMANUFACTURING_CONTRIB
+	bool "include contributed tools"
+	depends on PACKAGE_libcp210xmanufacturing
+	default yes
+	help
+	  Install actually useful tools, instead of hacky demos from Silabs
+	  (Hopefully actually useful....)
 endef
 
 define Build/InstallDev
@@ -61,6 +69,10 @@ define Package/$(PKG_NAME)/install
 ifeq ($(CONFIG_LIBCP210XMANUFACTURING_EXAMPLE),y)
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_BUILD_DIR)/Release/Linux/cp210xmanufacturing-example $(1)/usr/bin/
+endif
+ifeq ($(CONFIG_LIBCP210xMANUFACTURING_CONTRIB),y)
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) $(PKG_BUILD_DIR)/contrib/bin/* $(1)/usr/bin/
 endif
 endef
 
