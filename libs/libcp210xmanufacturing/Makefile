@@ -40,7 +40,7 @@ Note, this needs c++ and libusb!
 endef
 
 define Package/$(PKG_NAME)/config
-config LIBCP210XMANUFACTURING_EXAMPLE
+config LIBCP210xMANUFACTURING_EXAMPLE
         bool "include example app"
         depends on PACKAGE_libcp210xmanufacturing
         default no
@@ -66,7 +66,7 @@ endef
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_BUILD_DIR)/Release/Linux/$(PKG_NAME).so* $(1)/usr/lib/
-ifeq ($(CONFIG_LIBCP210XMANUFACTURING_EXAMPLE),y)
+ifeq ($(CONFIG_LIBCP210xMANUFACTURING_EXAMPLE),y)
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_BUILD_DIR)/Release/Linux/cp210xmanufacturing-example $(1)/usr/bin/
 endif
