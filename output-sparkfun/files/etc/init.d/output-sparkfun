@@ -1,0 +1,35 @@
+#!/bin/sh /etc/rc.common
+START=85
+USE_PROCD=1
+
+append_arg() {
+    local cfg="$1"
+    local var="$2"
+    local opt="$3"
+    local def="$4"
+    local val
+    config_get val "$cfg" "$var"
+    [ -n "$val" -o -n "$def" ] && procd_append_param command "$opt" "${val:-$def}"
+}
+
+add_optional_config() {
+    local cfg="$1"
+    append_arg "$cfg" public "-p"
+    append_arg "$cfg" key "-k"
+}
+
+start_service() {
+    procd_open_instance
+    procd_set_param command output-sparkfun.lua
+    config_load output-sparkfun && config_foreach add_optional_config general
+    # no, we let monit take care of it.  for now...
+    #procd_set_param respawn
+    procd_close_instance
+}
+
+service_triggers()
+{
+    # No, we'll do this manually for now
+    #procd_add_reload_trigger "delta_gadget"
+    echo "no triggers yet"
+}
