@@ -1,0 +1,18 @@
+#!/bin/sh
+# Karl Palsson, <karlp@tweak.net.au> March 2015
+
+[ -f /etc/config/output-sparkfun ] && exit 0
+
+# Create an example file if it doesn't exist already.
+touch /etc/config/output-sparkfun
+uci -q batch <<-EOF >/dev/null 
+        delete output-sparkfun.@general[0]
+	add output-sparkfun general
+        set output-sparkfun.@general[0]=general
+        set output-sparkfun.@general[0].enabled=0
+        set output-sparkfun.@general[0].public=example-public
+        set output-sparkfun.@general[0].key=example-private
+        commit output-sparkfun 
+EOF 
+
+exit 0
