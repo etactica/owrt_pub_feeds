@@ -27,7 +27,7 @@ local cfg = {
     MOSQ_IDLE_LOOP_MS = 100,
     TOPIC_LISTEN = "status/local/json/device/#",
     TEMPLATE_POST_URL="http://data.sparkfun.com/input/%s",
-    POST_INTERVAL = 5 * 1000, -- once a minute is enough...
+    POST_INTERVAL = 60 * 1000, -- once a minute is enough...
 }
 
 local cache = {}
