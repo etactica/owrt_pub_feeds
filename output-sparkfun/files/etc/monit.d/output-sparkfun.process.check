@@ -1,0 +1,5 @@
+check process output-sparkfun matching '/usr/bin/lua /usr/bin/output-sparkfun'        
+        start program = "/etc/init.d/output-sparkfun start"    
+        stop program = "/etc/init.d/output-sparkfun stop"    
+        if totalmemory is greater than 40% for 3 cycles then restart
+        group output-sparkfun    
