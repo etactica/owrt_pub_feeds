@@ -10,7 +10,7 @@ local mosq = require("mosquitto")
 --local posix = require("posix")
 local ugly = require("remake.ugly_log")
 
-local lapp = require("pl.lapp")
+require("pl")
 local args = lapp [[
     -H,--host (default "localhost") MQTT host to listen to
     -p,--public (string) public key to use
@@ -92,13 +92,18 @@ mqtt_idle_timer = uloop.timer(function()
 
 local timer_process_deltas
 timer_process_deltas = uloop.timer(function()
-	-- do this properly with libcurl or a library for this...
+        if tablex.size(cache) == 0 then
+		ugly.debug("Skipping post, no data in cache")
+		timer_process_deltas:set(cfg.POST_INTERVAL)
+		return
+	end
 	local url = string.format(cfg.TEMPLATE_POST_URL, args.public)
 	local cmd = string.format([[curl -X POST '%s' -H 'Phant-Private-Key: %s' ]], url, args.key)
-	-- WRONG! do a proper url encode please!
-	local fields = string.format("-d 'volts=%f&amps=%f&pf=%f&kwh=%f'", cache.volts, cache.amps, cache.pf, cache.kwh)
-	cmd = cmd .. fields
-	ugly.notice("Posting to sparkfun...", cmd)
+	local fields_args = tablex.pairmap(function(k,v)
+		return string.format([[--data "%s=%s"]], k, v)
+	end, cache)
+	cmd = cmd .. table.concat(fields_args, " ")
+	ugly.debug("executing: %s", cmd)
 	os.execute(cmd)
 
         timer_process_deltas:set(cfg.POST_INTERVAL)
