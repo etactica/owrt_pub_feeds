@@ -10,15 +10,18 @@ local mosq = require("mosquitto")
 --local posix = require("posix")
 local ugly = require("remake.ugly_log")
 
-require("pl")
-local args = lapp [[
+local pl = require'pl.import_into'()
+
+local args = pl.lapp [[
+  Takes the first phase of any mains and posts to a sparkfun/phant server.
+  if key_file is provided, the environment var is ignored.
+  the name of the environment var can be changed to allow multiple instances.
     -H,--host (default "localhost") MQTT host to listen to
     -p,--public (string) public key to use
-    -k,--key (string) private key (don't do this)
+    -k,--key (default "PHANT_KEY") environment variable or file containing private key
+    -f,--key_is_file using this means that -k refers to a file, not an env var
     -v,--verbose (0..7 default 4) Logging level, higher == more
 ]]
--- FIXME - private key should be file or env var or something so it's not in
--- "ps" output
 
 local cfg = {
     APP_NAME = "output-sparkfun",
@@ -33,6 +36,22 @@ local cfg = {
 local cache = {}
 
 ugly.initialize(cfg.APP_NAME, args.verbose or 4)
+
+if args.key_is_file then
+	ugly.debug("looking at file... %s", args.key)
+	if pl.path.isfile(args.key) then
+		args.key = pl.stringx.strip(pl.file.read(args.key))
+	else
+		pl.utils.quit(1, "key file specified does not exist: %s", args.key)
+	end
+else
+	ugly.debug("looking at envvar... %s", args.key)
+	args.key = os.getenv(args.key)
+end
+if not args.key then
+	pl.utils.quit(1, "key must be provided by either environment or file")
+end
+ugly.debug("Operating with private key: <%s>", args.key)
 
 mosq.init()
 local mqtt = mosq.new(cfg.MOSQ_CLIENT_ID, true)
@@ -92,14 +111,14 @@ mqtt_idle_timer = uloop.timer(function()
 
 local timer_process_deltas
 timer_process_deltas = uloop.timer(function()
-        if tablex.size(cache) == 0 then
+        if pl.tablex.size(cache) == 0 then
 		ugly.debug("Skipping post, no data in cache")
 		timer_process_deltas:set(cfg.POST_INTERVAL)
 		return
 	end
 	local url = string.format(cfg.TEMPLATE_POST_URL, args.public)
 	local cmd = string.format([[curl -X POST '%s' -H 'Phant-Private-Key: %s' ]], url, args.key)
-	local fields_args = tablex.pairmap(function(k,v)
+	local fields_args = pl.tablex.pairmap(function(k,v)
 		return string.format([[--data "%s=%s"]], k, v)
 	end, cache)
 	cmd = cmd .. table.concat(fields_args, " ")
