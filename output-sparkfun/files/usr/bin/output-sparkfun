@@ -79,6 +79,10 @@ mqtt.ON_MESSAGE = function(mid, topic, jpayload, qos, retain)
         ugly.warning("Invalid json in message on topic: %s, %s", topic, err)
         return
     end
+    if not payload.hwc or not payload.phases then
+        ugly.notice("Ignoring unsuitable json format on topic: %s", topic);
+        return
+    end
     if payload.error then ugly.notice("Ignoring failed reading"); return end
     if payload.hwc.typeOfMeasurementPoints == "cbms" then ugly.debug("Ignoring bar reading"); return end
     -- we simply keep the last remaining values.
