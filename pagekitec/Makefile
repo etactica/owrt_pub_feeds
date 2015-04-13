@@ -8,30 +8,42 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pagekitec
-PKG_REV:=v140214
+PKG_REV:=0.90.150130
 PKG_VERSION:=$(PKG_REV)C
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=git@github.com:pagekite/libpagekite.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=$(PKG_REV)
+PKG_SOURCE_VERSION:=v$(PKG_REV)
 
 include $(INCLUDE_DIR)/package.mk
 
 TARGET_CFLAGS += $(FPIC)
 
-define Package/$(PKG_NAME)
+define Package/$(PKG_NAME)/default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Make localhost servers publicly visible.
   URL:=https://pagekite.net/wiki/Floss/LibPageKite/
-  DEPENDS:=+libopenssl +libpthread +libev
   MAINTAINER:= Karl Palsson <karlp@tweak.net.au>
+  DEPENDS:=+libopenssl +libpthread +libev
 endef
 
-define Package/$(PKG_NAME)/description
+define Package/libpagekite
+  $(call Package/pagekitec/default)
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE+= (library)
+endef
+
+define Package/pagekitec
+  $(call Package/pagekitec/default)
+  DEPENDS:=+libpagekite
+endef
+
+define Package/$(PKG_NAME)/default/description
 PageKite is a system for running publicly visible servers (generally
  web servers) on machines without a direct connection to the Internet,
  such as mobile devices or computers behind restrictive firewalls.
@@ -41,18 +53,42 @@ PageKite is a system for running publicly visible servers (generally
  This package provides an implementation of the PageKite Protocol in C,
  optimized for high-performance or embedded applications.
 
- Basic UCI support for HTTP and SSH servers is also included in this package.
+endef
 
- https://pagekite.net/wiki/Floss/LibPageKite/
+define Package/libpagekite/description
+  $(call Package/pagekitec/default/description)
+
+  This package contains the core library
+endef
+
+define Package/pagekitec/description
+  $(call Package/pagekitec/default/description)
+
+  This package contains a basic backend useful for exposing http/ssh servers.
+
+  Basic UCI support for configuring this backend is also included.
 endef
 
 define Package/$(PKG_NAME)/conffiles
 /etc/config/$(PKG_NAME)
 endef
 
+#this installs files into ./staging_dir/. so that you can cross compile from the host
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include
+	$(CP) $(PKG_BUILD_DIR)/include/pagekite.h $(1)/usr/include
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_BUILD_DIR)/lib/libpagekite.so $(1)/usr/lib/
+endef
+
+define Package/libpagekite/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/libpagekite.so $(1)/usr/lib
+endef
+
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(PKG_NAME) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/$(PKG_NAME) $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/$(PKG_NAME).init $(1)/etc/init.d/$(PKG_NAME)
 	$(INSTALL_DIR) $(1)/etc/config
@@ -60,3 +96,4 @@ define Package/$(PKG_NAME)/install
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call BuildPackage,libpagekite))
