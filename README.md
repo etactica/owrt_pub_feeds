@@ -1,12 +1,24 @@
 Public feeds for OpenWRT.
 
-Eventually these all desire to move upstream, but they start here
-* All packages work on Attitude Adjustment
-* All packages except pagekitec (libev) work with backfire 10.03
-* Barrier Breaker (trunk) has not been extensively tested yet, if you find problems
-  please let us know.
+These are maintained for two purposes:
+1. Develop new or alternate packages prior to upstream inclusion
+2. Provide updates to packages when upstream has frozen or moved on
 
-Note: This is only a feed, ie, recipes for building.  This does not include
+In other words, there are two sorts of packages here. Firstly, immature,
+untested, possibly even unused packages.  And secondly, well tested packages
+for older builds.
+
+Current OpenWrt releases and their status
+* Barrier Breaker (10.03) All packages should still work, but no longer tested.
+  Support and workarounds have not been dropped.
+* Attitude Adjustment (14.07) Should work without issues
+* Chaos Calmer (15.05) Should work without issues
+* Master/Trunk Should work without issues.
+
+Note that there _are_ duplicate packages here! Some packages are also available
+upstream, with exactly the same version, simply with less old release backage.
+
+*NOTE*: This is only a feed, ie, recipes for building.  This does not include
 binaries for any architecture, for any release.
 
 Howto
@@ -33,10 +45,10 @@ Known issues
 
 If any of the packages in this feed are already in the upstream feed, you
 may have problems where running "update" keeps building the same (old)
-version.  This is a common problem for the _mosquitto_ package.  What goes
-wrong is that the owrt build system thinks it already has a definition for
+version.  This is a common problem for the _mosquitto_ package.
+The OpenWrt build system sees it already has a definition for
 the mosquitto package installed, from the upstream feed, and only checks
-_that_ feed for any updates.  The workaround is to uninstall the problem
+_that_ feed for updates.  The workaround is to uninstall the problem
 package, and reinstall it, preferentially from the desired feed.
 
 1. ./scripts/feeds uninstall mosquitto
