@@ -9,9 +9,10 @@ untested, possibly even unused packages.  And secondly, well tested packages
 for older builds.
 
 Current OpenWrt releases and their status
-* Barrier Breaker (10.03) All packages should still work, but no longer tested.
+* Backfire (10.03) All packages should still work, but no longer tested.
   Support and workarounds have not been dropped.
-* Attitude Adjustment (14.07) Should work without issues
+* Attitude Adjustment (12.09) Should work without issues
+* Barrier Breaker (14.07) Should work without issues
 * Chaos Calmer (15.05) Should work without issues
 * Master/Trunk Should work without issues.
 
