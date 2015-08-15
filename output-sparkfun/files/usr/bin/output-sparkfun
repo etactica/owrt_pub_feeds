@@ -46,12 +46,12 @@ if args.key_is_file then
 	end
 else
 	ugly.debug("looking at envvar... %s", args.key)
-	args.key = os.getenv(args.key)
+	args.key_real = os.getenv(args.key)
 end
-if not args.key then
-	pl.utils.quit(1, "key must be provided by either environment or file")
+if not args.key_real then
+	pl.utils.quit(1, "key must be provided by either env var or file: %s", args.key)
 end
-ugly.debug("Operating with private key: <%s>", args.key)
+ugly.debug("Operating with private key: <%s>", args.key_real)
 
 mosq.init()
 local mqtt = mosq.new(cfg.MOSQ_CLIENT_ID, true)
@@ -121,7 +121,7 @@ timer_process_deltas = uloop.timer(function()
 		return
 	end
 	local url = string.format(cfg.TEMPLATE_POST_URL, args.public)
-	local cmd = string.format([[curl -X POST '%s' -H 'Phant-Private-Key: %s' ]], url, args.key)
+	local cmd = string.format([[curl -X POST '%s' -H 'Phant-Private-Key: %s' ]], url, args.key_real)
 	local fields_args = pl.tablex.pairmap(function(k,v)
 		return string.format([[--data "%s=%s"]], k, v)
 	end, cache)
