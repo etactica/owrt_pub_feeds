@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2012 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-snmp
-PKG_VERSION:=5.4.2.1
-PKG_RELEASE:=6
+PKG_VERSION:=5.4.4
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/net-snmp
-PKG_MD5SUM:=984932520143f0c8bf7b7ce1fc9e1da1
+PKG_MD5SUM:=95aa054f3c99a1ce242807d7eaf98619
+PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+PKG_LICENSE:=MIT BSD-3-Clause-Clear
 
 PKG_FIXUP = patch-libtool
 
@@ -38,7 +40,6 @@ define Package/libnetsnmp
 $(call Package/net-snmp/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libelf1
   TITLE:=Open source SNMP implementation (libraries)
 endef
 
@@ -78,7 +79,6 @@ endef
 define Package/snmpd-static
 $(call Package/net-snmp/Default)
   TITLE:=Open source SNMP implementation (daemon)
-  DEPENDS:=+libelf1
 endef
 
 define Package/snmpd-static/description
@@ -122,12 +122,15 @@ SNMP_MIB_MODULES_INCLUDED = \
 	ucd-snmp/loadave \
 	ucd-snmp/memory \
 	ucd-snmp/pass \
+	ucd-snmp/pass_persist \
 	ucd-snmp/proc \
 	ucd-snmp/vmstat \
 	util_funcs \
 	utilities/execute \
 
 SNMP_MIB_MODULES_EXCLUDED = \
+	agent_mibs \
+	agentx \
 	disman/event \
 	disman/schedule \
 	hardware \
@@ -143,9 +146,9 @@ SNMP_MIB_MODULES_EXCLUDED = \
 	udp-mib \
 	utilities \
 
-SNMP_TRANSPORTS_INCLUDED = Callback UDP TCP
+SNMP_TRANSPORTS_INCLUDED = Callback UDP
 
-SNMP_TRANSPORTS_EXCLUDED = Unix
+SNMP_TRANSPORTS_EXCLUDED = TCP TCPIPv6 Unix
 
 TARGET_CFLAGS += $(FPIC)
 
@@ -175,7 +178,7 @@ CONFIGURE_ARGS += \
 	 $(call autoconf_bool,CONFIG_IPV6,ipv6) \
 
 ifeq ($(CONFIG_IPV6),y)
-SNMP_TRANSPORTS_INCLUDED+= UDPIPv6 TCPIPv6
+SNMP_TRANSPORTS_INCLUDED+= UDPIPv6
 endif
 
 TARGET_LDFLAGS += -L$(TOOLCHAIN_DIR)/usr/lib
@@ -214,7 +217,6 @@ define Package/libnetsnmp/install
 endef
 
 define Package/snmpd/conffiles
-/etc/default/snmpd
 /etc/config/snmpd
 endef
 
@@ -223,8 +225,6 @@ define Package/snmpd/install
 	$(INSTALL_DATA) ./files/snmpd.conf $(1)/etc/config/snmpd
 	$(INSTALL_DIR) $(1)/etc/snmp
 	ln -sf /var/run/snmpd.conf $(1)/etc/snmp/
-	$(INSTALL_DIR) $(1)/etc/default
-	$(INSTALL_DATA) ./files/snmpd.default $(1)/etc/default/snmpd
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/snmpd.init $(1)/etc/init.d/snmpd
 	$(INSTALL_DIR) $(1)/usr/sbin
@@ -232,7 +232,6 @@ define Package/snmpd/install
 endef
 
 define Package/snmpd-static/conffiles
-/etc/default/snmpd
 /etc/config/snmpd
 endef
 
@@ -241,8 +240,6 @@ define Package/snmpd-static/install
 	$(INSTALL_DATA) ./files/snmpd.conf $(1)/etc/config/snmpd
 	$(INSTALL_DIR) $(1)/etc/snmp
 	ln -sf /var/run/snmpd.conf $(1)/etc/snmp/
-	$(INSTALL_DIR) $(1)/etc/default
-	$(INSTALL_DATA) ./files/snmpd.default $(1)/etc/default/snmpd
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/snmpd.init $(1)/etc/init.d/snmpd
 	$(INSTALL_DIR) $(1)/usr/sbin
@@ -251,7 +248,7 @@ endef
 
 define Package/snmp-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/snmp{get,set,status,table,test,trap,walk} $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/snmp{get,set,status,test,trap,walk} $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,libnetsnmp))
