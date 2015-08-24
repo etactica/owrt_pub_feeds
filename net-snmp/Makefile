@@ -129,8 +129,6 @@ SNMP_MIB_MODULES_INCLUDED = \
 	utilities/execute \
 
 SNMP_MIB_MODULES_EXCLUDED = \
-	agent_mibs \
-	agentx \
 	disman/event \
 	disman/schedule \
 	hardware \
