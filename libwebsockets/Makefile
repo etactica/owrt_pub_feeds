@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libwebsockets
 
-PKG_VERSION:=1.3-chrome37-firefox30
+PKG_VERSION:=1.5-chrome47-firefox41
 PKG_RELEASE:=1
 PKG_SOURCE:=v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/warmcat/$(PKG_NAME)/archive/
