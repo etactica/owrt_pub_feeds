@@ -27,9 +27,6 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSI
 
 include $(INCLUDE_DIR)/package.mk
 
-MAKE_FLAGS+=WITH_DOCS=no
-MAKE_FLAGS+=WITH_WEBSOCKETS=$(if $(CONFIG_MOSQUITTO_LWS),"yes","no")
-
 include $(INCLUDE_DIR)/version.mk
 # The version of libopenssl in backfire doesn't support psk.
 ifeq ($(findstring 10.03,$(VERSION_CODE)),10.03)
@@ -203,8 +200,11 @@ endef
 Package/libmosquitto-nossl/install = $(Package/libmosquitto/install)
 
 # Applies to all...
+MAKE_FLAGS += WITH_DOCS=no
 ifeq ($(BUILD_VARIANT),nossl)
-        MAKE_FLAGS += WITH_TLS=no
+        MAKE_FLAGS += WITH_TLS=no WITH_WEBSOCKETS=no
+else
+	MAKE_FLAGS += WITH_WEBSOCKETS=$(if $(CONFIG_MOSQUITTO_LWS),"yes","no")
 endif
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
