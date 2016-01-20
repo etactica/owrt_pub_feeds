@@ -43,7 +43,9 @@ define Package/$(PKG_NAME)/default
   CATEGORY:=Network
   TITLE:=mosquitto - an MQTT message broker
   URL:=http://www.mosquitto.org/
+  MAINTAINER:=Karl Palsson <karlp@remake.is>
   DEPENDS:= +librt +libuuid
+  USERID:=mosquitto=200:mosquitto=200
 endef
 
 define Package/$(PKG_NAME)
@@ -53,20 +55,20 @@ define Package/$(PKG_NAME)
     VARIANT:=ssl
 endef
 
-define Package/$(PKG_NAME)/config
-	source "$(SOURCE)/Config.in"
-endef
-
 define Package/$(PKG_NAME)-nossl
     $(call Package/$(PKG_NAME)/default)
     TITLE+= (without SSL support)
     VARIANT:=nossl
 endef
 
+define Package/$(PKG_NAME)/config
+	source "$(SOURCE)/Config.in"
+endef
+
 define Package/$(PKG_NAME)/default/description
- mosquitto is a message broker that supports v3.1 of the MQ Telemetry
-Transport protocol. MQTT provides a lightweight method for
-messaging using a publish/subscribe model.
+Mosquitto is an open source (BSD licensed) message broker that implements
+the MQTT protocol version 3.1 and 3.1.1. MQTT provides a lightweight
+method of carrying out messaging using a publish/subscribe model.
 
 This package also includes some basic support for configuring via UCI
 endef
@@ -80,6 +82,7 @@ define Package/$(PKG_NAME)-nossl/description
         $(call Package/$(PKG_NAME)/default/description)
         This package is built WITHOUT SSL support.
 endef
+
 
 define Package/mosquitto-client/default
     $(Package/mosquitto/default)
@@ -138,7 +141,7 @@ define Package/libmosquitto/default/description
 use by any third party software that wants to communicate with a
 mosquitto server.
 
-Should be useable for communicating with any MQTT v3.1 compatible
+Should be useable for communicating with any MQTT v3.1/3.1.1 compatible
 server, such as IBM's RSMB, in addition to Mosquitto
 endef
 
@@ -159,12 +162,9 @@ endef
 
 Package/$(PKG_NAME)-nossl/conffiles = $(Package/$(PKG_NAME)/conffiles)
 
-define Package/$(PKG_NAME)/install
+define Package/mosquitto/install/default
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mosquitto $(1)/usr/sbin/mosquitto
-ifeq ($(CONFIG_MOSQUITTO_PASSWD),y)
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mosquitto_passwd $(1)/usr/sbin
-endif
 	$(INSTALL_DIR) $(1)/etc/mosquitto
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/mosquitto.conf $(1)/etc/mosquitto/mosquitto.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
@@ -172,8 +172,18 @@ endif
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/mosquitto.uci.convert $(1)/usr/bin
 endef
-Package/$(PKG_NAME)-nossl/install = $(Package/$(PKG_NAME)/install)
 
+define Package/mosquitto-nossl/install
+	$(call Package/mosquitto/install/default,$(1))
+endef
+
+define Package/mosquitto/install
+	$(call Package/mosquitto/install/default,$(1))
+ifeq ($(CONFIG_MOSQUITTO_PASSWD),y)
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mosquitto_passwd $(1)/usr/bin
+endif
+endef
 
 define Package/mosquitto-client/install
 	$(INSTALL_DIR) $(1)/usr/bin
