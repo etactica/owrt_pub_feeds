@@ -15,7 +15,7 @@ define Package/$(PKG_NAME)
     SUBMENU:=3. Applications
     TITLE:=LuCI support for pagekite configuration
     URL:=http://www.pagekite.net
-    DEPENDS:=+pagekitec
+    DEPENDS:=+luci-base +pagekitec
 endef
 
 define Package/$(PKG_NAME)/description

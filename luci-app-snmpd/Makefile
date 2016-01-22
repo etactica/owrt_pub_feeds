@@ -14,6 +14,7 @@ define Package/$(PKG_NAME)
     SUBMENU:=3. Applications
     TITLE:=LuCI support for net-snmp's snmpd configuration
     URL:=http://www.net-snmp.org
+    DEPENDS:= +luci-base
     #DEPENDS:=+snmpd
     # or on snmpd-static?
 endef
