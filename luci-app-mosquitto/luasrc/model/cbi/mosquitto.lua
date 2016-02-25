@@ -56,6 +56,16 @@ max_queued_messages = s:option(Value, "max_queued_messages", "Max Queued Message
 max_queued_messages.datatype = "string"
 max_queued_messages.validate = validate_max_queued_messages
 
+s = m:section(TypedSection, "persistence", "Persistence")
+s.anonymous = true
+s.addremove = false
+s:option(Flag, "persistence", "Persistence enabled", "Should persistence to disk be enabled at all")
+s:option(Value, "client_expiration", "Client expiration", "Remove persistent clients if they haven't reconnected in this period, eg 6h, 3d, 2w")
+s:option(Flag, "autosave_on_changes", "Autosave on changes", "Autosave interval applies to change counts instead of time")
+s:option(Value, "autosave_interval", "Autosave interval", "Save persistence file after this many seconds or changes")
+s:option(Value, "file", "Persistent file name")
+s:option(Value, "location", "Persistent file path (with /)", "Path to persistent file")
+
 -- we want to allow multiple bridge sections
 s = m:section(TypedSection, "bridge", "Bridges",
     "You can configure multiple bridge connections here")
