@@ -4,13 +4,13 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_REV:=640c5ba
-PKG_NAME:=mqblynk
+PKG_REV:=d3d28982088ca86c123688a2912316590d30dcb1
+PKG_NAME:=libjsonpath
 PKG_VERSION:=1.0-$(PKG_REV)
 PKG_RELEASE:=1
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_SOURCE_SUBDIR).tar.gz
-PKG_SOURCE_URL:=git@github.com:karlp/mqblynk.git
+PKG_SOURCE_URL:=git@github.com:karlp/jsonpath.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_MAINTAINER:=Karl Palsson <karlp@tweak.net.au>
@@ -21,10 +21,10 @@ include $(INCLUDE_DIR)/cmake.mk
 CMAKE_INSTALL:=1
 
 define Package/$(PKG_NAME)/default
-  SECTION:=utils
-  CATEGORY:=Utilities
-  TITLE:=mqblynk - MQTT jsonpath to blynk
-  DEPENDS:=+libjson-c +libjsonpath +libmosquittopp
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE:=openwrt jsonfilter extracted to libary
+  DEPENDS:=+libjson-c
 endef
 
 define Package/$(PKG_NAME)
@@ -32,13 +32,18 @@ define Package/$(PKG_NAME)
 endef
 
 define Package/$(PKG_NAME)/description
- Listens to MQTT topics with json messages, uses jsonpath to select data and send to Blynk virtual pins.
- Listens to Blynk virtual pins and writes out to mqtt topics.  (no json path there, what would it mean?)
+  existing jsonfilter app: http://git.openwrt.org/?p=project/jsonpath.git;a=summary
+ ripped out to a lib.  _desired_ to move upstream in some form or another
+endef
+
+define Package/InstallDev
+        $(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
+        $(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib/
 endef
 
 define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mqblynk $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libjsonpath.so $(1)/usr/lib
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
