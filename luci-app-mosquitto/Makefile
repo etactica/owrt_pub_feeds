@@ -60,10 +60,6 @@ define Package/$(PKG_NAME)/install
           $(INSTALL_DIR) $(1)/ && \
           cp -pR $(PKG_BUILD_DIR)/root/* $(1)/ \
           || true
-	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) ./files/etc/config/mosquitto $(1)/etc/config/mosquitto
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) ./files/mosquitto.uci-defaults $(1)/etc/uci-defaults
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
