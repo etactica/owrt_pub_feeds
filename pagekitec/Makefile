@@ -8,7 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pagekitec
-PKG_REV:=0.90.150130
+#PKG_REV:=0.90.150130
+PKG_REV:=c13c2adccda087680b8ab7a931a8021432ff768a
 PKG_VERSION:=$(PKG_REV)C
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
@@ -16,11 +17,14 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=git@github.com:pagekite/libpagekite.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=v$(PKG_REV)
+PKG_SOURCE_VERSION:=$(PKG_REV)
 
 include $(INCLUDE_DIR)/package.mk
 
-TARGET_CFLAGS += $(FPIC)
+PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
+
+CONFIGURE_ARGS += --without-java
 
 define Package/$(PKG_NAME)/default
   SECTION:=net
@@ -73,22 +77,27 @@ define Package/$(PKG_NAME)/conffiles
 /etc/config/$(PKG_NAME)
 endef
 
+define Build/Configure
+	(cd $(PKG_BUILD_DIR); ./autogen.sh );
+	$(call Build/Configure/Default)
+endef
+
 #this installs files into ./staging_dir/. so that you can cross compile from the host
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_BUILD_DIR)/include/pagekite.h $(1)/usr/include
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_BUILD_DIR)/lib/libpagekite.so $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/{include,lib/pkgconfig}
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/libpagekite/pagekite.h $(1)/usr/include
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpagekite.{a,so*} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/* $(1)/usr/lib/pkgconfig
 endef
 
 define Package/libpagekite/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/libpagekite.so $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libpagekite.so* $(1)/usr/lib
 endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/$(PKG_NAME) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$(PKG_NAME) $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/$(PKG_NAME).init $(1)/etc/init.d/$(PKG_NAME)
 	$(INSTALL_DIR) $(1)/etc/config
