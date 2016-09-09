@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-libmodbus
 
-PKG_REV:=0.1
+PKG_REV:=0.2
 PKG_VERSION:=$(PKG_REV)
 PKG_RELEASE:=1
 
