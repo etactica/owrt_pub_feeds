@@ -15,7 +15,7 @@ define Package/$(PKG_NAME)
     SUBMENU:=3. Applications
     TITLE:=LuCI support for mosquitto configuration
     URL:=http://www.mosquitto.org
-    DEPENDS:=+luci-base +mosquitto
+    DEPENDS:=+luci-base mosquitto
 endef
 
 define Package/$(PKG_NAME)/description
