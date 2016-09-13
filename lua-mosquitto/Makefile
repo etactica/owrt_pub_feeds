@@ -26,7 +26,7 @@ define Package/$(PKG_NAME)
     SECTION:=lang
     CATEGORY:=Languages
     TITLE:=Lua-mosquitto
-    DEPENDS:=+libmosquitto +lua
+    DEPENDS:=libmosquitto +lua
     MAINTAINER:=Karl Palsson <karlp@remake.is>
 endef
 
