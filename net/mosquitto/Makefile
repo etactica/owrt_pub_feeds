@@ -9,20 +9,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mosquitto
-PKG_VERSION:=1.4.10
-PKG_RELEASE:=1
+PKG_VERSION:=1.4.11
+PKG_RELEASE:=2
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
 
-#PKG_REV:=1a14f6fed585e0bb769932a7938cacec9d76d97a
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-#PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-#PKG_SOURCE_URL:=http://git.eclipse.org/gitroot/mosquitto/org.eclipse.mosquitto.git
-# TODO - get @ECLIPSE mirror support to work...
 PKG_SOURCE_URL:=http://mosquitto.org/files/source/
-#PKG_SOURCE_PROTO:=git
-#PKG_SOURCE_VERSION:=$(PKG_REV)
-PKG_MD5SUM:=61839b47b58c5799aab76584f13ed66f
+PKG_HASH:=ca47533bbc1b7c5e15d6e5d96d3efc59677f2515b6692263c34b7c48f33280c5
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
@@ -38,7 +32,7 @@ ifeq ($(findstring Attitude,$(VERSION_CODE)),Attitude)
 endif
 
 
-define Package/$(PKG_NAME)/default
+define Package/mosquitto/default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=mosquitto - an MQTT message broker
@@ -48,24 +42,26 @@ define Package/$(PKG_NAME)/default
   USERID:=mosquitto=200:mosquitto=200
 endef
 
-define Package/$(PKG_NAME)
+define Package/mosquitto-ssl
     $(call Package/mosquitto/default)
     TITLE+= (with SSL support)
     DEPENDS+= +libopenssl +MOSQUITTO_LWS:libwebsockets-openssl
     VARIANT:=ssl
+    PROVIDES:=mosquitto
 endef
 
-define Package/$(PKG_NAME)-nossl
-    $(call Package/$(PKG_NAME)/default)
+define Package/mosquitto-nossl
+    $(call Package/mosquitto/default)
     TITLE+= (without SSL support)
     VARIANT:=nossl
+    PROVIDES:=mosquitto
 endef
 
-define Package/$(PKG_NAME)/config
+define Package/mosquitto-ssl/config
 	source "$(SOURCE)/Config.in"
 endef
 
-define Package/$(PKG_NAME)/default/description
+define Package/mosquitto/default/description
 Mosquitto is an open source (BSD licensed) message broker that implements
 the MQTT protocol version 3.1 and 3.1.1. MQTT provides a lightweight
 method of carrying out messaging using a publish/subscribe model.
@@ -73,13 +69,13 @@ method of carrying out messaging using a publish/subscribe model.
 This package also includes some basic support for configuring via UCI
 endef
 
-define Package/$(PKG_NAME)/description
-	$(call Package/$(PKG_NAME)/default/description)
+define Package/mosquitto-ssl/description
+	$(call Package/mosquitto/default/description)
 	This package is built with SSL support
 endef
 
-define Package/$(PKG_NAME)-nossl/description
-        $(call Package/$(PKG_NAME)/default/description)
+define Package/mosquitto-nossl/description
+        $(call Package/mosquitto/default/description)
         This package is built WITHOUT SSL support.
 endef
 
@@ -88,11 +84,12 @@ define Package/mosquitto-client/default
     $(Package/mosquitto/default)
     TITLE:= mosquitto - client tools
     DEPENDS+=+libcares
+    PROVIDES:=mosquitto-client
 endef
-define Package/mosquitto-client
+define Package/mosquitto-client-ssl
     $(call Package/mosquitto-client/default)
     TITLE+= (With SSL support)
-    DEPENDS+=+libmosquitto
+    DEPENDS+=+libmosquitto-ssl
     VARIANT:=ssl
 endef
 define Package/mosquitto-client-nossl
@@ -107,7 +104,7 @@ define Package/mosquitto-client/default/description
 and subscribing to topics.
 endef
 
-define Package/mosquitto-client/description
+define Package/mosquitto-client-ssl/description
 $(call Package/mosquitto-client/default/description)
         This package is built with SSL support
 endef
@@ -122,9 +119,10 @@ define Package/libmosquitto/default
     CATEGORY:=Libraries
     DEPENDS:=+libpthread +librt +libcares
     TITLE:= mosquitto - client library
+    PROVIDES:=libmosquitto
 endef
 
-define Package/libmosquitto
+define Package/libmosquitto-ssl
     $(call Package/libmosquitto/default)
     TITLE+= (With SSL Support)
     DEPENDS+= +libopenssl
@@ -145,7 +143,7 @@ Should be useable for communicating with any MQTT v3.1/3.1.1 compatible
 server, such as IBM's RSMB, in addition to Mosquitto
 endef
 
-define Package/libmosquitto/description
+define Package/libmosquitto-ssl/description
     $(call Package/libmosquitto/default/description)
     This package is built with SSL support
 endef
@@ -157,7 +155,7 @@ endef
 define Package/libmosquittopp
     SECTION:=libs
     CATEGORY:=Libraries
-    DEPENDS:=+libmosquitto +libstdcpp
+    DEPENDS:=+libmosquitto-ssl +libstdcpp
     TITLE:= mosquitto - client c++ library
 endef
 
@@ -165,12 +163,12 @@ define Package/libmosquittopp/description
  C++ Library wrapper for libmosquitto.
 endef
 
-define Package/$(PKG_NAME)/conffiles
+define Package/mosquitto-ssl/conffiles
 /etc/mosquitto/mosquitto.conf
 /etc/config/mosquitto
 endef
 
-Package/$(PKG_NAME)-nossl/conffiles = $(Package/$(PKG_NAME)/conffiles)
+Package/mosquitto-nossl/conffiles = $(Package/mosquitto-ssl/conffiles)
 
 define Package/mosquitto/install/default
 	$(INSTALL_DIR) $(1)/usr/sbin
@@ -184,7 +182,7 @@ define Package/mosquitto-nossl/install
 	$(call Package/mosquitto/install/default,$(1))
 endef
 
-define Package/mosquitto/install
+define Package/mosquitto-ssl/install
 	$(call Package/mosquitto/install/default,$(1))
 ifeq ($(CONFIG_MOSQUITTO_PASSWD),y)
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -192,7 +190,7 @@ ifeq ($(CONFIG_MOSQUITTO_PASSWD),y)
 endif
 endef
 
-define Package/mosquitto-client/install
+define Package/mosquitto-client-ssl/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/client/mosquitto_pub $(1)/usr/bin/mosquitto_pub
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/client/mosquitto_sub $(1)/usr/bin/mosquitto_sub
@@ -212,12 +210,12 @@ define Build/InstallDev
 endef
 
 # This installs files on the target.  Compare with Build/InstallDev
-define Package/libmosquitto/install
+define Package/libmosquitto-ssl/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/libmosquitto.so.1 $(1)/usr/lib/
 	$(LN) libmosquitto.so.1 $(1)/usr/lib/libmosquitto.so
 endef
-Package/libmosquitto-nossl/install = $(Package/libmosquitto/install)
+Package/libmosquitto-nossl/install = $(Package/libmosquitto-ssl/install)
 
 define Package/libmosquittopp/install
 	$(INSTALL_DIR) $(1)/usr/lib
@@ -226,17 +224,17 @@ define Package/libmosquittopp/install
 endef
 
 # Applies to all...
-MAKE_FLAGS += WITH_DOCS=no
+MAKE_FLAGS += WITH_DOCS=no UNAME=Linux
 ifeq ($(BUILD_VARIANT),nossl)
 	MAKE_FLAGS += WITH_TLS=no WITH_WEBSOCKETS=no
 else
 	MAKE_FLAGS += WITH_WEBSOCKETS=$(if $(CONFIG_MOSQUITTO_LWS),"yes","no")
 endif
 
-$(eval $(call BuildPackage,$(PKG_NAME)))
-$(eval $(call BuildPackage,$(PKG_NAME)-nossl))
-$(eval $(call BuildPackage,libmosquitto))
+$(eval $(call BuildPackage,mosquitto-ssl))
+$(eval $(call BuildPackage,mosquitto-nossl))
+$(eval $(call BuildPackage,libmosquitto-ssl))
 $(eval $(call BuildPackage,libmosquitto-nossl))
 $(eval $(call BuildPackage,libmosquittopp))
-$(eval $(call BuildPackage,mosquitto-client))
+$(eval $(call BuildPackage,mosquitto-client-ssl))
 $(eval $(call BuildPackage,mosquitto-client-nossl))
