@@ -1,0 +1,236 @@
+#!/usr/bin/lua
+--[[
+    Karl Palsson, 2017 <karlp@etactica.com>
+]]
+
+-- todo - cjson, or luci-lua-jsonc maybe?
+local json = require("cjson.safe")
+local mosq = require("mosquitto")
+-- nonideal, but ok.
+local ugly = require("remake.ugly_log")
+
+local socket = require "socket"
+local https = require("ssl.https")
+local ltn12 = require("ltn12")
+
+local Puni = require("posix.unistd")
+local Pt = require("posix.time")
+local pl = require("pl.import_into")()
+
+local function msleep(ms)
+    socket.select(nil, nil, ms / 1000)
+end
+
+local args = pl.lapp [[
+  Basic output to dexma
+  if key_file is provided, the environment var is ignored.
+  the name of the environment var can be changed to allow multiple instances.
+    -H,--host (default "localhost") MQTT host to listen to
+    -i,--id (string) identifier for dexma
+    -k,--key (default "DEXMA_KEY") environment variable or file containing private key
+    -f,--key_is_file using this means that -k refers to a file, not an env var
+    -v,--verbose (0..7 default 5) Logging level, higher == more
+    -C,--cafile (string default "") path to ca bundle
+    -c,--capath (string default "") path to directory of certs
+]]
+
+if #args.cafile == 0 then args.cafile = nil end
+if #args.capath == 0 then args.capath = nil end
+if not args.cafile and not args.capath then pl.utils.quit(1, "Either cafile or capath must be provided") end
+
+local cfg = {
+    APP_NAME = "output-dexma",
+    MOSQ_CLIENT_ID = string.format("output-dexma-%d", Puni.getpid()),
+    TOPIC_LISTEN = "status/local/json/device/#",
+    TEMPLATE_POST_URL = [[https://is3.dexcell.com/readings?source_key=%s]],
+    --TEMPLATE_POST_URL = [[https://hookb.in/KxQwPmm7?source_key=%s]],
+    POST_INTERVAL_MINUTES = 15,
+    sqn = 1,
+    last_send = Pt.time(),
+}
+
+local cache = {}
+
+ugly.initialize(cfg.APP_NAME, args.verbose or 4)
+
+if args.key_is_file then
+	ugly.debug("looking at file... %s", args.key)
+	if pl.path.isfile(args.key) then
+		args.key = pl.stringx.strip(pl.file.read(args.key))
+	else
+		pl.utils.quit(1, "key file specified does not exist: %s", args.key)
+	end
+else
+	ugly.debug("looking at envvar... %s", args.key)
+	args.key = os.getenv(args.key)
+end
+if not args.key then
+	pl.utils.quit(1, "key must be provided by either environment or file")
+end
+ugly.debug("Operating with private key: <%s>", args.key)
+
+mosq.init()
+local mqtt = mosq.new(cfg.MOSQ_CLIENT_ID, true)
+
+mqtt.ON_CONNECT = function(success, rc, str)
+	if not success then
+		ugly.crit("Failed to connect to MQTT broker: %s, %d: %s", args.host, rc, str)
+		os.exit(1)
+	end
+	if not mqtt:subscribe(cfg.TOPIC_LISTEN, 0) then
+		ugly.crit("Aborting, unable to make MQTT subscription to: %s", args.host)
+		os.exit(1)
+	end
+	ugly.notice("Successfully connected and listening for data")
+end
+
+local function handle_message(mid, topic, jpayload, qos, retain)
+    local payload, err = json.decode(jpayload)
+    local devid = pl.stringx.split(topic, "/")[5]
+    if not payload then
+        ugly.warning("Invalid json in message on topic: %s, %s", topic, err)
+        return
+    end
+    if not payload.hwc or not payload.phases then
+        ugly.info("Ignoring unsuitable json format on topic: %s", topic);
+        return
+    end
+    if payload.error then ugly.info("Ignoring failed reading"); return end
+    if payload.hwc.typeOfMeasurementPoints == "cbms" then ugly.debug("Ignoring bar reading"); return end
+
+    if not cache[devid] then
+	cache[devid] = {
+        	sumamps = {0,0,0},
+		countamps = {0,0,0},
+		maxamps = {0,0,0},
+		maxamps_tsms = {0,0,0},
+	}
+    end
+    cache[devid].ts = payload.timestamp_ms
+    cache[devid].kwh = payload.cumulative_wh/1000
+    cache[devid].kvarh = payload.cumulative_varh/1000
+    for i = 1,3 do
+	cache[devid].sumamps[i] = cache[devid].sumamps[i] + payload.phases[i].current
+	cache[devid].countamps[i] = cache[devid].countamps[i]+1
+	if payload.phases[i].current > cache[devid].maxamps[i] then
+		cache[devid].maxamps[i] = payload.phases[i].current
+		cache[devid].maxamps_tsms[i] = payload.timestamp_ms
+	end
+    end
+		
+    --cache.volts = payload.phases[1].voltage
+    --cache.amps = payload.phases[1].current
+    --cache.pf = payload.phases[1].pf
+    --cache.kwh = payload.cumulative_wh / 1000
+end
+
+mqtt.ON_MESSAGE = function(mid, topic, jpayload, qos, retain)
+	local ok, err = pcall(handle_message, mid, topic, jpayload, qos, retain)
+	if not ok then
+		ugly.crit("Exception in message handler! %s", tostring(err))
+	end
+end
+
+mqtt:connect(args.host, 1883, 60)
+mqtt:loop_start()
+
+---
+--data table to be json encoded and posted
+--raws set to true if data is already encoded properly
+local function httppost(data, raws)
+	local respbody = {}
+	local reqbody = data
+	if not raws then reqbody = json.encode(data) end
+	ugly.debug("posting now: %s", reqbody)
+	url = string.format(cfg.TEMPLATE_POST_URL, args.id)
+       	headers = {
+		["x-dexcell-source-token"] = args.key,
+		["Content-Type"] = "application/json;charset=utf-8",
+		["content-length"] = #reqbody,
+	}
+	local http_req = {
+        	method = "POST",
+		url = url,
+        	source = ltn12.source.string(reqbody),
+        	headers = headers,
+        	sink = ltn12.sink.table(respbody),
+		-- got these from prosody, look reasonable
+		verify = { "peer", "client_once" },
+		options = { "no_sslv2", "no_sslv3", "no_ticket", "no_compression", "cipher_server_preference", "single_dh_use", "single_ecdh_use" },
+	}
+	if args.cafile then http_req.cafile = args.cafile end
+	if args.capath then http_req.capath = args.capath end
+	local r,c,h = https.request(http_req)
+	local real_resp = table.concat(respbody)
+	--print("real resp = ", real_resp)
+	--print("code = ", c)
+	--print("headers = ", pl.pretty.write(h))
+	return real_resp, c, h
+
+end
+
+---
+-- return true if the ts is an "even" multiple of the intmin minutes.
+local function is_interval(ts, intmin)
+	return Pt.gmtime(ts).tm_min % intmin == 0
+end
+
+
+local function process_cache(cache)
+        if pl.tablex.size(cache) == 0 then
+		ugly.debug("Skipping post, no data in cache")
+		return
+	end
+	local nowts = Pt.time()
+	if not is_interval(nowts, cfg.POST_INTERVAL_MINUTES) then
+		return
+	end
+	if nowts - cfg.last_send < 2 * 60 then
+		ugly.warning("15minute interval less than 2 minutes since last post?!")
+		return
+	end
+
+	local data = {}
+	-- dexma wants usage from 08:00 to 08:15 to report at 08:00
+	ts = Pt.strftime('%Y-%m-%dT%H:%M:00Z', Pt.gmtime(nowts - cfg.POST_INTERVAL_MINUTES*60))
+	for i,v in pairs(cache) do
+		local entry = {
+			did = i,
+			sqn = cfg.sqn,
+			ts = ts,
+			values = {
+				{p=402, v=v.kwh},
+				{p=404, v=v.kvarh},
+			},
+		}
+		table.insert(data, entry)
+		ugly.debug("time now: %s, posting as time %s", Pt.gmtime(nowts), entry.ts)
+		-- current readings have to go as another device?!
+		for k=1,3 do
+			local ph = {
+				did = string.format("%s-%d", i, k),
+				sqn = cfg.sqn,
+				ts = ts,
+				values = {
+					{p=425, v=v.maxamps[k]},
+					{p=426, v=v.sumamps[k]/v.countamps[k]},
+				},
+			}
+			table.insert(data, ph)
+		end
+	end
+	-- clear the cache out, we've posted it now
+	cache = {}
+	cfg.last_send = nowts
+	cfg.sqn = cfg.sqn + 1
+	
+	local r,c,h = httppost(data)
+	ugly.notice("Data insertion returned: %d", c)
+end
+
+while true do
+	-- Check on things every 45 secs (will always make sure we hit within each 15minute window)
+	Puni.sleep(45)
+	process_cache(cache)
+end
+

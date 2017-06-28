@@ -1,0 +1,18 @@
+#!/bin/sh
+# Karl Palsson, <karlp@etactica.com> June 2017
+
+[ -f /etc/config/output-dexma ] && exit 0
+
+# Create an example file if it doesn't exist already.
+touch /etc/config/output-dexma
+uci -q batch <<-EOF >/dev/null 
+        delete output-dexma.@general[0]
+	add output-dexma general
+        set output-dexma.@general[0]=general
+        set output-dexma.@general[0].enabled=0
+        set output-dexma.@general[0].source_key=example-public
+        set output-dexma.@general[0].dexcell_source_token=example-private
+        commit output-dexma
+EOF 
+
+exit 0

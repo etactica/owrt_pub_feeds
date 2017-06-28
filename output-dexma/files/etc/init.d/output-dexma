@@ -1,0 +1,34 @@
+#!/bin/sh /etc/rc.common
+START=85
+USE_PROCD=1
+
+append_arg() {
+    local cfg="$1"
+    local opt="$2"
+    local var="$3"
+    local def="$4"
+    local val
+    config_get val "$cfg" "$var"
+    [ -n "$val" -o -n "$def" ] && procd_append_param command "$opt" "${val:-$def}"
+}
+
+add_instance() {
+	local cfg=$1
+	local enabled
+	config_get_bool enabled "$cfg" enabled 0
+	[ $enabled -gt 0 ] || { echo "Output service not enabled"; exit 1; }
+	procd_open_instance
+	procd_set_param command output-dexma
+	append_arg "$cfg" --id source_key
+	append_arg "$cfg" -H mqhost
+	procd_append_param command -c /etc/ssl/certs/
+	config_get key "$cfg" dexcell_source_token
+	procd_set_param env DEXMA_KEY="$key"
+	procd_set_param respawn
+	procd_close_instance
+}
+
+start_service() {
+    config_load output-dexma && config_foreach add_instance general
+}
+
