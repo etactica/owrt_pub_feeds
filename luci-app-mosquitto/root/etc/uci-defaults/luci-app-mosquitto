@@ -1,0 +1,10 @@
+#!/bin/sh
+# minimally ensure that the (deprecated) luci-reload will at least reload
+THISAPP=mosquitto
+uci -q batch <<-EOF >/dev/null
+       delete ucitrack.@${THISAPP}[-1]
+       add ucitrack ${THISAPP}
+       set ucitrack.@${THISAPP}[-1].init=${THISAPP}
+       commit ucitrack
+EOF
+
