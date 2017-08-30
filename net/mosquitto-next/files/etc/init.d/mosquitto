@@ -6,6 +6,7 @@
 START=80
 USE_PROCD=1
 TCONF=/tmp/mosquitto.generated.conf
+CONF_WATCH=/etc/config/mosquitto
 
 # Usage: append_if cfg uci_name output_name
 # add a config line of the form "output_name <value>"
@@ -151,6 +152,7 @@ start_service_real() {
 		convert_uci
 	else
 		CONF=/etc/mosquitto/mosquitto.conf
+		CONF_WATCH=$CONF
         fi
 	config_get write_pid "$cfg" write_pid 0
 
@@ -158,7 +160,7 @@ start_service_real() {
 	procd_set_param command mosquitto
 	procd_append_param command -c $CONF
 	# Makes /etc/init.d/mosquitto reload work if you edit the final file.
-	procd_set_param file $CONF
+	procd_set_param file $CONF_WATCH
 	[ "$write_pid" -eq 1 ] && procd_set_param pidfile /var/run/mosquitto.pid
 	procd_close_instance
 }
