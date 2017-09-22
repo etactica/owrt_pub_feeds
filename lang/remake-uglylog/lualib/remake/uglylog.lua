@@ -24,7 +24,7 @@
 -- ugly.info("Writing %s to file %s", result, output)
 --]]
 
-module(..., package.seeall)
+local M = {}
 
 local function load_module_if_available(module_name)
     local status, module = pcall(require, module_name)
@@ -100,7 +100,7 @@ local function innerlog(log_level, log_level_number, format, ...)
 end
 
 -- logging level might be a string ("emerg", "info" etc.) or a number in the range 0 to 7 or nil
-function initialize(application_name, logging_level)
+function M.initialize(application_name, logging_level)
     local application_id = application_name or default_application_id
     set_logging_level(logging_level)
     if not is_environment_complete then
@@ -138,34 +138,36 @@ end
 -- e.g.
 -- format = "Write to file %s"
 
-function emerg(format, ...)
+function M.emerg(format, ...)
     innerlog("LOG_EMERG", 0, format, ...)
 end
 
-function alert(format, ...)
+function M.alert(format, ...)
     innerlog("LOG_ALERT", 1, format, ...)
 end
 
-function crit(format, ...)
+function M.crit(format, ...)
     innerlog("LOG_CRIT", 2, format, ...)
 end
 
-function err(format, ...)
+function M.err(format, ...)
     innerlog("LOG_ERR", 3, format, ...)
 end
 
-function warning(format, ...)
+function M.warning(format, ...)
     innerlog("LOG_WARNING", 4, format, ...)
 end
 
-function notice(format, ...)
+function M.notice(format, ...)
     innerlog("LOG_NOTICE", 5, format, ...)
 end
 
-function info(format, ...)
+function M.info(format, ...)
     innerlog("LOG_INFO", 6, format, ...)
 end
 
-function debug(format, ...)
+function M.debug(format, ...)
     innerlog("LOG_DEBUG", 7, format, ...)
 end
+
+return M
