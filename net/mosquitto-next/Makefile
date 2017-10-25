@@ -31,7 +31,7 @@ define Package/$(PKG_NAME)
   URL:=http://www.mosquitto.org/
   MAINTAINER:=Karl Palsson <karlp@etactica.com>
   DEPENDS:= +librt +libuuid
-  DEPENDS+= +libopenssl +libwebsockets-openssl
+  DEPENDS+= +libopenssl libwebsockets
   USERID:=mosquitto=200:mosquitto=200
   PROVIDES:= mosquitto
 endef
@@ -57,7 +57,7 @@ define Package/$(PKG_NAME)-client
   URL:=http://www.mosquitto.org/
   MAINTAINER:=Karl Palsson <karlp@etactica.com>
   DEPENDS:= +librt +libuuid
-  DEPENDS+= +libopenssl +libwebsockets-openssl
+  DEPENDS+= +libopenssl libwebsockets
   DEPENDS+=+libcares
   DEPENDS+=+libmosquitto
   PROVIDES:=mosquitto-client
