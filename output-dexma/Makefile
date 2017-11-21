@@ -47,7 +47,6 @@ endef
 define Build/Compile
 endef
 
-HTDOCS = /www
 LUA_LIBRARYDIR = /usr/lib/lua
 LUCI_LIBRARYDIR = $(LUA_LIBRARYDIR)/luci
 
@@ -55,18 +54,12 @@ define Package/$(PKG_NAME)/install
 	# Install luci stuff...
 	[ -d $(PKG_BUILD_DIR)/luasrc ] && \
           $(INSTALL_DIR) $(1)$(LUCI_LIBRARYDIR) && \
-          $(CP) $(PKG_BUILD_DIR)/luasrc/* $(1)$(LUCI_LIBRARYDIR)/
-	[ -d $(PKG_BUILD_DIR)/luasrc ] && \
-          $(INSTALL_DIR) $(1)$(LUCI_LIBRARYDIR) && \
-          $(CP) $(PKG_BUILD_DIR)/luasrc/* $(1)$(LUCI_LIBRARYDIR)/
-	[ -d $(PKG_BUILD_DIR)/htdocs ] && \
-          $(INSTALL_DIR) $(1)$(HTDOCS) && \
-          $(CP) $(PKG_BUILD_DIR)/htdocs/* $(1)$(HTDOCS)/ \
-          || true
-	[ -d $(PKG_BUILD_DIR)/root ] && \
-          $(INSTALL_DIR) $(1)/ && \
-          $(CP) $(PKG_BUILD_DIR)/root/* $(1)/ \
-          || true
+          $(CP) $(PKG_BUILD_DIR)/luasrc/* $(1)$(LUCI_LIBRARYDIR)/ \
+	  || true
+	[ -d $(PKG_BUILD_DIR)/lualib ] && \
+          $(INSTALL_DIR) $(1)$(LUA_LIBRARYDIR) && \
+          cp -pR $(PKG_BUILD_DIR)/lualib/* $(1)$(LUA_LIBRARYDIR)/ \
+	  || true
 	# Application itself, and it's packaging
 	$(CP) ./files/* $(1)/
 endef
