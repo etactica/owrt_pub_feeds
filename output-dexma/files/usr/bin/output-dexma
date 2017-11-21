@@ -100,7 +100,7 @@ local function handle_message(mid, topic, jpayload, qos, retain)
 
     if not cache[devid] then
 	cache[devid] = {
-        	sumamps = {0,0,0},
+		sumamps = {0,0,0},
 		countamps = {0,0,0},
 		maxamps = {0,0,0},
 		maxamps_tsms = {0,0,0},
@@ -177,7 +177,7 @@ end
 
 
 local function process_cache(cache)
-        if pl.tablex.size(cache) == 0 then
+	if pl.tablex.size(cache) == 0 then
 		ugly.debug("Skipping post, no data in cache")
 		return
 	end
@@ -192,7 +192,7 @@ local function process_cache(cache)
 
 	local data = {}
 	-- dexma wants usage from 08:00 to 08:15 to report at 08:00
-	ts = Pt.strftime('%Y-%m-%dT%H:%M:00Z', Pt.gmtime(nowts - cfg.POST_INTERVAL_MINUTES*60))
+	local ts = Pt.strftime('%Y-%m-%dT%H:%M:00Z', Pt.gmtime(nowts - cfg.POST_INTERVAL_MINUTES*60))
 	for i,v in pairs(cache) do
 		local entry = {
 			did = i,
