@@ -1,0 +1,6 @@
+check process output-dexma matching '/usr/bin/lua /usr/bin/output-dexma'
+	start program = "/etc/init.d/output-dexma start"
+	stop program = "/etc/init.d/output-dexma stop"
+        if totalmemory is greater than 40% for 3 cycles then restart
+        if totalcpu is greater than 40% for 3 cycles then restart
+	group output-dexma
