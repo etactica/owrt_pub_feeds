@@ -6,8 +6,7 @@
 -- todo - cjson, or luci-lua-jsonc maybe?
 local json = require("cjson.safe")
 local mosq = require("mosquitto")
--- nonideal, but ok.
-local ugly = require("remake.ugly_log")
+local ugly = require("remake.uglylog")
 
 local socket = require "socket"
 local https = require("ssl.https")
