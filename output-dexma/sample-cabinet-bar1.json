@@ -1,0 +1,21 @@
+{
+"commentary": "fake cabinet model to publish for pseudo bar CAFEBABE0002, some groups, some not",
+"branches":[
+{"ampsize":16,"label":"bc/1","points":[{"phase":1,"reading":0,"deviceid":"CAFEBABE0002"}]},
+{"ampsize":16,"label":"bc/2","points":[{"phase":2,"reading":1,"deviceid":"CAFEBABE0002"}]},
+{"ampsize":16,"label":"bc/3","points":[{"phase":3,"reading":2,"deviceid":"CAFEBABE0002"}]},
+{"label":"bc/4","ampsize":16,"points":[
+   {"phase":1,"reading":3,"deviceid":"CAFEBABE0002"},
+   {"phase":2,"reading":4,"deviceid":"CAFEBABE0002"},
+   {"phase":3,"reading":5,"deviceid":"CAFEBABE0002"}
+]},
+{"label":"bc/7","ampsize":16,"points":[
+   {"phase":1,"reading":6,"deviceid":"CAFEBABE0002"},
+   {"phase":2,"reading":7,"deviceid":"CAFEBABE0002"},
+   {"phase":3,"reading":8,"deviceid":"CAFEBABE0002"}
+]},
+{"ampsize":16,"label":"bc/10","points":[{"phase":1,"reading":9,"deviceid":"CAFEBABE0002"}]},
+{"ampsize":16,"label":"bc/11","points":[{"phase":2,"reading":10,"deviceid":"CAFEBABE0002"}]},
+{"ampsize":16,"label":"bc/12","points":[{"phase":3,"reading":11,"deviceid":"CAFEBABE0002"}]}
+],"cabinet":"Q29","version":0.2,"type":"profile"}
+

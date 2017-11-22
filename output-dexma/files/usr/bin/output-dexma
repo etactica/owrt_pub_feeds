@@ -20,6 +20,7 @@ local function msleep(ms)
     socket.select(nil, nil, ms / 1000)
 end
 
+
 local args = pl.lapp [[
   Basic output to dexma
   if key_file is provided, the environment var is ignored.
@@ -40,15 +41,22 @@ if not args.cafile and not args.capath then pl.utils.quit(1, "Either cafile or c
 local cfg = {
     APP_NAME = "output-dexma",
     MOSQ_CLIENT_ID = string.format("output-dexma-%d", Puni.getpid()),
-    TOPIC_LISTEN = "status/local/json/device/#",
+    TOPIC_LISTEN_DATA = "status/local/json/device/#",
+    TOPIC_LISTEN_CABINET = "status/local/json/cabinet/#",
     TEMPLATE_POST_URL = [[https://is3.dexcell.com/readings?source_key=%s]],
     --TEMPLATE_POST_URL = [[https://hookb.in/KxQwPmm7?source_key=%s]],
     POST_INTERVAL_MINUTES = 15,
+    --- How long to ignore data for while we process cabinet model information
+    INITIAL_SLEEP_TIME = 5,
     sqn = 1,
     last_send = Pt.time(),
+    time_start = nil,
 }
 
+--- cache of live data, structured for easy retrieval. we nuke this after each post
 local cache = {}
+---
+local cabinet_model = {}
 
 ugly.initialize(cfg.APP_NAME, args.verbose or 4)
 
@@ -76,58 +84,144 @@ mqtt.ON_CONNECT = function(success, rc, str)
 		ugly.crit("Failed to connect to MQTT broker: %s, %d: %s", args.host, rc, str)
 		os.exit(1)
 	end
-	if not mqtt:subscribe(cfg.TOPIC_LISTEN, 0) then
-		ugly.crit("Aborting, unable to make MQTT subscription to: %s", args.host)
+	if not mqtt:subscribe(cfg.TOPIC_LISTEN_DATA, 0) then
+		ugly.crit("Aborting, MQTT Subscribe failed: to %s:%s.", args.host, cfg.TOPIC_LISTEN_DATA)
+		os.exit(1)
+	end
+	if not mqtt:subscribe(cfg.TOPIC_LISTEN_CABINET, 0) then
+		ugly.crit("Aborting, MQTT Subscribe failed: to %s:%s.", args.host, cfg.TOPIC_LISTEN_DATA)
 		os.exit(1)
 	end
 	ugly.notice("Successfully connected and listening for data")
+    cfg.time_start = Pt.time()
 end
 
-local function handle_message(mid, topic, jpayload, qos, retain)
-    local payload, err = json.decode(jpayload)
-    local devid = pl.stringx.split(topic, "/")[5]
-    if not payload then
-        ugly.warning("Invalid json in message on topic: %s, %s", topic, err)
+--- Create/update our cache of the cabinet model.
+--- we use this data to group breakers/channels and provide "meaningful" names up to dexma
+local function handle_message_cabinet(mid, topic, jpayload, qos, retain)
+	ugly.debug("processing cabinet data from topic: %s", topic)
+	local payload, err = json.decode(jpayload)
+	if not payload then
+		ugly.warning("Invalid json in message on topic: %s, %s", topic, err)
+		ugly.debug("Raw message=<%s>", jpayload)
+		return
+	end
+
+	local cabinet = payload.cabinet
+	if not cabinet then
+		ugly.warning("No cabinet in cabinet model, ignoring on topic: %s", topic)
+		return
+	end
+	local devid = pl.stringx.split(topic, "/")[5]
+	if not devid then
+		ugly.warning("No deviceid in topic?! can't assign to cabinet model")
+		return
+	end
+
+	-- if there is an existing cabinet model for this device, just _replace_ it wholesale.
+	cabinet_model[devid] = {}
+    -- just keep the original branches, with a cabinet pointer on each one
+    for _,b in pairs(payload.branches) do
+        b.cabinet = cabinet
+        table.insert(cabinet_model[devid], b)
+    end
+end
+
+local function handle_message_data(mid, topic, jpayload, qos, retain)
+    if not cfg.time_start then error("message handler called before connect finished?!") end
+    if cfg.time_start and Pt.time() - cfg.time_start < cfg.INITIAL_SLEEP_TIME then
+        ugly.debug("Ignoring data, still %d seconds of sleep left.", cfg.INITIAL_SLEEP_TIME - (Pt.time() - cfg.time_start))
         return
     end
-    if not payload.hwc or not payload.phases then
+
+    if pl.tablex.size(cabinet_model) == 0 then
+        ugly.debug("Skipping data processing, no cabinet model")
+        return false
+    end
+    local chunks = pl.stringx.split(topic, "/")
+    if #chunks < 5 then
+		ugly.debug("Ignoring invalid/unprobed device on topic: %s", topic)
+		return
+	end
+    local devid = chunks[5]
+    local payload, err = json.decode(jpayload)
+    if not payload then
+        ugly.warning("Invalid json in message on topic: %s, %s", topic, err)
+        ugly.debug("Raw message=<%s>", jpayload)
+        return
+    end
+    if not payload.hwc then
         ugly.info("Ignoring unsuitable json format on topic: %s", topic);
         return
     end
-    if payload.error then ugly.info("Ignoring failed reading"); return end
-    if payload.hwc.typeOfMeasurementPoints == "cbms" then ugly.debug("Ignoring bar reading"); return end
+    if payload.hwc.error then
+        ugly.debug("Ignoring failed reading")
+        return
+    end
+    if payload.hwc.typeOfMeasurementPoints ~= "generic" then
+        ugly.debug("Ignoring non senml reading")
+        return
+    end
 
-    if not cache[devid] then
-	cache[devid] = {
-		sumamps = {0,0,0},
-		countamps = {0,0,0},
-		maxamps = {0,0,0},
-		maxamps_tsms = {0,0,0},
-	}
+    if not payload.senml or not payload.senml.e then
+        -- means checks above are busted!
+        ugly.warning("generic, but not senml, no e, no error on topic: %s, msg: %s", topic, jpayload)
     end
-    cache[devid].ts = payload.timestamp_ms
-    cache[devid].kwh = payload.cumulative_wh/1000
-    cache[devid].kvarh = payload.cumulative_varh/1000
-    for i = 1,3 do
-	cache[devid].sumamps[i] = cache[devid].sumamps[i] + payload.phases[i].current
-	cache[devid].countamps[i] = cache[devid].countamps[i]+1
-	if payload.phases[i].current > cache[devid].maxamps[i] then
-		cache[devid].maxamps[i] = payload.phases[i].current
-		cache[devid].maxamps_tsms[i] = payload.timestamp_ms
-	end
+
+    -- iterate the senml, creating "cache keys" as appropriate
+    for _,e in ipairs(payload.senml.e) do
+        -- save only what we're interested in, ignore the rest.
+		local chunks = pl.stringx.split(e.n, "/")
+        local n = chunks[1]
+        local idx = chunks[2]
+        -- TODO - skip non-numeric indices!
+        if not idx and (n == "cumulative_wh" or n == "cumulative_varh" or n == "frequency") then
+            idx = 1
+        end
+        if idx then
+            -- current, summable kwhs,  etc
+            if n == "cumulative_wh" or n == "wn_in" then
+                local key = string.format("%s-%d-%s", devid, idx, "cumulative_kwh")
+                cache[key] = e.v / 1000
+            end
+            if n == "cumulative_varh" or n == "varh_in" then
+                local key = string.format("%s-%d-%s", devid, idx, "cumulative_kvarh")
+                cache[key] = e.v / 1000
+            end
+            if n == "frequency" then
+                local key = string.format("%s-%s", devid, "frequency")
+                cache[key] = e.v
+            end
+            if n == "current" then
+                local key_max = string.format("%s-%d-%s", devid, idx, "currentmax")
+                local key_sum = string.format("%s-%d-%s", devid, idx, "currentsum")
+                local key_count = string.format("%s-%d-%s", devid, idx, "currentcount")
+                if cache[key_max] then
+                    if e.v > cache[key_max] then cache[key_max] = e.v end
+                else
+                    cache[key_max] = e.v
+                end
+                if not cache[key_count] then cache[key_count] = 0 end
+                cache[key_count] = cache[key_count] + 1
+                if not cache[key_sum] then cache[key_sum] = 0 end
+                cache[key_sum] = cache[key_sum] + e.v
+            end
+        end
     end
-		
-    --cache.volts = payload.phases[1].voltage
-    --cache.amps = payload.phases[1].current
-    --cache.pf = payload.phases[1].pf
-    --cache.kwh = payload.cumulative_wh / 1000
+
 end
 
 mqtt.ON_MESSAGE = function(mid, topic, jpayload, qos, retain)
-	local ok, err = pcall(handle_message, mid, topic, jpayload, qos, retain)
-	if not ok then
-		ugly.crit("Exception in message handler! %s", tostring(err))
-	end
+    if mosq.topic_matches_sub(cfg.TOPIC_LISTEN_DATA, topic) then
+        local ok, err = pcall(handle_message_data, mid, topic, jpayload, qos, retain)
+        if not ok then
+            ugly.crit("Exception in message handler! %s", tostring(err))
+        end
+    end
+    if mosq.topic_matches_sub(cfg.TOPIC_LISTEN_CABINET, topic) then
+        local ok, err = pcall(handle_message_cabinet, mid, topic, jpayload, qos, retain)
+        if not ok then ugly.crit("Exception in cabinet handler: %s", tostring(err)) end
+    end
 end
 
 mqtt:connect(args.host, 1883, 60)
@@ -141,8 +235,8 @@ local function httppost(data, raws)
 	local reqbody = data
 	if not raws then reqbody = json.encode(data) end
 	ugly.debug("posting now: %s", reqbody)
-	url = string.format(cfg.TEMPLATE_POST_URL, args.id)
-       	headers = {
+	local url = string.format(cfg.TEMPLATE_POST_URL, args.id)
+	local headers = {
 		["x-dexcell-source-token"] = args.key,
 		["Content-Type"] = "application/json;charset=utf-8",
 		["content-length"] = #reqbody,
@@ -161,9 +255,7 @@ local function httppost(data, raws)
 	if args.capath then http_req.capath = args.capath end
 	local r,c,h = https.request(http_req)
 	local real_resp = table.concat(respbody)
-	--print("real resp = ", real_resp)
-	--print("code = ", c)
-	--print("headers = ", pl.pretty.write(h))
+	ugly.debug("Response: %s %s %s", tostring(r), tostring(c), tostring(real_resp))
 	return real_resp, c, h
 
 end
@@ -175,61 +267,133 @@ local function is_interval(ts, intmin)
 end
 
 
-local function process_cache(cache)
-	if pl.tablex.size(cache) == 0 then
-		ugly.debug("Skipping post, no data in cache")
-		return
-	end
-	local nowts = Pt.time()
-	if not is_interval(nowts, cfg.POST_INTERVAL_MINUTES) then
-		return
-	end
-	if nowts - cfg.last_send < 2 * 60 then
-		ugly.warning("15minute interval less than 2 minutes since last post?!")
-		return
-	end
-
+local function process_cache(nowts, cache)
 	local data = {}
+    ugly.debug("dumping cabinet model prior to processing: %s", pl.pretty.write(cabinet_model))
+    ugly.debug("dumping keys/values in cache")
+    for k,v in pairs(cache) do
+        print(k,v)
+	end
 	-- dexma wants usage from 08:00 to 08:15 to report at 08:00
 	local ts = Pt.strftime('%Y-%m-%dT%H:%M:00Z', Pt.gmtime(nowts - cfg.POST_INTERVAL_MINUTES*60))
-	for i,v in pairs(cache) do
-		local entry = {
-			did = i,
-			sqn = cfg.sqn,
-			ts = ts,
-			values = {
-				{p=402, v=v.kwh},
-				{p=404, v=v.kvarh},
-			},
-		}
-		table.insert(data, entry)
-		ugly.debug("time now: %s, posting as time %s", Pt.gmtime(nowts), entry.ts)
-		-- current readings have to go as another device?!
-		for k=1,3 do
-			local ph = {
-				did = string.format("%s-%d", i, k),
-				sqn = cfg.sqn,
-				ts = ts,
-				values = {
-					{p=425, v=v.maxamps[k]},
-					{p=426, v=v.sumamps[k]/v.countamps[k]},
-				},
-			}
-			table.insert(data, ph)
-		end
+	-- yes, we _only_ send values to dexma if they are in the cabinet model
+    for _,dev in pairs(cabinet_model) do
+        for _,branch in pairs(dev) do
+            -- make a dexma entry for each _branch_ in cabinet model
+            local entry = {
+                did = string.format("%s-%s", branch.cabinet, branch.label),
+                sqn = cfg.sqn,
+                ts = ts,
+                values = {},
+            }
+            ugly.debug("scanning cache for 'branch': %s", entry.did)
+            -- go and sum any kwh/kvarh values we found for this _branch_
+            -- This sum by point will work for wh from each channel on power bar,
+            -- but needs to handle getting just the top level one too!
+            -- we can handle that at data insert time by just inserting it for point 1?
+            local kwh, kvarh
+            for _,point in pairs(branch.points) do
+                -- +1 is because cabinet readings are zero based, but all senml is 1 based
+                local key_kwh = string.format("%s-%d-%s", point.deviceid, point.reading + 1, "cumulative_kwh")
+                local key_kvarh = string.format("%s-%d-%s", point.deviceid, point.reading + 1, "cumulative_kvarh")
+                if cache[key_kwh] then
+                    ugly.debug("including kwh from key: %s", key_kwh)
+                    if not kwh then kwh = 0 end
+                    kwh = kwh + cache[key_kwh]
+                end
+                if cache[key_kvarh] then
+                    ugly.debug("including kvarh from key: %s", key_kvarh)
+                    if not kvarh then kvarh = 0 end
+                    kvarh = kvarh + cache[key_kvarh]
+                end
+            end
+            if kwh then table.insert(entry.values, {p=402, v=kwh}) end
+            if kvarh then table.insert(entry.values, {p=404, v=kvarh}) end
+
+            -- fixme what is the key for freq again? there's no point
+            --local key_freq = string.format("%s-%s", point.deviceid, "frequency")
+            --if cache[key_freq] then
+            --    table.insert(entry.values, {p=414, v=cache[key_freq]})
+            --    ugly.debug("inserted freq")
+            --end
+
+            -- ok, end of "top level" values
+            if #entry.values > 0 then
+                ugly.debug("had branch level data, adding to group package")
+                table.insert(data, entry)
+            end
+
+            -- Any variable that is per point within a branch
+            for i,point in ipairs(branch.points) do
+                -- need new DIDs for this in dexma land.
+                local entry = {
+					-- i is the number within the (multipoint) breaker, more useful than breakernumber
+                    did = string.format("%s-%s-%d", branch.cabinet, branch.label, i),
+                    sqn = cfg.sqn,
+                    ts = ts,
+                    values = {},
+                }
+                ugly.debug("scanning for per point data on %s", entry.did)
+                local key_max = string.format("%s-%d-%s", point.deviceid, point.reading + 1, "currentmax")
+                if cache[key_max] then
+                    ugly.debug("adding current-max from key: %s", key_max)
+                    table.insert(entry.values, {p=425, v=cache[key_max]})
+                end
+                -- working out "average" current like is only valid if we received _all_ readings at equal timings
+                local key_sum = string.format("%s-%d-%s", point.deviceid, point.reading + 1, "currentsum")
+                local key_count = string.format("%s-%d-%s", point.deviceid, point.reading + 1, "currentcount")
+                if cache[key_sum] and cache[key_count] then
+                    ugly.debug("adding current-average from keys: %s/%s", key_sum, key_count)
+                    table.insert(entry.values, {p=426, v=cache[key_sum] / cache[key_count]})
+                end
+
+                -- if we got anything from a "sub point" then add it in
+                if #entry.values > 0 then
+                    ugly.debug("had sub point level data, adding to group package")
+                    table.insert(data, entry)
+                end
+            end
+        end
 	end
+
+	-- TODO temperature sensors have no branch, but have a cabinet
+	-- if desired, we could publish temperature via a new entry there.
+	return data
+
+end
+
+
+local function validate_cache(nowts, cache)
+	if pl.tablex.size(cache) == 0 then
+		ugly.debug("Skipping post, no data in cache")
+		return false
+	end
+	if not is_interval(nowts, cfg.POST_INTERVAL_MINUTES) then
+		return false
+	end
+	if nowts - cfg.last_send < 2 * 60 then
+		ugly.warning("Less than 2 minutes since last post?!")
+		return false
+	end
+	return true
+end
+
+local function process()
+	local nowts = Pt.time()
+	if not validate_cache(nowts, cache) then return end
+	local data = process_cache(nowts, cache)
 	-- clear the cache out, we've posted it now
 	cache = {}
 	cfg.last_send = nowts
 	cfg.sqn = cfg.sqn + 1
 	
 	local r,c,h = httppost(data)
-	ugly.notice("Data insertion returned: %d", c)
+	ugly.notice("Data insertion returned: %s", tostring(c))
 end
 
 while true do
 	-- Check on things every 45 secs (will always make sure we hit within each 15minute window)
 	Puni.sleep(45)
-	process_cache(cache)
+	process()
 end
 

@@ -1,0 +1,8 @@
+{
+"commentary": "em mains, 3xsingle phase (very uncommon really)",
+"branches":[
+{"ampsize":"80","label":"91/1","points":[{"phase":1,"reading":0,"deviceid":"CAFEBABE0020"}]},
+{"ampsize":"80","label":"91/2","points":[{"phase":2,"reading":1,"deviceid":"CAFEBABE0020"}]},
+{"ampsize":"80","label":"91/3","points":[{"phase":3,"reading":2,"deviceid":"CAFEBABE0020"}]}
+],
+"cabinet":"Q29","version":0.2,"type":"profile"}

@@ -1,0 +1,10 @@
+{
+"commentary": "em mains, 3 phase",
+"branches":[
+    {"ampsize":"200","label":"triple","points":[
+	{"phase":1,"reading":0,"deviceid":"CAFEBABE002A"},
+	{"phase":2,"reading":1,"deviceid":"CAFEBABE002A"},
+	{"phase":3,"reading":2,"deviceid":"CAFEBABE002A"}
+    ]}
+],
+"cabinet":"Q29","version":0.2,"type":"profile"}
