@@ -61,18 +61,18 @@ local cabinet_model = {}
 ugly.initialize(cfg.APP_NAME, args.verbose or 4)
 
 if args.key_is_file then
-	ugly.debug("looking at file... %s", args.key)
-	if pl.path.isfile(args.key) then
-		args.key = pl.stringx.strip(pl.file.read(args.key))
-	else
-		pl.utils.quit(1, "key file specified does not exist: %s", args.key)
-	end
+    ugly.debug("looking at file... %s", args.key)
+    if pl.path.isfile(args.key) then
+        args.key = pl.stringx.strip(pl.file.read(args.key))
+    else
+        pl.utils.quit(1, "key file specified does not exist: %s", args.key)
+    end
 else
-	ugly.debug("looking at envvar... %s", args.key)
-	args.key = os.getenv(args.key)
+    ugly.debug("looking at envvar... %s", args.key)
+    args.key = os.getenv(args.key)
 end
 if not args.key then
-	pl.utils.quit(1, "key must be provided by either environment or file")
+    pl.utils.quit(1, "key must be provided by either environment or file")
 end
 ugly.debug("Operating with private key: <%s>", args.key)
 
@@ -80,48 +80,48 @@ mosq.init()
 local mqtt = mosq.new(cfg.MOSQ_CLIENT_ID, true)
 
 mqtt.ON_CONNECT = function(success, rc, str)
-	if not success then
-		ugly.crit("Failed to connect to MQTT broker: %s, %d: %s", args.host, rc, str)
-		os.exit(1)
-	end
-	if not mqtt:subscribe(cfg.TOPIC_LISTEN_DATA, 0) then
-		ugly.crit("Aborting, MQTT Subscribe failed: to %s:%s.", args.host, cfg.TOPIC_LISTEN_DATA)
-		os.exit(1)
-	end
-	if not mqtt:subscribe(cfg.TOPIC_LISTEN_CABINET, 0) then
-		ugly.crit("Aborting, MQTT Subscribe failed: to %s:%s.", args.host, cfg.TOPIC_LISTEN_DATA)
-		os.exit(1)
-	end
-	ugly.notice("Successfully connected and listening for data")
+    if not success then
+        ugly.crit("Failed to connect to MQTT broker: %s, %d: %s", args.host, rc, str)
+        os.exit(1)
+    end
+    if not mqtt:subscribe(cfg.TOPIC_LISTEN_DATA, 0) then
+        ugly.crit("Aborting, MQTT Subscribe failed: to %s:%s.", args.host, cfg.TOPIC_LISTEN_DATA)
+        os.exit(1)
+    end
+    if not mqtt:subscribe(cfg.TOPIC_LISTEN_CABINET, 0) then
+        ugly.crit("Aborting, MQTT Subscribe failed: to %s:%s.", args.host, cfg.TOPIC_LISTEN_DATA)
+        os.exit(1)
+    end
+    ugly.notice("Successfully connected and listening for data")
     cfg.time_start = Pt.time()
 end
 
 --- Create/update our cache of the cabinet model.
 --- we use this data to group breakers/channels and provide "meaningful" names up to dexma
 local function handle_message_cabinet(mid, topic, jpayload, qos, retain)
-	ugly.debug("processing cabinet data from topic: %s", topic)
-	local payload, err = json.decode(jpayload)
-	if not payload then
-		ugly.warning("Invalid json in message on topic: %s, %s", topic, err)
-		ugly.debug("Raw message=<%s>", jpayload)
-		return
-	end
+    ugly.debug("processing cabinet data from topic: %s", topic)
+    local payload, err = json.decode(jpayload)
+    if not payload then
+        ugly.warning("Invalid json in message on topic: %s, %s", topic, err)
+        ugly.debug("Raw message=<%s>", jpayload)
+        return
+    end
 
-	local cabinet = payload.cabinet
-	if not cabinet then
-		ugly.warning("No cabinet in cabinet model, ignoring on topic: %s", topic)
-		return
-	end
-	local devid = pl.stringx.split(topic, "/")[5]
-	if not devid then
-		ugly.warning("No deviceid in topic?! can't assign to cabinet model")
-		return
-	end
+    local cabinet = payload.cabinet
+    if not cabinet then
+        ugly.warning("No cabinet in cabinet model, ignoring on topic: %s", topic)
+        return
+    end
+    local devid = pl.stringx.split(topic, "/")[5]
+    if not devid then
+        ugly.warning("No deviceid in topic?! can't assign to cabinet model")
+        return
+    end
 
-	-- if there is an existing cabinet model for this device, just _replace_ it wholesale.
-	cabinet_model[devid] = {}
+    -- if there is an existing cabinet model for this device, just _replace_ it wholesale.
+    cabinet_model[devid] = {}
     -- just keep the original branches, with a cabinet pointer on each one
-    for _,b in pairs(payload.branches) do
+    for _, b in pairs(payload.branches) do
         b.cabinet = cabinet
         table.insert(cabinet_model[devid], b)
     end
@@ -140,9 +140,9 @@ local function handle_message_data(mid, topic, jpayload, qos, retain)
     end
     local chunks = pl.stringx.split(topic, "/")
     if #chunks < 5 then
-		ugly.debug("Ignoring invalid/unprobed device on topic: %s", topic)
-		return
-	end
+        ugly.debug("Ignoring invalid/unprobed device on topic: %s", topic)
+        return
+    end
     local devid = chunks[5]
     local payload, err = json.decode(jpayload)
     if not payload then
@@ -169,9 +169,9 @@ local function handle_message_data(mid, topic, jpayload, qos, retain)
     end
 
     -- iterate the senml, creating "cache keys" as appropriate
-    for _,e in ipairs(payload.senml.e) do
+    for _, e in ipairs(payload.senml.e) do
         -- save only what we're interested in, ignore the rest.
-		local chunks = pl.stringx.split(e.n, "/")
+        local chunks = pl.stringx.split(e.n, "/")
         local n = chunks[1]
         local idx = chunks[2]
         -- TODO - skip non-numeric indices!
@@ -208,7 +208,6 @@ local function handle_message_data(mid, topic, jpayload, qos, retain)
             end
         end
     end
-
 end
 
 mqtt.ON_MESSAGE = function(mid, topic, jpayload, qos, retain)
@@ -228,57 +227,56 @@ mqtt:connect(args.host, 1883, 60)
 mqtt:loop_start()
 
 ---
---data table to be json encoded and posted
---raws set to true if data is already encoded properly
+-- data table to be json encoded and posted
+-- raws set to true if data is already encoded properly
 local function httppost(data, raws)
-	local respbody = {}
-	local reqbody = data
-	if not raws then reqbody = json.encode(data) end
-	ugly.debug("posting now: %s", reqbody)
-	local url = string.format(cfg.TEMPLATE_POST_URL, args.id)
-	local headers = {
-		["x-dexcell-source-token"] = args.key,
-		["Content-Type"] = "application/json;charset=utf-8",
-		["content-length"] = #reqbody,
-	}
-	local http_req = {
-        	method = "POST",
-		url = url,
-        	source = ltn12.source.string(reqbody),
-        	headers = headers,
-        	sink = ltn12.sink.table(respbody),
-		-- got these from prosody, look reasonable
-		verify = { "peer", "client_once" },
-		options = { "no_sslv2", "no_sslv3", "no_ticket", "no_compression", "cipher_server_preference", "single_dh_use", "single_ecdh_use" },
-	}
-	if args.cafile then http_req.cafile = args.cafile end
-	if args.capath then http_req.capath = args.capath end
-	local r,c,h = https.request(http_req)
-	local real_resp = table.concat(respbody)
-	ugly.debug("Response: %s %s %s", tostring(r), tostring(c), tostring(real_resp))
-	return real_resp, c, h
-
+    local respbody = {}
+    local reqbody = data
+    if not raws then reqbody = json.encode(data) end
+    ugly.debug("posting now: %s", reqbody)
+    local url = string.format(cfg.TEMPLATE_POST_URL, args.id)
+    local headers = {
+        ["x-dexcell-source-token"] = args.key,
+        ["Content-Type"] = "application/json;charset=utf-8",
+        ["content-length"] = #reqbody,
+    }
+    local http_req = {
+        method = "POST",
+        url = url,
+        source = ltn12.source.string(reqbody),
+        headers = headers,
+        sink = ltn12.sink.table(respbody),
+        -- got these from prosody, look reasonable
+        verify = { "peer", "client_once" },
+        options = { "no_sslv2", "no_sslv3", "no_ticket", "no_compression", "cipher_server_preference", "single_dh_use", "single_ecdh_use" },
+    }
+    if args.cafile then http_req.cafile = args.cafile end
+    if args.capath then http_req.capath = args.capath end
+    local r, c, h = https.request(http_req)
+    local real_resp = table.concat(respbody)
+    ugly.debug("Response: %s %s %s", tostring(r), tostring(c), tostring(real_resp))
+    return real_resp, c, h
 end
 
 ---
 -- return true if the ts is an "even" multiple of the intmin minutes.
 local function is_interval(ts, intmin)
-	return Pt.gmtime(ts).tm_min % intmin == 0
+    return Pt.gmtime(ts).tm_min % intmin == 0
 end
 
 
 local function process_cache(nowts, cache)
-	local data = {}
+    local data = {}
     ugly.debug("dumping cabinet model prior to processing: %s", pl.pretty.write(cabinet_model))
     ugly.debug("dumping keys/values in cache")
-    for k,v in pairs(cache) do
-        print(k,v)
-	end
-	-- dexma wants usage from 08:00 to 08:15 to report at 08:00
-	local ts = Pt.strftime('%Y-%m-%dT%H:%M:00Z', Pt.gmtime(nowts - cfg.POST_INTERVAL_MINUTES*60))
-	-- yes, we _only_ send values to dexma if they are in the cabinet model
-    for _,dev in pairs(cabinet_model) do
-        for _,branch in pairs(dev) do
+    for k, v in pairs(cache) do
+        print(k, v)
+    end
+    -- dexma wants usage from 08:00 to 08:15 to report at 08:00
+    local ts = Pt.strftime('%Y-%m-%dT%H:%M:00Z', Pt.gmtime(nowts - cfg.POST_INTERVAL_MINUTES * 60))
+    -- yes, we _only_ send values to dexma if they are in the cabinet model
+    for _, dev in pairs(cabinet_model) do
+        for _, branch in pairs(dev) do
             -- make a dexma entry for each _branch_ in cabinet model
             local entry = {
                 did = string.format("%s-%s", branch.cabinet, branch.label),
@@ -292,7 +290,7 @@ local function process_cache(nowts, cache)
             -- but needs to handle getting just the top level one too!
             -- we can handle that at data insert time by just inserting it for point 1?
             local kwh, kvarh
-            for _,point in pairs(branch.points) do
+            for _, point in pairs(branch.points) do
                 -- +1 is because cabinet readings are zero based, but all senml is 1 based
                 local key_kwh = string.format("%s-%d-%s", point.deviceid, point.reading + 1, "cumulative_kwh")
                 local key_kvarh = string.format("%s-%d-%s", point.deviceid, point.reading + 1, "cumulative_kvarh")
@@ -307,8 +305,8 @@ local function process_cache(nowts, cache)
                     kvarh = kvarh + cache[key_kvarh]
                 end
             end
-            if kwh then table.insert(entry.values, {p=402, v=kwh}) end
-            if kvarh then table.insert(entry.values, {p=404, v=kvarh}) end
+            if kwh then table.insert(entry.values, { p = 402, v = kwh }) end
+            if kvarh then table.insert(entry.values, { p = 404, v = kvarh }) end
 
             -- fixme what is the key for freq again? there's no point
             --local key_freq = string.format("%s-%s", point.deviceid, "frequency")
@@ -324,10 +322,10 @@ local function process_cache(nowts, cache)
             end
 
             -- Any variable that is per point within a branch
-            for i,point in ipairs(branch.points) do
+            for i, point in ipairs(branch.points) do
                 -- need new DIDs for this in dexma land.
                 local entry = {
-					-- i is the number within the (multipoint) breaker, more useful than breakernumber
+                    -- i is the number within the (multipoint) breaker, more useful than breakernumber
                     did = string.format("%s-%s-%d", branch.cabinet, branch.label, i),
                     sqn = cfg.sqn,
                     ts = ts,
@@ -337,14 +335,14 @@ local function process_cache(nowts, cache)
                 local key_max = string.format("%s-%d-%s", point.deviceid, point.reading + 1, "currentmax")
                 if cache[key_max] then
                     ugly.debug("adding current-max from key: %s", key_max)
-                    table.insert(entry.values, {p=425, v=cache[key_max]})
+                    table.insert(entry.values, { p = 425, v = cache[key_max] })
                 end
                 -- working out "average" current like is only valid if we received _all_ readings at equal timings
                 local key_sum = string.format("%s-%d-%s", point.deviceid, point.reading + 1, "currentsum")
                 local key_count = string.format("%s-%d-%s", point.deviceid, point.reading + 1, "currentcount")
                 if cache[key_sum] and cache[key_count] then
                     ugly.debug("adding current-average from keys: %s/%s", key_sum, key_count)
-                    table.insert(entry.values, {p=426, v=cache[key_sum] / cache[key_count]})
+                    table.insert(entry.values, { p = 426, v = cache[key_sum] / cache[key_count] })
                 end
 
                 -- if we got anything from a "sub point" then add it in
@@ -354,46 +352,45 @@ local function process_cache(nowts, cache)
                 end
             end
         end
-	end
+    end
 
-	-- TODO temperature sensors have no branch, but have a cabinet
-	-- if desired, we could publish temperature via a new entry there.
-	return data
-
+    -- TODO temperature sensors have no branch, but have a cabinet
+    -- if desired, we could publish temperature via a new entry there.
+    return data
 end
 
 
 local function validate_cache(nowts, cache)
-	if pl.tablex.size(cache) == 0 then
-		ugly.debug("Skipping post, no data in cache")
-		return false
-	end
-	if not is_interval(nowts, cfg.POST_INTERVAL_MINUTES) then
-		return false
-	end
-	if nowts - cfg.last_send < 2 * 60 then
-		ugly.warning("Less than 2 minutes since last post?!")
-		return false
-	end
-	return true
+    if pl.tablex.size(cache) == 0 then
+        ugly.debug("Skipping post, no data in cache")
+        return false
+    end
+    if not is_interval(nowts, cfg.POST_INTERVAL_MINUTES) then
+        return false
+    end
+    if nowts - cfg.last_send < 2 * 60 then
+        ugly.warning("Less than 2 minutes since last post?!")
+        return false
+    end
+    return true
 end
 
 local function process()
-	local nowts = Pt.time()
-	if not validate_cache(nowts, cache) then return end
-	local data = process_cache(nowts, cache)
-	-- clear the cache out, we've posted it now
-	cache = {}
-	cfg.last_send = nowts
-	cfg.sqn = cfg.sqn + 1
-	
-	local r,c,h = httppost(data)
-	ugly.notice("Data insertion returned: %s", tostring(c))
+    local nowts = Pt.time()
+    if not validate_cache(nowts, cache) then return end
+    local data = process_cache(nowts, cache)
+    -- clear the cache out, we've posted it now
+    cache = {}
+    cfg.last_send = nowts
+    cfg.sqn = cfg.sqn + 1
+
+    local r, c, h = httppost(data)
+    ugly.notice("Data insertion returned: %s", tostring(c))
 end
 
 while true do
-	-- Check on things every 45 secs (will always make sure we hit within each 15minute window)
-	Puni.sleep(45)
-	process()
+    -- Check on things every 45 secs (will always make sure we hit within each 15minute window)
+    Puni.sleep(45)
+    process()
 end
 
