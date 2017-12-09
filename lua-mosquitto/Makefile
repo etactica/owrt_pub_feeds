@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-mosquitto
-PKG_VERSION:=0.2
+PKG_VERSION:=0.3
 PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_MIRROR_HASH:=104a143131812a507e74f9debde45614d006b6ea6c3b0265b83060b14b9d3a34
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/flukso/lua-mosquitto.git
@@ -21,22 +22,22 @@ PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/$(PKG_NAME)
+define Package/lua-mosquitto
     SUBMENU:=Lua
     SECTION:=lang
     CATEGORY:=Languages
     TITLE:=Lua-mosquitto
-    DEPENDS:=libmosquitto +lua
-    MAINTAINER:=Karl Palsson <karlp@remake.is>
+    DEPENDS:=+libmosquitto +lua
+    MAINTAINER:=Karl Palsson <karlp@etactica.com>
 endef
 
-define Package/$(PKG_NAME)/description
+define Package/lua-mosquitto/description
 	Lua bindings to libmosquitto
 endef
 
-define Package/$(PKG_NAME)/install
+define Package/lua-mosquitto/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/mosquitto.so $(1)/usr/lib/lua
 endef
 
-$(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call BuildPackage,lua-mosquitto))
