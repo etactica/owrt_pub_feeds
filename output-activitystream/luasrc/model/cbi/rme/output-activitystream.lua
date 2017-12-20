@@ -5,10 +5,23 @@
 --]]
 
 m = Map("output-activitystream", "Message Output Daemon - Activity Stream",
-  [[This contains some basic configuration for configuring the MQTT bridge of
-the live data stream to Activity Stream
-  <b>FIXME - insert links and text</b>
- ]])
+    [[This service handles bridging eTactica live stream data, and posting it to your Activity Stream account.
+    <h4>Before you start</h4>
+    You should <em>already</em> have an Activity Stream account.
+    <h4>More information</H4>
+    <p/>
+    From their website:
+    <blockquote>
+    OPTIMIZE YOUR BUSINESS<br>
+    Improve all aspects of operations and services with Artificial Intelligence
+    </blockquote>
+    <p/>
+    <a href="http://www.activitystream.com/">
+        <img src="/resources/images/activitystream.png" height="31" style="vertical-align: middle" alt="Activity Stream logo"/><br>
+        Visit their site for more information
+    </a>
+    </p>
+    ]])
 
 s = m:section(TypedSection, "general", "Configuration")
 s.anonymous = true
