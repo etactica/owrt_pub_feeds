@@ -42,7 +42,7 @@ add_instance() {
 	config_get routing_key "$cfg" routing_key
 	config_get username "$cfg" username
 	config_get password "$cfg" password
-	config_get address "$cfg" address "mq.activitystream:8883"
+	config_get address "$cfg" address "mq.activitystream.com:8883"
 	# We always remove it, and re-add it if needed.
 	config_load mosquitto && config_foreach remove_output bridge
 	if [ $enabled -eq 0 ]; then
