@@ -224,7 +224,6 @@ mqtt.ON_MESSAGE = function(mid, topic, jpayload, qos, retain)
 end
 
 mqtt:connect(args.host, 1883, 60)
-mqtt:loop_start()
 
 ---
 -- data table to be json encoded and posted
@@ -369,7 +368,7 @@ local function validate_cache(nowts, cache)
         return false
     end
     if nowts - cfg.last_send < 2 * 60 then
-        ugly.warning("Less than 2 minutes since last post?!")
+        ugly.debug("Less than 2 minutes since last post, ignoring.")
         return false
     end
     return true
@@ -389,8 +388,12 @@ local function process()
 end
 
 while true do
-    -- Check on things every 45 secs (will always make sure we hit within each 15minute window)
-    Puni.sleep(45)
     process()
+    local rc, code, err = mqtt:loop()
+    if not rc then
+        -- procd can restart us
+        ugly.warning("mqtt loop failed, exiting: %d %s", code, err)
+        os.exit(1)
+    end
 end
 
