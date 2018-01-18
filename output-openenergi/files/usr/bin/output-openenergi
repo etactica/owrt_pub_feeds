@@ -1,0 +1,278 @@
+#!/usr/bin/lua
+--[[
+    Karl Palsson, 2018 <karlp@etactica.com>
+    This is an "output" daemon for Open Energi.
+]]
+
+local json = require("cjson.safe")
+local mosq = require("mosquitto")
+local ugly = require("remake.uglylog")
+
+local Puni = require("posix.unistd")
+local Pt = require("posix.time")
+local pl = require("pl.import_into")()
+
+
+local args = pl.lapp [[
+  Output power consumption data to Open Energi
+    -H,--host (default "localhost") MQTT host to use
+    -v,--verbose (0..7 default 5) Logging level, higher == more
+]]
+
+local cfg = {
+	APP_NAME = "output-openenergi",
+	MOSQ_CLIENT_ID = string.format("output-openenergi-%d", Puni.getpid()),
+	TOPIC_LISTEN_DATA = "status/local/json/device/#",
+	TOPIC_PUBLISH = "ext/openenergi/out/ooe",
+	PROCESS_INTERVAL = 1,
+	max_send_interval = 15 * 60 * 1000,
+	DEFAULTS = {
+		delta_percent = 0.01, -- ie 1%
+		delta_absolute = 10, -- in Watts
+	}
+}
+
+--- cache of live data, updated by live readings.
+local cache = {}
+
+
+CACHE_ENTRY = {}
+CACHE_ENTRY.__index = CACHE_ENTRY
+function CACHE_ENTRY.create(key, opts)
+	local i = { }
+	setmetatable(i, CACHE_ENTRY)
+	i.key = key
+	if not opts then opts = {} end
+	i.opts = pl.tablex.update(cfg.DEFAULTS, opts)
+	return i
+end
+
+function CACHE_ENTRY:update(ts, v)
+	self.last_ts = ts
+	self.last_v = v
+end
+
+function CACHE_ENTRY:changed()
+	local old = self.last_v_sent
+	local new = self.last_v
+	if not old then return true end
+	local change = (new - old)/math.abs(old)
+	--print("Considering old/new as change:", old, new, change)
+	if math.abs(change) >= self.opts.delta_percent then return true end
+	if math.abs(old-new) >= self.opts.delta_absolute then return true end
+	return false
+end
+
+function CACHE_ENTRY:old()
+	if not self.last_ts_sent then return true end
+	local delta = self.last_ts - self.last_ts_sent
+	if delta > cfg.max_send_interval then return true end
+	return false
+end
+
+function CACHE_ENTRY:__tostring()
+	if self.last_ts_sent and self.last_v_sent then
+		return string.format("CE<%s @ %s => %f [%s=>%f]>", self.key, self.last_ts, self.last_v, self.last_ts_sent, self.last_v_sent)
+	else
+		return string.format("CE<%s @ %s => %f [neversent]>", self.key, self.last_ts, self.last_v)
+	end
+end
+
+
+ugly.initialize(cfg.APP_NAME, args.verbose or 4)
+
+mosq.init()
+local mqtt = mosq.new(cfg.MOSQ_CLIENT_ID, true)
+
+mqtt.ON_CONNECT = function(success, rc, str)
+	if not success then
+		ugly.crit("Failed to connect to MQTT broker: %s, %d: %s", args.host, rc, str)
+		os.exit(1)
+	end
+	if not mqtt:subscribe(cfg.TOPIC_LISTEN_DATA, 0) then
+		ugly.crit("Aborting, MQTT Subscribe failed: to %s:%s.", args.host, cfg.TOPIC_LISTEN_DATA)
+		os.exit(1)
+	end
+	ugly.notice("Successfully connected and listening for data")
+	cfg.last_ts_process = Pt.time()
+end
+
+--- Look up the openenergi entity id mapping
+local function find_entity_id(key)
+	-- FIXME do the real implementation eventually!
+	return "EID_" .. key
+end
+
+local function update_cache(idx, ts, power)
+	-- like mq delta gadget, keep last sent ts, last sent val, and last ts, last val
+	if not cache[idx] then cache[idx] = CACHE_ENTRY.create(idx) end
+	local ce = cache[idx]
+	ce:update(ts, power)
+	ugly.debug("updating cache: %s", tostring(ce))
+end
+
+local function process_cache()
+	local rv = {}
+	for k,v in pairs(cache) do
+		if v:old() or v:changed() then
+			ugly.info("Will publish as old or changed: %s", tostring(v))
+			v.last_ts_sent = v.last_ts
+			v.last_v_sent = v.last_v
+			table.insert(rv, v)
+		end
+	end
+
+	--- Round to one decimal place.
+	local function round(num)
+		local mult = 10^1
+		return math.floor(num * mult + 0.5) / mult
+	end
+
+	-- Convert points that changed into entity readings for OE
+	local entities = {}
+	for k,v in pairs(rv) do
+		local eid = find_entity_id(v.key)
+		table.insert(entities, {
+			topic = "readings",
+			entity = eid,
+			type = "active-power",
+			timestamp = v.last_ts,
+			value = round(v.last_v / 1000), -- kW.
+		})
+	end
+	if #entities > 0 then return entities end
+	return nil, "No changed readings this time"
+end
+
+--- Common code for validating senml entry list
+local function validate_entries(eee, bt)
+	local rval = true
+	for k,e in pairs(eee) do
+		if type(e) ~= "table" then rval = false; break end
+
+		if not e.v then rval = false; break end
+		if type(e.v) ~= "number" then rval = false; break end
+
+		if not e.n then rval = false; break end
+		if type(e.n) ~= "string" then rval = false; break end
+
+		if e.u and type(e.u) ~= "string" then rval = false; break end
+
+		if e.t and type(e.t) ~= "number" then rval = false; break end
+		if not e.t and not bt then rval = false; break; end
+		-- safe to modify here, it wasn't provided, so it will have no affect
+		if not e.t then e.t = 0 end
+	end
+	return rval
+end
+
+--- Common code for validating senml metadata
+-- will modify meta if necessary!
+local function validate_meta(eee)
+	if eee.bn and type(eee.bn) ~= "string" then return false end
+	-- safe to modify, not required, but need string concat to work
+	if not eee.bn then eee.bn = "" end
+
+	if eee.bt and type(eee.bt) ~= "number" then return false end
+	return true
+end
+
+--- Process newly arrived data messages.
+-- Needs to validate the data message, then actually handle it.
+local function handle_message_data(mid, topic, jpayload, qos, retain)
+	local chunks = pl.stringx.split(topic, "/")
+	if #chunks < 5 then
+		ugly.debug("Ignoring invalid/unprobed device on topic: %s", topic)
+		return
+	end
+	local payload, err = json.decode(jpayload)
+	if not payload then
+		ugly.warning("Invalid json in message on topic: %s, %s", topic, err)
+		ugly.debug("Raw message=<%s>", jpayload)
+		return
+	end
+	if not payload.hwc then
+		ugly.info("Ignoring unsuitable json format on topic: %s", topic);
+		return
+	end
+	if payload.hwc.error then
+		ugly.debug("Ignoring failed reading")
+		return
+	end
+	if type(payload.senml) ~= "table" then
+		ugly.warning("device data without a senml table?!")
+		return
+	end
+	if type(payload.senml.e) ~= "table" then
+		ugly.warning("device data with an empty senml.e field?!")
+		return
+	end
+	if not validate_meta(payload.senml) then
+		ugly.warning("senml metadata (bt,bn etc) was invalid?!")
+		return
+	end
+	if not validate_entries(payload.senml.e, payload.senml.bt) then
+		ugly.warning("senml entry set contained invalid entries, ignoring batch!")
+		return
+	end
+	if not payload.senml.bt then payload.senml.bt = 0 end
+
+	local this_power = {}
+
+	-- iterate the senml, looking for our v/i/pf data per index.
+	for _, e in ipairs(payload.senml.e) do
+		-- save only what we're interested in, ignore the rest.
+		local name_chunks = pl.stringx.split(e.n, "/")
+		local n = name_chunks[1]
+		local idx = name_chunks[2]
+		local fullt = payload.senml.bt + e.t
+		if idx then
+			if n == "current" or n == "volt" or n == "pf" then
+				local key = payload.senml.bn .. idx
+				if not this_power[key] then this_power[key] = {} end
+				--print("Inserting to key, n, value", key, n, e.v)
+				this_power[key][n] = e.v
+				this_power[key].ts = fullt
+			end
+		end
+	end
+
+	-- Now, convert to power and save for publishing
+	for fn,v in pairs(this_power) do
+		if v.current and v.volt and v.pf then
+			local power = v.current * v.volt * v.pf
+			update_cache(fn, v.ts, power)
+		end
+	end
+end
+
+mqtt.ON_MESSAGE = function(mid, topic, jpayload, qos, retain)
+	if mosq.topic_matches_sub(cfg.TOPIC_LISTEN_DATA, topic) then
+		local ok, err = pcall(handle_message_data, mid, topic, jpayload, qos, retain)
+		if not ok then
+			ugly.crit("Exception in message handler! %s", tostring(err))
+		end
+	end
+end
+
+mqtt:connect(args.host, 1883, 60)
+
+
+while true do
+	local rc, code, err = mqtt:loop()
+	if not rc then
+		-- let process monitoring handle this.
+		ugly.warning("mqtt loop failed, exiting: %d %s", code, err)
+		os.exit(1)
+	end
+	-- This only has second resolution, but that's ok really.
+	local now_ts = Pt.time()
+	if now_ts - cfg.last_ts_process >= cfg.PROCESS_INTERVAL then
+		local entity_readings, err = process_cache()
+		cfg.last_ts_process = now_ts
+		if entity_readings then
+			mqtt:publish(cfg.TOPIC_PUBLISH, json.encode(entity_readings), 1, false)
+			ugly.notice("Posted %d changed entity readings", #entity_readings)
+		end
+	end
+end

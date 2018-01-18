@@ -1,0 +1,6 @@
+check process output-openenergi matching '/usr/bin/lua /usr/bin/output-openenergi'
+	start program = "/etc/init.d/output-openenergi start"
+	stop program = "/etc/init.d/output-openenergi stop"
+        if totalmemory is greater than 40% for 3 cycles then restart
+        if totalcpu is greater than 40% for 3 cycles then restart
+	group output-openenergi
