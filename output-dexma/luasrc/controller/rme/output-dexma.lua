@@ -4,7 +4,7 @@
 module("luci.controller.rme.output-dexma", package.seeall)
 
 function index()
-    entry({"admin", "services", "output-dexma"}, cbi("rme/output-dexma"), "Output-Dexma")
+    entry({"admin", "services", "output-dexma"}, cbi("rme/output-dexma"), "Output-Dexma", 20)
 end
 
 

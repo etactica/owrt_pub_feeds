@@ -4,7 +4,7 @@
 module("luci.controller.rme.output-activitystream", package.seeall)
 
 function index()
-    entry({"admin", "services", "output-activitystream"}, cbi("rme/output-activitystream"), "Output-ActivityStream")
+    entry({"admin", "services", "output-activitystream"}, cbi("rme/output-activitystream"), "Output-ActivityStream", 20)
 end
 
 
