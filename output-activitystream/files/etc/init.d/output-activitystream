@@ -31,6 +31,7 @@ add_output() {
 		set mosquitto.$newcfg.remote_username="$username"
 		set mosquitto.$newcfg.remote_password="$password"
 		add_list mosquitto.$newcfg.topic="/json/device/# out 1 status/local status/$routing_key"
+		add_list mosquitto.$newcfg.topic="/json/cabinet/# out 1 status/local status/$routing_key"
 		commit
 EOF
 }
