@@ -58,8 +58,9 @@ function CACHE_ENTRY:changed()
 	if not old then return true end
 	local change = (new - old)/math.abs(old)
 	--print("Considering old/new as change:", old, new, change)
-	if math.abs(change) >= self.opts.delta_percent then return true end
-	if math.abs(old-new) >= self.opts.delta_absolute then return true end
+	local delta = math.abs(change) >= self.opts.delta_percent
+	local absol = math.abs(old-new) >= self.opts.delta_absolute
+	if delta and absol then return true end
 	return false
 end
 
