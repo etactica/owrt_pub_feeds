@@ -139,39 +139,40 @@ add_bridge() {
     append_if "$1" connection
     append_if "$1" address
 
-    config_list_foreach "$1" topic add_topic
+    append_optional_bool "$1" attempt_unsubscribe bridge_attempt_unsubscribe
+    append_if "$1" protocol_version bridge_protocol_version
     append_optional_bool "$1" cleansession cleansession
-    append_optional_bool "$1" try_private try_private
+    append_if "$1" keepalive_interval
+    append_if "$1" idle_timeout
+    append_if "$1" local_clientid
+    append_if "$1" local_password
+    append_if "$1" local_username
     append_optional_bool "$1" notifications notifications
-    append_optional_bool "$1" round_robin round_robin
-
+    append_if "$1" notification_topic
     # Note, deprecated upstream, preserve old uci configs
     append_if "$1" clientid remote_clientid
     append_if "$1" remote_clientid
-    append_if "$1" local_clientid
-    append_if "$1" notification_topic
-    append_if "$1" keepalive_interval
-    append_if "$1" start_type
-    append_if "$1" restart_timeout
-    append_if "$1" idle_timeout
-    append_if "$1" threshold
-    append_if "$1" protocol_version bridge_protocol_version
-    append_optional_bool "$1" attempt_unsubscribe bridge_attempt_unsubscribe
-    append_if "$1" identity bridge_identity
-    append_if "$1" psk bridge_psk
-    append_if "$1" tls_version bridge_tls_version
-
-    append_if "$1" restart_timeout
-    append_if "$1" capath bridge_capath
-    append_if "$1" cafile bridge_cafile
-    append_if "$1" certfile bridge_certfile
-    append_if "$1" keyfile bridge_keyfile
-    # Note, deprecated upstream, preserve old uci configs
-    append_if "$1" username remote_username
     # Note, deprecated upstream, preserve old uci configs
     append_if "$1" password remote_password
-    append_if "$1" remote_username
     append_if "$1" remote_password
+    # Note, deprecated upstream, preserve old uci configs
+    append_if "$1" username remote_username
+    append_if "$1" remote_username
+    append_if "$1" restart_timeout
+    append_optional_bool "$1" round_robin round_robin
+    append_if "$1" start_type
+    append_if "$1" threshold
+    config_list_foreach "$1" topic add_topic
+    append_optional_bool "$1" try_private try_private
+
+    append_if "$1" cafile bridge_cafile
+    append_if "$1" capath bridge_capath
+    append_if "$1" certfile bridge_certfile
+    append_if "$1" identity bridge_identity
+    append_optional_bool "$1" insecure bridge_insecure
+    append_if "$1" keyfile bridge_keyfile
+    append_if "$1" psk bridge_psk
+    append_if "$1" tls_version bridge_tls_version
 }
 
 
