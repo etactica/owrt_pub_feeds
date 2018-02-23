@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mosquitto-next
-PKG_VERSION:=1.4.60
+PKG_VERSION:=1.4.61
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
 
-PKG_REV:=d3239920d789a16cb9c54c598f4fc7d5ef03f2e9
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_REV:=ec63d7bfc7f312f17bc5ca3c876966aa5c583887
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 #PKG_SOURCE_URL:=http://github.com/remakeelectric/mosquitto.git
 PKG_SOURCE_URL:=http://github.com/eclipse/mosquitto.git
