@@ -16,7 +16,6 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/stvp/lua-statsd-client
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_REV)
-PKG_BUILD_DEPENDS:=liblua
 
 PKG_MAINTAINER:=Karl Palsson <karlp@etactica.com>
 PKG_LICENSE:=MIT/X11
@@ -31,7 +30,7 @@ define Package/$(PKG_NAME)
   CATEGORY:=Languages
   TITLE:=Lua statsd publishing client library
   URL:=https://github.com/stvp/lua-statsd-client
-  DEPENDS:=+lua +luasocket
+  DEPENDS:=+liblua +luasocket
 endef
 
 define Package/$(PKG_NAME)/description

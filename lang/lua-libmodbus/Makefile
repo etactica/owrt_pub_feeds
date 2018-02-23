@@ -18,7 +18,6 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=git@github.com:remakeelectric/lua-libmodbus
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_REV)
-PKG_BUILD_DEPENDS:=liblua
 
 PKG_MAINTAINER:=Karl Palsson <karlp@etactica.com>
 PKG_LICENSE:=MIT
@@ -33,7 +32,7 @@ define Package/$(PKG_NAME)
   CATEGORY:=Languages
   TITLE:=$(PKG_NAME)
   URL:=https://github.com/remakeelectric/lua-libmodbus
-  DEPENDS:=+lua +libmodbus
+  DEPENDS:=+liblua +libmodbus
 endef
 
 define Package/$(PKG_NAME)/description

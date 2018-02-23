@@ -18,7 +18,6 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=git@github.com:grytole/lualibusb1
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_REV)
-PKG_BUILD_DEPENDS:=liblua
 
 PKG_MAINTAINER:=Karl Palsson <karlp@etactica.com>
 PKG_LICENSE:=MIT
@@ -33,7 +32,7 @@ define Package/$(PKG_NAME)
   CATEGORY:=Languages
   TITLE:=$(PKG_NAME)
   URL:=https://github.com/grytole/lualibusb1
-  DEPENDS:=+lua +libusb-1.0
+  DEPENDS:=+liblua +libusb-1.0
 endef
 
 define Package/$(PKG_NAME)/description

@@ -16,7 +16,6 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=git@github.com:remakeelectric/lsyslog.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_REV)
-PKG_BUILD_DEPENDS:=liblua
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -29,7 +28,7 @@ define Package/$(PKG_NAME)
   CATEGORY:=Languages
   TITLE:=lsyslog
   URL:=http://luaforge.net/projects/lsyslog/
-  DEPENDS:=+lua
+  DEPENDS:=+liblua
 endef
 
 define Package/$(PKG_NAME)/description
