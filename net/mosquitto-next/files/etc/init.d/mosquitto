@@ -124,9 +124,16 @@ add_bridge() {
     config_get conn "$1" connection
     config_get addr "$1" address
     if [ -z "$conn" -o -z "$addr" ]; then
-        echo "Ignoring bridge section, misisng connection/address"
+        echo "Ignoring bridge section with missing connection/address"
         return
     fi
+    # Also invalid if no topics are defined, mosquitto will not start!
+    config_get tlen "$1" "topic_LENGTH"
+    if [ -z "$tlen" ]; then
+        echo "Ignoring bridge section with no topics defined"
+        return
+    fi
+
     echo "" >> $TCONF
     echo "# Bridge connection from UCI section" >> $TCONF
     append_if "$1" connection
