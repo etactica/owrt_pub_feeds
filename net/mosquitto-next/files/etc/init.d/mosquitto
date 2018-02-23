@@ -148,6 +148,7 @@ add_bridge() {
     append_if "$1" local_password
     append_if "$1" local_username
     append_optional_bool "$1" notifications notifications
+    append_optional_bool "$1" notifications_local_only notifications_local_only
     append_if "$1" notification_topic
     # Note, deprecated upstream, preserve old uci configs
     append_if "$1" clientid remote_clientid
