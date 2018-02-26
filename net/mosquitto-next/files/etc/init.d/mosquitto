@@ -169,7 +169,7 @@ add_bridge() {
     append_if "$1" connection
     append_if "$1" address
 
-    append_optional_bool "$1" attempt_unsubscribe
+    append_optional_bool "$1" attempt_unsubscribe bridge_attempt_unsubscribe
     append_if "$1" protocol_version bridge_protocol_version
     append_optional_bool "$1" cleansession
     append_if "$1" keepalive_interval
