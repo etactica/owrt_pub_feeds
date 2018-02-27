@@ -25,6 +25,7 @@ s.anonymous = true
 
 p = s:option(Value, "kitename", "Kite Name")
 p = s:option(Value, "kitesecret", "Kite Secret")
+p.password = true
 
 p = s:option(Flag, "simple_http", "Basic HTTP",
     [[Enable a tunnel to the local HTTP server (in most cases, this admin
