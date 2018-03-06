@@ -2,35 +2,35 @@
 # Oct 2012, karlp@remake.is
 START=99
 APP=pagekitec
-PID_FILE=/var/run/$APP.pid
-NAME=$(uci -q get pagekitec.pagekitec.kitename)
-KEY=$(uci -q get pagekitec.pagekitec.kitesecret)
-if [ "$NAME" = "" ] || [ "$KEY" = "" ]; then
-	echo "Both kitename and kitesecret must be specified!"
-	exit 1
-fi
-ARGS=
-QQ=$(uci -q get pagekitec.pagekitec.simple_http)
-if [ $? -eq 0 ] && [ $QQ -eq 1 ]; then
-	ARGS="$ARGS 80 http $NAME 80 $KEY"
-fi
-QQ=$(uci -q get pagekitec.pagekitec.simple_ssh)
-if [ $? -eq 0 ] && [ $QQ -eq 1 ]; then
-	ARGS="$ARGS 22 raw $NAME 443 $KEY"
-fi
+USE_PROCD=1
 
-start() {
-	# later ;) user_exists pagekitec 201 || user_add pagekitec 201
-	start-stop-daemon -S -x $APP -p $PID_FILE -m -b	-- $ARGS
+add_instance() {
+	local cfg="$1"
+	local kitename kitesecret simple_http simple_ssh static
+	config_get kitename "$cfg" kitename
+	config_get kitesecret "$cfg" kitesecret
+	[ -z "$kitename" -o -z "$kitesecret" ] && {
+		echo "Both kitename and kitesecret must be specified"
+		return 1
+	}
+	config_get_bool simple_http "$cfg" simple_http 0
+	config_get_bool simple_ssh "$cfg" simple_ssh 0
+	config_get_bool static "$cfg" static 0
+
+	procd_open_instance
+	procd_set_param command $APP
+	procd_append_param command -s
+	[ $static -eq 1 ] && procd_append_param command -S
+	[ $simple_http -eq 1 ] && procd_append_param command 80 http $kitename 80 $kitesecret
+	[ $simple_ssh -eq 1 ] && procd_append_param command 22 raw $kitename 443 $kitesecret
+	procd_close_instance
 }
 
-stop() {
-	start-stop-daemon -K -n $APP -p $PID_FILE -s TERM
-	rm -rf $PID_FILE
+start_service() {
+	config_load pagekitec && config_foreach add_instance pagekitec
 }
 
-restart() {
-	stop;
-	sleep 1;
-	start;
+service_triggers()
+{
+	procd_add_reload_trigger "pagekitec"
 }
