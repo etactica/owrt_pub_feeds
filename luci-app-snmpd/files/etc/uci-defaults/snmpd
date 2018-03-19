@@ -3,6 +3,7 @@ APP=snmpd
 
 # Make sure luci knows how to restart apps if we change config
 uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@$APP[-1]
 	add ucitrack $APP
 	set ucitrack.@$APP[-1].init=$APP
 	commit ucitrack
