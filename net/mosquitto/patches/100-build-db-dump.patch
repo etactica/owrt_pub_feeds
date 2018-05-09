@@ -1,0 +1,35 @@
+diff --git a/src/Makefile b/src/Makefile
+index ee79bd3..5984a00 100644
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -3,9 +3,9 @@ include ../config.mk
+ .PHONY: all install uninstall clean reallyclean
+ 
+ ifeq ($(WITH_TLS),yes)
+-all : mosquitto mosquitto_passwd
++all : mosquitto mosquitto_passwd mosquitto_db_dump
+ else
+-all : mosquitto
++all : mosquitto mosquitto_db_dump
+ endif
+ 
+ OBJS=	mosquitto.o \
+@@ -202,6 +202,9 @@ mosquitto_passwd : mosquitto_passwd.o
+ mosquitto_passwd.o : mosquitto_passwd.c
+ 	${CROSS_COMPILE}${CC} $(CFLAGS) ${CPPFLAGS} -c $< -o $@
+ 
++mosquitto_db_dump:
++	$(MAKE) -C db_dump
++
+ plugin_defer.so : plugin_defer.c mosquitto_plugin.h mosquitto_broker.h mosquitto_broker_internal.h
+ 	${CROSS_COMPILE}${CC} -I. -I../lib -fPIC -shared $< -o $@
+ 
+@@ -223,7 +226,7 @@ uninstall :
+ 	-rm -f "${DESTDIR}${prefix}/bin/mosquitto_passwd"
+ 
+ clean : 
+-	-rm -f *.o mosquitto mosquitto_passwd
++	-rm -f *.o mosquitto mosquitto_passwd db_dump/mosquitto_db_dump
+ 
+ reallyclean : clean
+ 	-rm -rf *.orig *.db

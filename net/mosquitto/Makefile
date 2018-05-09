@@ -188,6 +188,10 @@ ifeq ($(CONFIG_MOSQUITTO_PASSWD),y)
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mosquitto_passwd $(1)/usr/bin
 endif
+ifeq ($(CONFIG_MOSQUITTO_DB_DUMP),y)
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/db_dump/mosquitto_db_dump $(1)/usr/bin
+endif
 endef
 
 define Package/mosquitto-client-ssl/install

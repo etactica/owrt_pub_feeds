@@ -11,3 +11,12 @@ config MOSQUITTO_PASSWD
     default y
     help
         mosquitto_passwd is a tool for managing password files for mosquitto.
+
+config MOSQUITTO_DB_DUMP
+	bool "Include persistence database analysis tool"
+	depends on PACKAGE_mosquitto-ssl
+	default n
+	help
+		mosquitto_db_dump is a tool for dumping statistics/messages
+		from a mosquitto persistence file. This can only dump, not edit,
+		and is not a tool you normally need.
