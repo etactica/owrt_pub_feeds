@@ -48,12 +48,14 @@ add_instance() {
 	config_load mosquitto && config_foreach remove_output bridge
 	if [ $enabled -eq 0 ]; then
 		echo "Disabling Activity Stream"
+		rm -f /etc/cron.d/daily/republish_cabinet_model.lua
 	else
 		[ -z "$routing_key" ] && { echo "routing_key is required!"; exit 1;}
 		[ -z "$username" ] && { echo "username is required!"; exit 1;}
 		[ -z "$password" ] && { echo "password is required!"; exit 1;}
 		echo "Enabling Activity Stream"
 		add_output $routing_key $username $password $address
+		ln -s /usr/bin/republish_cabinet_model.lua /etc/cron.d/daily/
 	fi
 	uci commit
 	reload_config
