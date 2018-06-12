@@ -1,0 +1,73 @@
+From fd8db36fc85afc6a348e72c4bd831f54eed2f34f Mon Sep 17 00:00:00 2001
+From: Karl Palsson <karlp@etactica.com>
+Date: Tue, 12 Jun 2018 10:44:54 +0000
+Subject: [PATCH] replace luasystem with lua-posix
+
+luasystem is unmtained, doesn't cross compile properly, and only exposes
+three functions.  All of which can be implemented using lua-posix, which
+is well maintained and portable.
+
+Signed-off-by: Karl Palsson <karlp@etactica.com>
+---
+ busted/core.lua | 31 +++++++++++++++++++++++++++----
+ 1 file changed, 27 insertions(+), 4 deletions(-)
+
+diff --git a/busted/core.lua b/busted/core.lua
+index f9b869b..69a3940 100644
+--- a/busted/core.lua
++++ b/busted/core.lua
+@@ -3,7 +3,8 @@ local setfenv = require 'busted.compatibility'.setfenv
+ local unpack = require 'busted.compatibility'.unpack
+ local path = require 'pl.path'
+ local pretty = require 'pl.pretty'
+-local system = require 'system'
++local Pt = require("posix.time")
++local Pst = require("posix.sys.time")
+ local throw = error
+ 
+ local failureMt = {
+@@ -41,6 +42,28 @@ local function isCallable(obj)
+   return type(obj) == 'function' or (debug.getmetatable(obj) or {}).__call
+ end
+ 
++local function pgettime()
++	local tspec = Pst.gettimeofday()
++	return tspec.tv_sec + tspec.tv_usec * 1e-6
++end
++
++local function pmonotime()
++	local tspec = Pt.clock_gettime(Pt.CLOCK_MONOTONIC)
++	return tspec.tv_sec + tspec.tv_nsec * 1e-9
++end
++
++local function psleep(secs)
++        local tspec = {
++                tv_sec = math.floor(secs),
++                tv_nsec = math.floor(secs % 1 * 1e9)
++        }
++        local ok, err, code
++        repeat
++                ok, err, code, tspec = Pt.nanosleep(tspec)
++        until ok
++end
++
++
+ return function()
+   local mediator = require 'mediator'()
+ 
+@@ -57,9 +80,9 @@ return function()
+   local executors = {}
+   local eattributes = {}
+ 
+-  busted.gettime = system.gettime
+-  busted.monotime = system.monotime
+-  busted.sleep = system.sleep
++  busted.gettime = pgettime
++  busted.monotime = pmonotime
++  busted.sleep = psleep
+   busted.status = require 'busted.status'
+ 
+   function busted.getTrace(element, level, msg)
+-- 
+2.14.4
+
