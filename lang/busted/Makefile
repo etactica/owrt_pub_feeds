@@ -30,7 +30,7 @@ define Package/$(PKG_NAME)
   CATEGORY:=Languages
   TITLE:=Elegant Lua unit testing
   URL:=http://olivinelabs.com/busted
-  DEPENDS:=+luassert +lua_cliargs +luafilesystem +luaposix +lua-penlight +mediator_lua +say 
+  DEPENDS:=+luassert +lua_cliargs +luafilesystem +luaposix +lua-penlight +lua-term +mediator_lua +say
 endef
 
 define Package/$(PKG_NAME)/description
