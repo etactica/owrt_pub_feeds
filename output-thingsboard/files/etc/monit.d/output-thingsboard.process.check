@@ -1,0 +1,6 @@
+check process output-thingsboard matching '/usr/bin/lua /usr/bin/output-thingsboard.lua'
+	start program = "/etc/init.d/output-thingsboard start"
+	stop program = "/etc/init.d/output-thingsboard stop"
+        if totalmemory is greater than 40% for 3 cycles then restart
+        if totalcpu is greater than 40% for 3 cycles then restart
+	group output-thingsboard

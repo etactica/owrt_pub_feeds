@@ -1,0 +1,30 @@
+#!/bin/sh
+# Karl Palsson, <karlp@etactica.com> Jul 2018
+
+CFG=output-thingsboard
+[ -f /etc/config/$CFG ] && exit 0
+
+# Create an example file if it doesn't exist already.
+touch /etc/config/$CFG
+uci -q batch <<-EOF >/dev/null 
+		delete $CFG.@general[0]
+		add $CFG general
+		set $CFG.@general[0]=general
+		set $CFG.@general[0].enabled=0
+		set $CFG.@general[0].accesstoken=you-need-to-provide-this
+		set $CFG.@general[0].host=iot.example.com
+		commit $CFG
+EOF
+
+# Add a ucitrack entry, until such time as luci uses reload_config :|
+uci -q batch <<-EOF >/dev/null
+        delete ucitrack.@$CFG[-1]
+        add ucitrack $CFG
+        set ucitrack.@$CFG[-1].init=$CFG
+        commit ucitrack
+EOF
+
+# Helps us work if we're installed later
+rm -f /tmp/luci-indexcache
+
+exit 0

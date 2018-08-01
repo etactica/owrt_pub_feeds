@@ -1,0 +1,72 @@
+#!/bin/sh /etc/rc.common
+START=85
+USE_PROCD=1
+
+remove_output() {
+	local cfg="$1"
+	local connection
+	config_get connection "$cfg" connection
+	[ -n "$connection" -a "$connection" = "thingsboard" ] && {
+		uci delete mosquitto.$cfg
+	}
+}
+
+add_output() {
+	local accesstoken="$1"
+	local address="$2"
+	local use_tls=$3
+	local newcfg
+	newcfg=$(uci add mosquitto bridge)
+	uci -q batch <<-EOF
+		set mosquitto.$newcfg.connection=thingsboard
+		set mosquitto.$newcfg.address="$address"
+		set mosquitto.$newcfg.notifications_local_only=true
+		set mosquitto.$newcfg.try_private=false
+		set mosquitto.$newcfg.remote_username="$accesstoken"
+		EOF
+	[ $use_tls -eq 1 ] && uci -q set mosquitto.$newcfg.capath="/etc/ssl/certs"
+	uci -q batch <<-EOF
+		add_list mosquitto.$newcfg.topic='"" out 1 ext/thingsboard/telemetry v1/devices/me/telemetry'
+		add_list mosquitto.$newcfg.topic='"" out 1 ext/thingsboard/out/attributes v1/devices/me/attributes'
+		add_list mosquitto.$newcfg.topic='"" in 1 ext/thingsboard/in/attributes v1/devices/me/attributes'
+		# Note: this sets up server -> client RPC only.
+		add_list mosquitto.$newcfg.topic='+ in 1 ext/thingsboard/in/rpc/ v1/devices/me/rpc/request/'
+		add_list mosquitto.$newcfg.topic='+ out 1 ext/thingsboard/out/rpc/ v1/devices/me/rpc/response/'
+		commit
+		EOF
+}
+
+add_instance() {
+	local cfg="$1"
+	local enabled accesstoken address use_tls
+	config_get_bool enabled "$cfg" enabled 0
+	config_get accesstoken "$cfg" accesstoken
+	config_get address "$cfg" address "iot.example.com"
+	config_get_bool use_tls "$cfg" use_tls 0
+	# We always remove it, and re-add it if needed.
+	config_load mosquitto && config_foreach remove_output bridge
+	if [ $enabled -eq 0 ]; then
+		echo "Disabling ThingsBoard Stream"
+		monit unmonitor output-thingsboard
+	else
+		[ -z "accesstoken" ] && { echo "accesstoken required!"; exit 1;}
+		echo "Enabling ThingsBoard Stream"
+		add_output "$accesstoken" "$address" $use_tls
+		procd_open_instance
+		procd_set_param command output-thingsboard.lua
+		procd_set_param file /etc/config/output-thingsboard
+		procd_close_instance
+		monit monitor output-thingsboard
+	fi
+	uci commit
+	reload_config
+}
+
+start_service() {
+	# We make sure our mqtt bridges are in place, and then start our daemon
+	config_load output-thingsboard && config_foreach add_instance general
+}
+
+service_triggers() {
+	procd_add_reload_trigger output-thingsboard
+}
