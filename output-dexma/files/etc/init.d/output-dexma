@@ -16,7 +16,11 @@ add_instance() {
 	local cfg=$1
 	local enabled
 	config_get_bool enabled "$cfg" enabled 0
-	[ $enabled -gt 0 ] || { echo "Output service not enabled"; exit 1; }
+	[ $enabled -gt 0 ] || {
+		monit unmonitor output-dexma
+		echo "Output service not enabled"
+		exit 1
+	}
 	procd_open_instance
 	procd_set_param command output-dexma
 	append_arg "$cfg" --id source_key
@@ -24,11 +28,17 @@ add_instance() {
 	procd_append_param command -c /etc/ssl/certs/
 	config_get key "$cfg" dexcell_source_token
 	procd_set_param env DEXMA_KEY="$key"
+	procd_set_param file /etc/config/output-dexma
 	procd_set_param respawn
 	procd_close_instance
+	monit monitor output-dexma
 }
 
 start_service() {
     config_load output-dexma && config_foreach add_instance general
 }
 
+service_triggers()
+{
+	procd_add_reload_trigger output-dexma
+}

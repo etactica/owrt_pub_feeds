@@ -47,6 +47,7 @@ add_instance() {
 	config_load mosquitto && config_foreach remove_output bridge
 	if [ $enabled -eq 0 ]; then
 		echo "Disabling Open Energi Stream"
+		monit unmonitor output-openenergi
 	else
 		[ -z "$deviceid" ] && { echo "deviceid is required!"; exit 1;}
 		[ -z "$sastoken" ] && { echo "sastoken is required!"; exit 1;}
@@ -56,6 +57,7 @@ add_instance() {
 		procd_set_param command output-openenergi
 		procd_set_param file /etc/config/output-openenergi
 		procd_close_instance
+		monit monitor output-openenergi
 	fi
 	uci commit
 	reload_config
