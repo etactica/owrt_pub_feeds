@@ -12,7 +12,7 @@ uci -q batch <<-EOF >/dev/null
 		set $CFG.@general[0]=general
 		set $CFG.@general[0].enabled=0
 		set $CFG.@general[0].accesstoken=you-need-to-provide-this
-		set $CFG.@general[0].host=iot.example.com
+		set $CFG.@general[0].address=iot.example.com
 		commit $CFG
 EOF
 
