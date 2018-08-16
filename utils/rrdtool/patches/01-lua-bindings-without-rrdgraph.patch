@@ -1,0 +1,14 @@
+diff --git a/bindings/lua/rrdlua.c b/bindings/lua/rrdlua.c
+index ce484cb9..5f9c1ca9 100644
+--- a/bindings/lua/rrdlua.c
++++ b/bindings/lua/rrdlua.c
+@@ -373,7 +373,9 @@ static const struct luaL_Reg rrd[] = {
+ #if defined(DINF)
+   {"info", lua_rrd_info},
+   {"updatev", lua_rrd_updatev},
++#ifdef HAVE_RRD_GRAPH
+   {"graphv", lua_rrd_graphv},
++#endif
+ #endif
+   {NULL, NULL}
+ };
