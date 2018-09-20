@@ -56,3 +56,29 @@ package, and reinstall it, preferentially from the desired feed.
 2. ./scripts/feeds install -p owrt_pub_feeds mosquitto
 
 See also the github issues
+
+"Abandoned" packages
+====================
+
+Perhaps not abandonded, but the following packages have been merged upstream,
+and will no longer be worked on here.  They remain purely for people who may
+wish to use them with older versions, but they should NOT be considered the
+right source!
+
+* luci-app-pagekitec - merged to luci core for 18.06 and later
+* luci-app-mosquitto - merged to luci core _after_ 18.06
+* pagekitec - merged to openwrt-packages for 18.06 and later
+* mosquitto - has been in openwrt-packages for a long time
+* mosquitto-next only ever for experimental packages
+* lua-penlight has been in openwrt-packages since 15.05
+* lua-mosquitto has been in openwrt-packages since 15.05
+* lpeg has been in openwrt-packages since at least 15.05
+* libev has been in openwrt-packages since at least 15.05
+* libevent21 libevent2 was updated to v2.1 in openwrt-core _after_ 18.06
+
+Experimental packages
+=====================
+
+Experiments, prerequisites for experiments, or otherwise unsuitable for upstreaming:
+
+Everything else :)
