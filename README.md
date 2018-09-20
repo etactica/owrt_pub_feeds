@@ -67,6 +67,7 @@ right source!
 
 * luci-app-pagekitec - merged to luci core for 18.06 and later
 * luci-app-mosquitto - merged to luci core _after_ 18.06
+* luci-app-snmpd - merged to luci core _after_ 18.06
 * pagekitec - merged to openwrt-packages for 18.06 and later
 * mosquitto - has been in openwrt-packages for a long time
 * mosquitto-next only ever for experimental packages
