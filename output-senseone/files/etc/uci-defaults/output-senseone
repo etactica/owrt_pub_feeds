@@ -1,0 +1,23 @@
+#!/bin/sh
+# Karl Palsson, <karlp@etactica.com> Sept 2018
+
+CFG=output-senseone
+[ -f /etc/config/$CFG ] && exit 0
+
+# Create an example file if it doesn't exist already.
+touch /etc/config/$CFG
+uci -q batch <<-EOF >/dev/null 
+		delete $CFG.@general[0]
+		add $CFG general
+		set $CFG.@general[0]=general
+		set $CFG.@general[0].enabled=0
+		set $CFG.@general[0].username=example-username
+		set $CFG.@general[0].password=example-password
+		set $CFG.@general[0].address=mqtt.senseonetech.com
+		commit $CFG
+EOF
+
+# Helps us work if we're installed later
+rm -f /tmp/luci-indexcache
+
+exit 0
