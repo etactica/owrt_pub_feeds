@@ -18,7 +18,6 @@ add_output() {
 	local connection
 	local newcfg
 	newcfg=$(uci add mosquitto bridge)
-	# add to below when tls enabled... 'set mosquitto.$newcfg.capath=/etc/ssl/certs'
 	uci -q batch <<-EOF
 		set mosquitto.$newcfg.connection=senseone
 		set mosquitto.$newcfg.address="$address"
@@ -28,6 +27,7 @@ add_output() {
 		set mosquitto.$newcfg.try_private=false
 		set mosquitto.$newcfg.remote_username="$username"
 		set mosquitto.$newcfg.remote_password="$password"
+		set mosquitto.$newcfg.cafile=/etc/ssl/certs/senseonetech-mqtt.crt
 		add_list mosquitto.$newcfg.topic="/device/# out 1 status/local/json $username/status"
 		add_list mosquitto.$newcfg.topic="/cabinet/# out 1 status/local/json $username/status"
 		commit
@@ -40,7 +40,7 @@ add_instance() {
 	config_get_bool enabled "$cfg" enabled 0
 	config_get username "$cfg" username
 	config_get password "$cfg" password
-	config_get address "$cfg" address "mqtt.senseonetech.com"
+	config_get address "$cfg" address "mqtt.senseonetech.com:8883"
 	# We always remove it, and re-add it if needed.
 	config_load mosquitto && config_foreach remove_output bridge
 	if [ $enabled -eq 0 ]; then

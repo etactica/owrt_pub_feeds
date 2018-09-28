@@ -13,7 +13,7 @@ uci -q batch <<-EOF >/dev/null
 		set $CFG.@general[0].enabled=0
 		set $CFG.@general[0].username=example-username
 		set $CFG.@general[0].password=example-password
-		set $CFG.@general[0].address=mqtt.senseonetech.com
+		set $CFG.@general[0].address=mqtt.senseonetech.com:8883
 		commit $CFG
 EOF
 
