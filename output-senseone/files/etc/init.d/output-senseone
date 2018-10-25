@@ -51,7 +51,7 @@ add_instance() {
 		[ -z "$password" ] && { echo "password is required!"; exit 1;}
 		echo "Enabling SenseOne"
 		add_output $username $password $address
-		ln -s /usr/bin/republish_cabinet_model.lua /etc/cron.d/daily/
+		[ -f /etc/cron.d/daily/republish_cabinet_model.lua ] || ln -s /usr/bin/republish_cabinet_model.lua /etc/cron.d/daily/
 	fi
 	uci commit
 	reload_config
