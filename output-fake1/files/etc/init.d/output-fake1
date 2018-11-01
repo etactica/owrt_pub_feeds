@@ -1,0 +1,69 @@
+#!/bin/sh /etc/rc.common
+START=85
+USE_PROCD=1
+
+remove_output() {
+	local cfg="$1"
+	local connection
+	config_get connection "$cfg" connection
+	[ -n "$connection" -a "$connection" = "fake1" ] && {
+		uci delete mosquitto.$cfg
+	}
+}
+
+add_output() {
+	local username="$1"
+	local password="$2"
+	local address="$3"
+	local connection
+	local newcfg
+	newcfg=$(uci add mosquitto bridge)
+	uci -q batch <<-EOF
+		set mosquitto.$newcfg.connection=fake1
+		set mosquitto.$newcfg.address="$address"
+		set mosquitto.$newcfg.cleansession=1
+		set mosquitto.$newcfg.attempt_unsubscribe=false
+		set mosquitto.$newcfg.notifications_local_only=true
+		set mosquitto.$newcfg.try_private=false
+		set mosquitto.$newcfg.remote_username="$username"
+		set mosquitto.$newcfg.remote_password="$password"
+		add_list mosquitto.$newcfg.topic="/cabinet/# out 1 status/local/json $username/status"
+		add_list mosquitto.$newcfg.topic="/interval/# out 1 status/local/json $username/status"
+		add_list mosquitto.$newcfg.topic="/alert/# out 1 status/local/json $username/alert"
+		commit
+EOF
+}
+
+add_instance() {
+	local cfg="$1"
+	local enabled username password
+	config_get_bool enabled "$cfg" enabled 0
+	config_get username "$cfg" username
+	config_get password "$cfg" password
+	config_get address "$cfg" address "fake1.example.com:8883"
+	# We always remove it, and re-add it if needed.
+	config_load mosquitto && config_foreach remove_output bridge
+	if [ $enabled -eq 0 ]; then
+		echo "Disabling Fake1"
+	else
+		[ -z "$username" ] && { echo "username is required!"; exit 1;}
+		[ -z "$password" ] && { echo "password is required!"; exit 1;}
+		echo "Enabling Fake1"
+		add_output $username $password $address
+	fi
+	uci commit
+	reload_config
+}
+
+start_service() {
+	procd_open_instance
+	# Just something that succeeds
+	procd_set_param command true
+	procd_set_param file /etc/config/output-fake1
+	procd_close_instance
+	config_load output-fake1 && config_foreach add_instance general
+}
+
+service_triggers() {
+	procd_add_reload_trigger output-fake1
+}
