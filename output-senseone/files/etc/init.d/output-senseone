@@ -36,7 +36,7 @@ EOF
 
 add_instance() {
 	local cfg="$1"
-	local enabled routing_key username password
+	local enabled username password
 	config_get_bool enabled "$cfg" enabled 0
 	config_get username "$cfg" username
 	config_get password "$cfg" password
