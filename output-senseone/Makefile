@@ -13,8 +13,7 @@ define Package/$(PKG_NAME)
     CATEGORY:=Remake
     TITLE:=$(PKG_NAME) - message output daemon
     URL:=http://github.com/remakeelectric/owrt_pub_feeds/output-senseone
-    # Not presently TLS enabled!
-    #DEPENDS:=+ca-certificates
+    DEPENDS:=+ca-certificates
 endef
 
 define Package/$(PKG_NAME)/description
