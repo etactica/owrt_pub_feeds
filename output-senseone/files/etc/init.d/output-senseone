@@ -2,6 +2,8 @@
 START=85
 USE_PROCD=1
 
+[ -f /lib/rme_utils.sh ] && . /lib/rme_utils.sh
+
 remove_output() {
 	local cfg="$1"
 	local connection
@@ -49,6 +51,7 @@ add_instance() {
 	else
 		[ -z "$username" ] && { echo "username is required!"; exit 1;}
 		[ -z "$password" ] && { echo "password is required!"; exit 1;}
+		assert_ntp_up;
 		echo "Enabling SenseOne"
 		add_output $username $password $address
 		[ -f /etc/cron.d/daily/republish_cabinet_model.lua ] || ln -s /usr/bin/republish_cabinet_model.lua /etc/cron.d/daily/
@@ -64,6 +67,13 @@ start_service() {
 	procd_set_param file /etc/config/output-senseone
 	procd_close_instance
 	config_load output-senseone && config_foreach add_instance general
+}
+
+stop_service() {
+	# Explicit stop just removes the bridge configs
+	config_load mosquitto && config_foreach remove_output bridge
+	uci commit
+	reload_config
 }
 
 service_triggers() {
