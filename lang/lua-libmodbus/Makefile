@@ -1,23 +1,14 @@
-#
-# Copyright (C) 2015 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
-
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-libmodbus
-
-PKG_REV:=0.4.1
-PKG_VERSION:=$(PKG_REV)
+PKG_VERSION:=0.4.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=git@github.com:remakeelectric/lua-libmodbus
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=v$(PKG_REV)
+PKG_SOURCE_URL:=https://codeload.github.com/remakeelectric/lua-libmodbus/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=90aff3a2cfe7f91f167ad4ea00f55c2aa86cf2aef93d022e3b2cf906a1791254
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 
 PKG_MAINTAINER:=Karl Palsson <karlp@etactica.com>
 PKG_LICENSE:=MIT
