@@ -4,8 +4,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=output-fake1
 PKG_VERSION:=1.0
-PKG_ARCH:=all
 PKG_RELEASE:=1
+PKG_ARCH:=all
 
 include $(INCLUDE_DIR)/package.mk
 
