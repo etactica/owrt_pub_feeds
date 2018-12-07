@@ -30,6 +30,8 @@ add_output() {
 		set mosquitto.$newcfg.remote_username="$username"
 		set mosquitto.$newcfg.remote_password="$password"
 		set mosquitto.$newcfg.cafile=/etc/ssl/certs/senseonetech-mqtt.crt
+		add_list mosquitto.$newcfg.topic="/alert/new/# out 1 status/local/json $username/status"
+		add_list mosquitto.$newcfg.topic="/alert/expired/# out 1 status/local/json $username/status"
 		add_list mosquitto.$newcfg.topic="/cabinet/# out 1 status/local/json $username/status"
 		add_list mosquitto.$newcfg.topic="/interval/15min/# out 1 status/local/json $username/status"
 		commit
