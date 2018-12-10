@@ -8,13 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=upnpbeacon
-PKG_VERSION:=0.1.0
+PKG_VERSION:=0.1.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://developer.digitalstrom.org/releases/tools/
-PKG_MD5SUM:=47012ad96340081ba40f5ea76b68369c
+PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.bz2
+PKG_SOURCE_URL:=https://gitorious.digitalstrom.org/dss-misc/upnpbeacon/-/archive/v$(PKG_VERSION)/
+PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
+PKG_HASH:=93c1e405cff96d96da2edcf49e249f2bb8fdceb4f6eed8acaf49290a718dd0f6
 PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 #PKG_BUILD_DEPENDS:= libupnp
