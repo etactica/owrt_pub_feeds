@@ -18,6 +18,8 @@ add_output() {
 	local password="$2"
 	local address="$3"
 	local connection
+	local gateid
+	gateid=$(uci -q get system.@system[0].rme_stablemac)
 	local newcfg
 	newcfg=$(uci add mosquitto bridge)
 	uci -q batch <<-EOF
