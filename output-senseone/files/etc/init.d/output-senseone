@@ -17,7 +17,7 @@ add_output() {
 	local username="$1"
 	local password="$2"
 	local address="$3"
-	local connection
+	local interval="$4"
 	local gateid
 	gateid=$(uci -q get system.@system[0].rme_stablemac)
 	local newcfg
@@ -35,18 +35,19 @@ add_output() {
 		add_list mosquitto.$newcfg.topic="/alert/new/# out 1 status/local/json $username/status"
 		add_list mosquitto.$newcfg.topic="/alert/expired/# out 1 status/local/json $username/status"
 		add_list mosquitto.$newcfg.topic="/cabinet/# out 1 status/local/json $username/status"
-		add_list mosquitto.$newcfg.topic="/interval/15min/# out 1 status/local/json $username/status"
+		add_list mosquitto.$newcfg.topic="/interval/$interval/# out 1 status/local/json $username/status"
 		commit
 EOF
 }
 
 add_instance() {
 	local cfg="$1"
-	local enabled username password
+	local enabled username password address interval
 	config_get_bool enabled "$cfg" enabled 0
 	config_get username "$cfg" username
 	config_get password "$cfg" password
 	config_get address "$cfg" address "mqtt.senseonetech.com:8883"
+	config_get interval "$cfg" interval "15min"
 	# We always remove it, and re-add it if needed.
 	config_load mosquitto && config_foreach remove_output bridge
 	if [ $enabled -eq 0 ]; then
@@ -57,7 +58,7 @@ add_instance() {
 		[ -z "$password" ] && { echo "password is required!"; exit 1;}
 		assert_ntp_up;
 		echo "Enabling SenseOne"
-		add_output $username $password $address
+		add_output $username $password $address $interval
 		[ -f /etc/cron.d/daily/republish_cabinet_model.lua ] || ln -s /usr/bin/republish_cabinet_model.lua /etc/cron.d/daily/
 	fi
 	uci commit
