@@ -16,7 +16,7 @@ m = Map("output-activitystream", "Message Output Daemon - Activity Stream",
     Improve all aspects of operations and services with Artificial Intelligence
     </blockquote>
     <p/>
-    <a href="http://www.activitystream.com/">
+    <a href="http://www.activitystream.com/" target="_blank">
         <img src="/resources/images/activitystream.png" height="31" style="vertical-align: middle" alt="Activity Stream logo"/><br>
         Visit their site for more information
     </a>

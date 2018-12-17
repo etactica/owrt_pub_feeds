@@ -20,7 +20,7 @@ m = Map("output-dexma", "Message Output Daemon - Dexma",
    visibility of energy consumption and costs. Our intelligent energy management suite, DEXCell Energy Manager,
    is cloud-based and hardware-neutral. It combines advanced monitoring, analysis, alerts and reporting in an easy-to-use SaaS solution.
    </blockquote>
-   <a href="http://www.dexmatech.com/software/">Visit their site for more information</a>
+   <a href="http://www.dexmatech.com/software/" target="_blank">Visit their site for more information</a>
  ]])
 
 s = m:section(TypedSection, "general", "Configuration")

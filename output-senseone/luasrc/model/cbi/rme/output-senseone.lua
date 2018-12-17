@@ -21,7 +21,7 @@ m = Map("output-senseone", "Message Output Daemon - SenseOne",
 <p>From a technical standpoint, we have focused on interoperability requirements and developed a scalable IoT middleware layer for integrating heterogeneous systems and enabling connected environments.
     </blockquote>
     <p/>
-    <a href="http://www.senseonetech.com/">
+    <a href="http://www.senseonetech.com/" target="_blank">
         <img src="/resources/images/senseone.png" height="31" style="vertical-align: middle" alt="SenseOne logo"/><br>
         Visit their site for more information
     </a>

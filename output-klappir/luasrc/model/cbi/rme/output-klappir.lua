@@ -15,7 +15,7 @@ m = Map("output-klappir", "Message Output Daemon - Klappir",
     Capture operational data, calculate your environmental footprint and ensure compliance to regulations.
     </blockquote>
     <p/>
-    <a href="https://klappir.com/">
+    <a href="https://klappir.com/" target="_blank">
         <img src="/resources/images/klappir-logo.png" height="31" style="vertical-align: middle" alt="klappir logo"/><br>
         Visit their site for more information
     </a>

@@ -15,7 +15,7 @@ m = Map("output-thingsboard", "Message Output Daemon - ThingsBoard",
     ThingsBoard IoT Platform -  Device management, data collection, processing and visualization for your IoT solution
     </blockquote>
     <p/>
-    <a href="http://www.thingsboard.io/">Visit their site for more information</a>
+    <a href="http://www.thingsboard.io/" target="_blank">Visit their site for more information</a>
     ]])
 
 s = m:section(TypedSection, "general", "Configuration")

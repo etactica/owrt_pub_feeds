@@ -15,7 +15,7 @@ m = Map("output-openenergi", "Message Output Daemon - Open Energi",
 At Open Energi, we use advanced technology and data-driven insight to radically reduce the cost of delivering and consuming power.
     </blockquote>
     <p/>
-    <a href="http://www.openenergi.com/">
+    <a href="http://www.openenergi.com/" target="_blank">
         <img src="/resources/images/OE-logo.png" height="31" style="vertical-align: middle" alt="Open Energi logo"/><br>
         Visit their site for more information
     </a>
