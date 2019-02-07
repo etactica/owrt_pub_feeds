@@ -19,7 +19,8 @@ function action_diag()
         --mqtt_connection_match = "blah",
 
         expect_process = true,
-        process = ok, -- boolean to indicate process is running
+        -- coerce to true boolean.  0 is "true" in lua, but not javascript.
+        process = not not ok, -- boolean to indicate process is running
         -- extra will be shown if the process is not running
         process_extra = extra -- raw text <pre> to show if not running
     }
