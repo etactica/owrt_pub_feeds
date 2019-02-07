@@ -13,6 +13,33 @@ remove_output() {
 	}
 }
 
+add_output_legacy() {
+	local username="$1"
+	local password="$2"
+	local address="$3"
+	local gateid
+	gateid=$(uci -q get system.@system[0].rme_stablemac)
+	local newcfg
+	newcfg=$(uci add mosquitto bridge)
+	uci -q batch <<-EOF
+		set mosquitto.$newcfg.connection=senseone
+		set mosquitto.$newcfg.address="$address"
+		set mosquitto.$newcfg.cleansession=1
+		set mosquitto.$newcfg.attempt_unsubscribe=false
+		set mosquitto.$newcfg.notification_topic=$username/bridge/$gateid/state
+		set mosquitto.$newcfg.try_private=false
+		set mosquitto.$newcfg.remote_username="$username"
+		set mosquitto.$newcfg.remote_password="$password"
+		set mosquitto.$newcfg.cafile=/etc/ssl/certs/senseonetech-mqtt.crt
+		add_list mosquitto.$newcfg.topic="/alert/new/# out 1 status/local/json $username/status"
+		add_list mosquitto.$newcfg.topic="/alert/expired/# out 1 status/local/json $username/status"
+		add_list mosquitto.$newcfg.topic="/cabinet/# out 1 status/local/json $username/status"
+		add_list mosquitto.$newcfg.topic="/device/# out 1 status/local/json $username/status"
+		commit
+EOF
+}
+
+
 add_output() {
 	local username="$1"
 	local password="$2"
@@ -58,7 +85,15 @@ add_instance() {
 		[ -z "$password" ] && { echo "password is required!"; exit 1;}
 		assert_ntp_up;
 		echo "Enabling SenseOne"
-		add_output $username $password $address $interval
+		case "$username" in
+		    etactica_hq|\
+		    marel_iceland)
+		        add_output_legacy $username $password $address
+		        ;;
+		    *)
+                add_output $username $password $address $interval
+                ;;
+		esac
 		[ -f /etc/cron.d/daily/republish_cabinet_model.lua ] || ln -s /usr/bin/republish_cabinet_model.lua /etc/cron.d/daily/
 	fi
 	uci commit
