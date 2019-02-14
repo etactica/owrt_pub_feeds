@@ -1,0 +1,17 @@
+#!/bin/sh /etc/rc.common
+START=85
+USE_PROCD=1
+
+[ -f /lib/rme_utils.sh ] && . /lib/rme_utils.sh
+
+start_service() {
+	procd_open_instance
+	# Just something that succeeds
+	procd_set_param command output-statsd
+	procd_set_param file /etc/config/output-statsd
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger output-statsd
+}
