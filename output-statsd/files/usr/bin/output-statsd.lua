@@ -112,7 +112,8 @@ local function add_senml(senml_in)
     if not senml then return nil, err end
     for _,e in pairs(senml.e) do
         local fulln = senml.bn .. e.n
-        --local fullt = senml.bt + e.t
+        -- translate MQTT '/' separated topic levels into statsd '.' separated
+        fulln = fulln:gsub("/", ".")
         ugly.debug("Adding gauge for %s with v %f", fulln, e.v)
         statsd:gauge(fulln, e.v)
     end
