@@ -126,7 +126,7 @@ local function handle_senml(topic, jpayload)
         ugly.warning("Invalid json in message on topic: %s, %s", topic, err)
         return
     end
-    statsd:meter("senml-input", 1)
+    statsd:meter("msgs-processed", 1)
     if payload.hwc and payload.hwc.error then
         ugly.debug("ignoring error report: %s", topic)
         statsd:increment("read-error")
