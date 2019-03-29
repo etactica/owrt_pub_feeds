@@ -6,9 +6,9 @@ USE_PROCD=1
 
 start_service() {
 	procd_open_instance
-	# Just something that succeeds
-	procd_set_param command output-statsd
+	procd_set_param command output-statsd.lua
 	procd_set_param file /etc/config/output-statsd
+	# FIXME - load statsd server host/port too!
 	procd_close_instance
 }
 
