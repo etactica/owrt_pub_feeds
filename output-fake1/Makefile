@@ -13,7 +13,7 @@ define Package/$(PKG_NAME)
     SECTION:=remake
     CATEGORY:=Remake
     TITLE:=$(PKG_NAME) - message output daemon
-    URL:=http://github.com/remakeelectric/owrt_pub_feeds/output-fake1
+    URL:=http://github.com/etactica/owrt_pub_feeds/output-fake1
 endef
 
 define Package/$(PKG_NAME)/description

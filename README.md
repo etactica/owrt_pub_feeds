@@ -26,7 +26,7 @@ Howto
 =====
 1. Add this to your feeds.conf
 
-   src-git owrt_pub_feeds git://github.com/remakeelectric/owrt_pub_feeds.git
+   src-git owrt_pub_feeds git://github.com/etactica/owrt_pub_feeds.git
 
    or
 
@@ -34,7 +34,7 @@ Howto
 
    or
 
-   src-git owrt_pub_feeds git://github.com/remakeelectric/owrt_pub_feeds.git;branch_xx
+   src-git owrt_pub_feeds git://github.com/etactica/owrt_pub_feeds.git;branch_xx
 
 
 2. ./scripts/feeds update owrt_pub_feeds

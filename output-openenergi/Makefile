@@ -12,7 +12,7 @@ define Package/$(PKG_NAME)
     SECTION:=remake
     CATEGORY:=Remake
     TITLE:=$(PKG_NAME) - message output daemon
-    URL:=http://github.com/remakeelectric/owrt_pub_feeds/output-openenergi
+    URL:=http://github.com/etactica/owrt_pub_feeds/output-openenergi
     DEPENDS:=+ca-certificates
 endef
 
