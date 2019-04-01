@@ -14,9 +14,9 @@ s = m:section(TypedSection, "general", "Configuration")
 s.anonymous = true
 s:option(Flag, "enabled", "Enable this output service",
         [[The service will not start until this is checked]])
-s:option(Value, "statsdhost", "The StatsD server hostname",
+s:option(Value, "statsd_host", "The StatsD server hostname",
 	[[Hostname of StatsD server to post to]])
-s:option(Value, "statsdport", "The StatsD listen port",
+s:option(Value, "statsd_port", "The StatsD listen port",
 	[[Normally standard]])
 
 return m
