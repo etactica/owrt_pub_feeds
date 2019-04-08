@@ -1,0 +1,5 @@
+check process output-statsd with pidfile /var/run/output-statsd.pid
+	start program = "/etc/init.d/output-statsd start"
+	stop program = "/etc/init.d/output-statsd stop"
+        if totalmemory is greater than 40% for 3 cycles then restart
+	group output-statsd
