@@ -55,6 +55,7 @@ add_instance() {
 	if [ $enabled -eq 0 ]; then
 		echo "Disabling SenseOne"
 		rm -f /etc/cron.d/daily/republish_cabinet_model.lua
+		monit unmonitor output-senseone
 	else
 		[ -z "$username" ] && { echo "username is required!"; exit 1;}
 		[ -z "$password" ] && { echo "password is required!"; exit 1;}
@@ -72,6 +73,7 @@ add_instance() {
 				;;
 		esac
 		[ -f /etc/cron.d/daily/republish_cabinet_model.lua ] || ln -s /usr/bin/republish_cabinet_model.lua /etc/cron.d/daily/
+		monit monitor output-senseone
 	fi
 	uci commit
 	reload_config

@@ -1,0 +1,4 @@
+check program output-senseone with path "/bin/grep 'connection senseone' /tmp/mosquitto.generated.conf"
+	with timeout 5 seconds
+	if status != 0 then exec "/etc/init.d/output-senseone restart"
+	group output-senseone
