@@ -48,12 +48,14 @@ add_instance() {
 	if [ $enabled -eq 0 ]; then
 		echo "Disabling Klappir"
 		rm -f /etc/cron.d/daily/republish_cabinet_model.lua
+		monit unmonitor output-klappir
 	else
 		[ -z "$username" ] && { echo "username is required!"; exit 1;}
 		assert_ntp_up;
 		echo "Enabling Klappir"
 		add_output $username $address $gateid
 		[ -f /etc/cron.d/daily/republish_cabinet_model.lua ] || ln -s /usr/bin/republish_cabinet_model.lua /etc/cron.d/daily/
+		monit monitor output-klappir
 	fi
 	uci commit
 	reload_config

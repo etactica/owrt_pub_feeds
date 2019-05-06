@@ -1,0 +1,4 @@
+check program output-klappir with path "/bin/grep 'connection klappir' /tmp/mosquitto.generated.conf"
+	with timeout 5 seconds
+	if status != 0 then exec "/etc/init.d/output-klappir restart"
+	group output-klappir
