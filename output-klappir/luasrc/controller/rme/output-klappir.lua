@@ -3,7 +3,7 @@
 --]]
 module("luci.controller.rme.output-klappir", package.seeall)
 
-local _ = luci.i18n.translate or _
+local __ = luci.i18n.translate
 
 function index()
     entry({"admin", "services", "output-klappir"}, cbi("rme/output-klappir"), _("Output-Klappir"), 20)
@@ -12,7 +12,7 @@ end
 
 function action_diag()
     local rval = {
-        friendly_name = _("Klappir Smart Environmental Management"),
+        friendly_name = __("Klappir Smart Environmental Management"),
         expect_bridge = true,
         expect_process = false,
     }
