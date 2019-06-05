@@ -1,0 +1,54 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: ../output-klappir/luasrc/model/cbi/rme/output-klappir.lua:26
+msgid "Configuration"
+msgstr ""
+
+#: ../output-klappir/luasrc/model/cbi/rme/output-klappir.lua:28
+msgid "Enable this output service"
+msgstr ""
+
+#: ../output-klappir/luasrc/controller/rme/output-klappir.lua:15
+msgid "Klappir Smart Environmental Management"
+msgstr ""
+
+#: ../output-klappir/luasrc/model/cbi/rme/output-klappir.lua:8
+msgid "Message Output Daemon - Klappir"
+msgstr ""
+
+#: ../output-klappir/luasrc/controller/rme/output-klappir.lua:9
+msgid "Output-Klappir"
+msgstr ""
+
+#: ../output-klappir/luasrc/model/cbi/rme/output-klappir.lua:33
+msgid "Provided by Klappir, normally standard"
+msgstr ""
+
+#: ../output-klappir/luasrc/model/cbi/rme/output-klappir.lua:31
+msgid "Provided by Klappir, unique for your account"
+msgstr ""
+
+#: ../output-klappir/luasrc/model/cbi/rme/output-klappir.lua:30
+msgid "The MQTT bridge username"
+msgstr ""
+
+#: ../output-klappir/luasrc/model/cbi/rme/output-klappir.lua:32
+msgid "The MQTT broker address"
+msgstr ""
+
+#: ../output-klappir/luasrc/model/cbi/rme/output-klappir.lua:29
+msgid "The service will not start until this is checked"
+msgstr ""
+
+#: ../output-klappir/luasrc/model/cbi/rme/output-klappir.lua:9
+msgid ""
+"This service handles bridging eTactica live stream data, and posting it to "
+"your Klappir account. <h4>Before you start</h4> You should <em>already</em> "
+"have a Klappir account. <h4>More information</H4> <p/> From their website: "
+"<blockquote> Capture operational data, calculate your environmental "
+"footprint and ensure compliance to regulations. </blockquote> <p/> <a href="
+"\"https://klappir.com/\" target=\"_blank\"> <img src=\"/resources/images/"
+"klappir-logo.png\" height=\"31\" style=\"vertical-align: middle\" alt="
+"\"klappir logo\"/><br> Visit their site for more information </a> </p>"
+msgstr ""
