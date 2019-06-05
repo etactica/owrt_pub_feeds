@@ -3,9 +3,10 @@
 -- Copyright Karl Palsson <karlp@etactica.com> Sept 2018
 -- Licensed under your choice of Apache2, ISC, MIT, or BSD 2 clause
 --]]
+local _ = luci.i18n.translate
 
-m = Map("output-klappir", "Message Output Daemon - Klappir",
-    [[This service handles bridging eTactica live stream data, and posting it to your Klappir account.
+m = Map("output-klappir", _("Message Output Daemon - Klappir"),
+    _([[This service handles bridging eTactica live stream data, and posting it to your Klappir account.
     <h4>Before you start</h4>
     You should <em>already</em> have a Klappir account.
     <h4>More information</H4>
@@ -20,15 +21,15 @@ m = Map("output-klappir", "Message Output Daemon - Klappir",
         Visit their site for more information
     </a>
     </p>
-    ]])
+    ]]))
 
-s = m:section(TypedSection, "general", "Configuration")
+s = m:section(TypedSection, "general", _("Configuration"))
 s.anonymous = true
-s:option(Flag, "enabled", "Enable this output service",
-        [[The service will not start until this is checked]])
-s:option(Value, "username", "The MQTT bridge username", 
-	[[Provided by Klappir, unique for your account]])
-s:option(Value, "address", "The MQTT broker address",
-	[[Provided by Klappir, normally standard]])
+s:option(Flag, "enabled", _("Enable this output service"),
+        _([[The service will not start until this is checked]]))
+s:option(Value, "username", _("The MQTT bridge username"),
+	_([[Provided by Klappir, unique for your account]]))
+s:option(Value, "address", _("The MQTT broker address"),
+	_([[Provided by Klappir, normally standard]]))
 
 return m
