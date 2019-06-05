@@ -15,5 +15,5 @@ You may obtain a copy of the License at
 module("luci.controller.mosquitto", package.seeall)
 
 function index()
-    entry({"admin", "services", "mosquitto"}, cbi("mosquitto"), "Mosquitto")
+    entry({"admin", "services", "mosquitto"}, cbi("mosquitto"), _("Mosquitto"))
 end
