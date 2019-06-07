@@ -30,8 +30,7 @@ add_output() {
 		add_list mosquitto.$newcfg.topic="/alert/new/# out 1 status/local/json etactica/$username/$gateid"
 		add_list mosquitto.$newcfg.topic="/alert/expired/# out 1 status/local/json etactica/$username/$gateid"
 		add_list mosquitto.$newcfg.topic="/cabinet/# out 1 status/local/json etactica/$username/$gateid"
-		add_list mosquitto.$newcfg.topic="/interval/60min/+/cumulative_wh out 1 status/local/json etactica/$username/$gateid"
-		add_list mosquitto.$newcfg.topic="/interval/60min/+/wh_in/# out 1 status/local/json etactica/$username/$gateid"
+		add_list mosquitto.$newcfg.topic="/interval/60min/# out 1 status/local/json etactica/$username/$gateid"
 		commit
 EOF
 }
