@@ -1,5 +1,5 @@
 diff --git a/src/Makefile b/src/Makefile
-index ee79bd3..5984a00 100644
+index 2517cb6..ecfd373 100644
 --- a/src/Makefile
 +++ b/src/Makefile
 @@ -3,9 +3,9 @@ include ../config.mk
@@ -14,9 +14,9 @@ index ee79bd3..5984a00 100644
  endif
  
  OBJS=	mosquitto.o \
-@@ -202,6 +202,9 @@ mosquitto_passwd : mosquitto_passwd.o
+@@ -266,6 +266,9 @@ mosquitto_passwd : mosquitto_passwd.o
  mosquitto_passwd.o : mosquitto_passwd.c
- 	${CROSS_COMPILE}${CC} $(CFLAGS) ${CPPFLAGS} -c $< -o $@
+ 	${CROSS_COMPILE}${CC} -I.. $(CPPFLAGS) $(CFLAGS) -c $< -o $@
  
 +mosquitto_db_dump:
 +	$(MAKE) -C db_dump
@@ -24,12 +24,11 @@ index ee79bd3..5984a00 100644
  plugin_defer.so : plugin_defer.c mosquitto_plugin.h mosquitto_broker.h mosquitto_broker_internal.h
  	${CROSS_COMPILE}${CC} -I. -I../lib -fPIC -shared $< -o $@
  
-@@ -223,7 +226,7 @@ uninstall :
- 	-rm -f "${DESTDIR}${prefix}/bin/mosquitto_passwd"
+@@ -288,6 +291,7 @@ uninstall :
  
  clean : 
--	-rm -f *.o mosquitto mosquitto_passwd
-+	-rm -f *.o mosquitto mosquitto_passwd db_dump/mosquitto_db_dump
+ 	-rm -f *.o mosquitto mosquitto_passwd *.gcda *.gcno
++	-rm -f db_dump/mosquitto_db_dump
  
  reallyclean : clean
  	-rm -rf *.orig *.db
