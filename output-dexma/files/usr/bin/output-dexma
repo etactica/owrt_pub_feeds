@@ -180,7 +180,7 @@ local function handle_message_data(mid, topic, jpayload, qos, retain)
         end
         if idx then
             -- current, summable kwhs,  etc
-            if n == "cumulative_wh" or n == "wn_in" then
+            if n == "cumulative_wh" or n == "wh_in" then
                 local key = string.format("%s-%d-%s", devid, idx, "cumulative_kwh")
                 cache[key] = e.v / 1000
             end
