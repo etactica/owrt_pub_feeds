@@ -1,0 +1,7 @@
+# FIXME this needs to handle multiple instances...!
+# (using a template file and writing them into monit.d on demand perhaps?)
+check process output-db with pidfile /var/run/output-db.pid
+	start program = "/etc/init.d/output-db start"
+	stop program = "/etc/init.d/output-db stop"
+        if totalmemory is greater than 40% for 3 cycles then restart
+	group output-db

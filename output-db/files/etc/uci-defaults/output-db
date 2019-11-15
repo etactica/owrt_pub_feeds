@@ -1,0 +1,20 @@
+#!/bin/sh
+# Karl Palsson, <karlp@etactica.com> Sept 2018
+
+CFG=output-db
+[ -f /etc/config/$CFG ] && exit 0
+
+# Create an example file if it doesn't exist already.
+touch /etc/config/$CFG
+uci -q batch <<-EOF >/dev/null 
+		set $CFG.default=instance
+		set $CFG.default.enabled=0
+		set $CFG.default.driver=postgres
+		set $CFG.default.connection="magic connection string"
+		commit $CFG
+EOF
+
+# Helps us work if we're installed later
+rm -f /tmp/luci-indexcache
+
+exit 0
