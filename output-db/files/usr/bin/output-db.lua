@@ -33,6 +33,8 @@ local cfg = {
     DEFAULT_TOPIC_DATA = "status/+/json/interval/%dmin/#",
     DEFAULT_TOPIC_METADATA = "status/+/json/cabinet/#",
     DEFAULT_INTERVAL = 15, -- in minutes
+    DATABASE_VERSION = 1,
+    PATH_SCHEMA = "/usr/share/output-db"
 }
 ugly.initialize(cfg.APP_NAME, args.verbose or 4)
 
@@ -47,7 +49,6 @@ end)
 -- checks and fills in defaults
 -- raises if required fields are not available
 local function cfg_validate(c)
-    c.connection = c.uci.connection or error("A connection string is required!")
     c.interval = c.uci.interval or cfg.DEFAULT_INTERVAL
     c.topic_data_in = string.format(cfg.DEFAULT_TOPIC_DATA, c.interval)
     c.topic_metadata_in = cfg.DEFAULT_TOPIC_METADATA
@@ -67,6 +68,68 @@ end
 local state = {
 
 }
+
+local function db_connect()
+    local dname = string.format("luasql.%s", cfg.uci.driver)
+    local driver = require (dname)
+    if not driver then error("Couldn't load driver for: " .. dname) end
+    local env = driver[cfg.uci.driver]()
+    if not env then error("Couldn't open environment for driver") end
+    local params = {cfg.uci.dbname, cfg.uci.dbuser, cfg.uci.dbpass, cfg.uci.dbhost}
+    if cfg.uci.dbport then table.insert(params, cfg.uci.dbport) end
+    local conn, err = env:connect(table.unpack(params))
+    if not conn then
+        error(string.format("Couldn't connect with %s: %s", pl.pretty.write(params), err))
+    end
+    return conn
+end
+
+local conn = db_connect()
+
+local function db_validate_schema(conn, driver)
+    -- Load the schema for this driver
+    -- This is convoluted, because mysql doesn't let you run multiple statements in one go.
+    local schemas, ferr = pl.dir.getfiles(cfg.PATH_SCHEMA, string.format("schema.%s.*.sql", driver))
+    if not schemas then error(string.format("Couldn't load schema(s) for driver: %s: %s", driver, ferr)) end
+
+    -- Creates tables if they don't exist.
+    for _,fn in ipairs(schemas) do
+        local schema, serr = pl.file.read(fn)
+        if not schema then error(string.format("Failed to read schema file: %s: %s", fn, serr)) end
+        local rows, err = conn:execute(schema)
+        if not rows then
+            error("Failed to update schema: " .. err)
+        else
+            print("update schema returned", rows)
+        end
+    end
+
+    local q = [[select val from metadata where mkey = 'version']]
+    local cur = conn:execute(q)
+    if not cur then error("Couldn't execute the version check") end
+    local row = cur:fetch({}, "a")
+    local version
+    while row do
+        version = tonumber(row.val)
+        row = cur:fetch (row, "a")
+    end
+
+    if version then
+        if version < cfg.DATABASE_VERSION then
+            -- TODO Here should be a function to deal with the old database.
+            error("No Function to deal with different database version")
+        end
+        ugly.debug("Database running version: %d", version)
+    else
+        local rows, err = conn:execute(string.format([[insert into metadata (mkey, val) values ('version', '%d')]], cfg.DATABASE_VERSION))
+        if not rows then
+            print("setting version failed: ", err)
+            error("failed to set version")
+        end
+    end
+end
+
+db_validate_schema(conn, cfg.uci.driver)
 
 mosq.init()
 local mqtt = mosq.new(cfg.MOSQ_CLIENT_ID, true)
@@ -110,6 +173,10 @@ end
 
 mqtt.ON_MESSAGE = function(mid, topic, jpayload, qos, retain)
     if mosq.topic_matches_sub(cfg.topic_data_in, topic) then
+        if retain then
+            ugly.debug("Skipping retained messages on topic: %s, we might have already processed that", topic)
+            return
+        end
         return handle_interval_data(topic, jpayload)
     end
     if mosq.topic_matches_sub(cfg.topic_metadata_in, topic) then

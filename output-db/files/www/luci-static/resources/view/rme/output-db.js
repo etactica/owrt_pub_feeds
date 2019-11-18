@@ -21,14 +21,23 @@ return L.view.extend({
 
 		/* We actually need to know what driver to use, because luasql doesn't do that on a magic connection url, but params on the drivers */
 		o = s.taboption("general", form.ListValue, "driver", _("Database driver"), _("What sort of database are we connecting to?"));
-		o.modalonly = true;
 		o.value('postgres', _('Postgres'));
 		o.value('mysql', _('MySQL/MariaDB'));
-		// what does this do?!
-		// o.modalonly = true;
 
-		o = s.taboption("general", form.Value, "connection", _("Connection string"), _("A complete luasql connection string for your database"))
-		o.placeholder = "magic"
+		o = s.taboption("general", form.Value, "dbname", _("Database name"), _("The name of the database you wish to connect to"))
+		o.placeholder = "datasink"
+
+		o = s.taboption("general", form.Value, "dbuser", _("Database username"), _("The username to use when connecting to the database"))
+		o.placeholder = "some-user-name"
+
+		o = s.taboption("general", form.Value, "dbpass", _("Database password"), _("The password for your database user"))
+		o.placeholder = "some-db-password"
+
+		o = s.taboption("general", form.Value, "dbhost", _("Database hostname"), _("Hostname of your database server"))
+		o.placeholder = "my-db-instance.some-zone.rds.amazonws.com"
+
+		o = s.taboption("general", form.Value, "dbport", _("Database port"), _("Port your database server runs on. You can normally leave this blank"))
+		o.placeholder = _("default")
 
 		o = s.taboption("advanced", form.ListValue, "interval", _("Interval to monitor and forward"), _("Default is 15 minute, but you can select finer/coarser grained"));
 		o.optional = true;
