@@ -21,8 +21,18 @@ local args = pl.lapp [[
     -i,--instance (string) UCI service instance to run
 
     "All" configuration is loaded from the UCI file for the given instance
+
+statsd options
+    -S,--statsd_host (default "localhost") StatsD server address
+    --statsd_port (default 8125) StatsD port
+    --statsd_namespace (default "apps.output-db") (instance id will be appended)
 ]]
 
+local statsd = require("statsd")({
+    namespace = args.statsd_namespace .. "." .. args.instance,
+    host = args.statsd_host,
+    port = args.statsd_port,
+})
 -- Default global configuration
 local cfg = {
     APP_NAME = "output-db",
@@ -201,19 +211,24 @@ local function handle_interval_data(topic, jpayload)
 
     local payload, err = json.decode(jpayload)
     if payload then
+        statsd:increment("msgs.data")
         local ok, serr = conn:execute(query_data(key, payload))
         if ok then
+            statsd:increment("db.insert-good")
         else
             -- FIXME - attempt to store a short queue here?  retry at all? or jsut log and continue?
             ugly.err("Failed to store data! %s", serr)
+            statsd:increment("db.insert-fail")
         end
     else
+        statsd:increment("msgs.invalid-data")
         ugly.err("Non JSON payload on topic: %s: %s ", topic, err)
     end
 end
 
 local function handle_metadata(topic, jpayload)
     ugly.info("Processing metadata for %s", topic)
+    statsd:increment("msgs.metadata")
 end
 
 mqtt.ON_MESSAGE = function(mid, topic, jpayload, qos, retain)
