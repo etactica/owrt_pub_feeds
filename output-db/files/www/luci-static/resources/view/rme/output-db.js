@@ -67,6 +67,8 @@ return L.view.extend({
 		o = s.taboption("advanced", form.TextValue, "query_write_metadata", _("Query for metadata writing"), _("The parameterized sql query that will be used to insert metadata"));
 		o = s.taboption("advanced", form.TextValue, "query_write_data", _("Query for data writing"), _("The parameterized sql query that will be used to insert data"));
 
+		o = s.taboption("advanced", form.Flag, "validate_schema", _("Validate schema"), _("Whether we should attempt to update tables and schemas when we start"));
+
 		return m.render();
 	}
 });

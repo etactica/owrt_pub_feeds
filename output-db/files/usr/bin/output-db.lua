@@ -129,7 +129,11 @@ local function db_validate_schema(conn, driver)
     end
 end
 
-db_validate_schema(conn, cfg.uci.driver)
+if cfg.uci.validate_schema then
+    db_validate_schema(conn, cfg.uci.driver)
+else
+    ugly.notice("Assuming database is compatible with validation. If you get errors, check your queries or schemas!");
+end
 
 mosq.init()
 local mqtt = mosq.new(cfg.MOSQ_CLIENT_ID, true)
