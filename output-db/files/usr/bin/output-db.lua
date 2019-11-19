@@ -158,17 +158,58 @@ local function make_key(device, datatype, channel)
     end
 end
 
+--status/local/json/interval/15min/1E1C2EF21CA1/current/4 {"mean":0,"max":0,"ts_end":1574165700000,"min":0,"max_ts":1574164800680,"min_ts":1574164800680,"ts_start":1574164800000,"stddev":0,"n":442}
+
+
+-- return a properly formatted "safe" sql to execute based on the data payload
+-- it's realllly lame that luasql doesn't do parameterized queries natively!
+-- TODO - this needs to become templated based on the custom user queries.  (We almost definitely will want that)
+local function query_data(key, payload)
+    -- Convert our timestamp into an iso8601 datestring, so that it parses natively into different database backends
+    -- (we don't care about milliseconds on minute level interval reporting)
+    local ts_end = math.floor(payload.ts_end / 1000)
+    local ts_str = os.date("%FT%T", ts_end)
+    --local qry = [[insert into data (pname, ts_end, period, val) values ('%s', TO_TIMESTAMP(%s / 1000.0), %d, %f)]] -- hello postgres
+    --local qry = [[insert into data (pname, ts_end, period, val) values ('%s', from_unixtime(%s / 1000.0), %d, %f)]] -- hello mysql
+    local qry = [[insert into data (pname, ts_end, period, val) values ('%s', '%s', %d, %f)]]
+    local value
+    if key:find("cumulative_wh") then
+        value = payload.max
+    else
+        value = payload.mean
+    end
+    return string.format(qry, conn:escape(key), conn:escape(ts_str), cfg.interval * 60, value)
+end
+
 local function handle_interval_data(topic, jpayload)
     local segs = pl.stringx.split(topic, "/")
     local dtype = segs[7] -- yes. always!
     if not dtype then return end
     -- NB: _RIGHT_ HERE we make power bars look like anyone else. no special casing elsewhere!
     if dtype == "wh_in" then dtype = "cumulative_wh" end
-    if not pl.tablex.find(cfg.store_types, dtype) then return end
+    if not pl.tablex.find(cfg.store_types, dtype) then
+        ugly.debug("Ignoring uninteresting data of type: %s", dtype)
+        return
+    end
     local device = segs[6]
     local channel = segs[8] -- may be nil
     local key = make_key(device, dtype, channel)
-    ugly.info("Plausibly interesting interval data for key: %s", key)
+    ugly.debug("Plausibly interesting interval data for key: %s", key)
+
+    -- find or insert key into sources table. -- or just _not_....
+    -- let them have what they like here?
+
+    local payload, err = json.decode(jpayload)
+    if payload then
+        local ok, serr = conn:execute(query_data(key, payload))
+        if ok then
+        else
+            -- FIXME - attempt to store a short queue here?  retry at all? or jsut log and continue?
+            ugly.err("Failed to store data! %s", serr)
+        end
+    else
+        ugly.err("Non JSON payload on topic: %s: %s ", topic, err)
+    end
 end
 
 local function handle_metadata(topic, jpayload)
