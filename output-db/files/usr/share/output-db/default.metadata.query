@@ -1,0 +1,3 @@
+-- This is the default data query. See help for variables available
+insert into sources (deviceid, pointid, breakersize, phase, cabinetname, label, gatewayid, updated_at)
+  values ('$deviceid', $point, $breakersize, $phase, '$cabinet', '$label', '$gateid', '$ts')

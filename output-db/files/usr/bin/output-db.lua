@@ -9,6 +9,7 @@ json.encode_sparse_array(true)
 local uloop = require("uloop")
 uloop.init()
 local mosq = require("mosquitto")
+mosq.init()
 local PU = require("posix.unistd")
 local Pt = require("posix.time")
 local uci = require("uci")
@@ -44,7 +45,8 @@ local cfg = {
     DEFAULT_TOPIC_METADATA = "status/+/json/cabinet/#",
     DEFAULT_INTERVAL = 15, -- in minutes
     DATABASE_VERSION = 1,
-    PATH_SCHEMA = "/usr/share/output-db"
+    PATH_DEFAULT = "/usr/share/output-db",
+    PATH_USER = "/etc/output-db",
 }
 ugly.initialize(cfg.APP_NAME, args.verbose or 4)
 
@@ -52,9 +54,16 @@ ugly.initialize(cfg.APP_NAME, args.verbose or 4)
 local x = uci.cursor()
 x:foreach(cfg.APP_NAME, "instance", function(s)
     if s[".name"] ~= args.instance then return end
-    ugly.debug("found our instance config? %s", pl.pretty.write(s))
     cfg.uci = s
 end)
+
+x:foreach("system", "system", function(s)
+    if s.rme_stablemac then
+        cfg.gateid = s.rme_stablemac
+        return
+    end
+end)
+
 
 -- checks and fills in defaults
 -- raises if required fields are not available
@@ -63,11 +72,25 @@ local function cfg_validate(c)
     c.topic_data_in = string.format(cfg.DEFAULT_TOPIC_DATA, c.interval)
     c.topic_metadata_in = cfg.DEFAULT_TOPIC_METADATA
     c.store_types = c.uci.store_types or cfg.DEFAULT_STORE_TYPES
+
+    local function read_template(instance, type)
+        local err, custom, default
+        custom, err = pl.file.read(string.format("%s/custom.%s.%s.query", cfg.PATH_USER, instance, type))
+        default, err = pl.file.read(string.format("%s/default.%s.query", cfg.PATH_DEFAULT, type))
+        if not custom and not default then
+            ugly.fatal("No custom query and unable to read default either: %s", err)
+            os.exit()
+        end
+        return custom or default
+    end
+
+    c.template_data = read_template(args.instance, "data")
+    c.template_metadata = read_template(args.instance, "metadata")
     return c
 end
 
 cfg = cfg_validate(cfg)
-ugly.notice("Starting operations with config: %s", pl.pretty.write(cfg))
+ugly.debug("Starting operations with config: %s", pl.pretty.write(cfg))
 
 local function timestamp_ms()
     local tspec = Pt.clock_gettime(Pt.CLOCK_REALTIME)
@@ -99,7 +122,7 @@ local conn = db_connect()
 local function db_validate_schema(conn, driver)
     -- Load the schema for this driver
     -- This is convoluted, because mysql doesn't let you run multiple statements in one go.
-    local schemas, ferr = pl.dir.getfiles(cfg.PATH_SCHEMA, string.format("schema.%s.*.sql", driver))
+    local schemas, ferr = pl.dir.getfiles(cfg.PATH_DEFAULT, string.format("schema.%s.*.sql", driver))
     if not schemas then error(string.format("Couldn't load schema(s) for driver: %s: %s", driver, ferr)) end
 
     -- Creates tables if they don't exist.
@@ -145,7 +168,6 @@ else
     ugly.notice("Assuming database is compatible with validation. If you get errors, check your queries or schemas!");
 end
 
-mosq.init()
 local mqtt = mosq.new(cfg.MOSQ_CLIENT_ID, true)
 
 if not mqtt:connect(args.mqtt_host, 1883, 60) then
@@ -153,9 +175,12 @@ if not mqtt:connect(args.mqtt_host, 1883, 60) then
     os.exit(1)
 end
 
-if not mqtt:subscribe(cfg.topic_data_in, 0) then
-    ugly.err("Aborting, unable to subscribe to live data stream")
-    os.exit(1)
+for _,topic in ipairs({cfg.topic_data_in, cfg.topic_metadata_in}) do
+    local mid, code, err = mqtt:subscribe(topic, 0)
+    if not mid then
+        ugly.err("Aborting, unable to subscribe to: %s: %d %s", topic, code, err)
+        os.exit(1)
+    end
 end
 
 -- Make a unique key for a datapoint
@@ -168,27 +193,52 @@ local function make_key(device, datatype, channel)
     end
 end
 
---status/local/json/interval/15min/1E1C2EF21CA1/current/4 {"mean":0,"max":0,"ts_end":1574165700000,"min":0,"max_ts":1574164800680,"min_ts":1574164800680,"ts_start":1574164800000,"stddev":0,"n":442}
+-- return a properly formatted "safe" sql to execute based on a metadata branch/point
+-- We write a row of metadata for every single point.  This makes some duplicates,
+-- but makes it much easier to match things up in a database later.
+-- NOTE: switching to luadbi and parameterized queries will dramatically change how the templates would work!
+local function make_query_metadata(cabinet, deviceid, branch, point)
+    -- make a timestamp for "last change"
+    local ts_str = os.date("%FT%T")
+    -- create a context object for them to use
+    local context = {
+        deviceid = deviceid,
+        cabinet = cabinet,
+        breakersize = branch.ampsize,
+        label = branch.label,
+        point = point.reading + 1, -- the interval data uses logical channel numbers, not zero based.
+        phase = point.phase,
+        gateid = cfg.gateid,
+        ts = ts_str,
+    }
+
+    local t = pl.text.Template(cfg.template_metadata)
+    return t:substitute(context)
+end
 
 
 -- return a properly formatted "safe" sql to execute based on the data payload
--- it's realllly lame that luasql doesn't do parameterized queries natively!
--- TODO - this needs to become templated based on the custom user queries.  (We almost definitely will want that)
-local function query_data(key, payload)
+-- NOTE: switching to luadbi and parameterized queries will dramatically change how the templates would work!
+local function make_query_data(key, payload)
     -- Convert our timestamp into an iso8601 datestring, so that it parses natively into different database backends
     -- (we don't care about milliseconds on minute level interval reporting)
     local ts_end = math.floor(payload.ts_end / 1000)
     local ts_str = os.date("%FT%T", ts_end)
-    --local qry = [[insert into data (pname, ts_end, period, val) values ('%s', TO_TIMESTAMP(%s / 1000.0), %d, %f)]] -- hello postgres
-    --local qry = [[insert into data (pname, ts_end, period, val) values ('%s', from_unixtime(%s / 1000.0), %d, %f)]] -- hello mysql
-    local qry = [[insert into data (pname, ts_end, period, val) values ('%s', '%s', %d, %f)]]
     local value
     if key:find("cumulative_wh") then
         value = payload.max
     else
         value = payload.mean
     end
-    return string.format(qry, conn:escape(key), conn:escape(ts_str), cfg.interval * 60, value)
+    -- Enrich the payload a bit before we give it to the template.
+    payload.pname = key
+    payload.selected = value
+    payload.ts_ends = ts_str
+    payload.period = cfg.interval * 60
+    payload.gateid = cfg.gateid
+
+    local t = pl.text.Template(cfg.template_data)
+    return t:substitute(payload)
 end
 
 local function handle_interval_data(topic, jpayload)
@@ -204,7 +254,6 @@ local function handle_interval_data(topic, jpayload)
     local device = segs[6]
     local channel = segs[8] -- may be nil
     local key = make_key(device, dtype, channel)
-    ugly.debug("Plausibly interesting interval data for key: %s", key)
 
     -- find or insert key into sources table. -- or just _not_....
     -- let them have what they like here?
@@ -212,8 +261,9 @@ local function handle_interval_data(topic, jpayload)
     local payload, err = json.decode(jpayload)
     if payload then
         statsd:increment("msgs.data")
-        local ok, serr = conn:execute(query_data(key, payload))
+        local ok, serr = conn:execute(make_query_data(key, payload))
         if ok then
+            ugly.debug("Successfully exported data for key: %s", key)
             statsd:increment("db.insert-good")
         else
             -- FIXME - attempt to store a short queue here?  retry at all? or jsut log and continue?
@@ -227,9 +277,54 @@ local function handle_interval_data(topic, jpayload)
 end
 
 local function handle_metadata(topic, jpayload)
-    ugly.info("Processing metadata for %s", topic)
-    statsd:increment("msgs.metadata")
+    local function handle_clean_json(p)
+        if not p.type or p.type ~= "profile" then
+            return nil, "unknown message type? " .. tostring(p.type)
+        end
+        if not p.version then
+            return nil, "profile version not provided"
+        end
+        local n = 0
+        if p.version == 0.3 then
+            local cabinet = p.cabinet
+            local deviceid = p.deviceid
+            for _,branch in ipairs(p.branches) do
+                for _,point in ipairs(branch.points) do
+                    -- FIXME - this isn't good enough.  we need to do an upsert here!
+                    local ok, serr = conn:execute(make_query_metadata(cabinet, deviceid, branch, point))
+                    if ok then
+                        statsd:increment("db.insert-good-meta")
+                        n = n + 1
+                    else
+                        -- FIXME - attempt to store a short queue here?  retry at all? or jsut log and continue?
+                        ugly.err("Failed to store metadata! %s", serr)
+                        statsd:increment("db.insert-fail-meta")
+                    end
+                end
+            end
+        else
+            return nil, "unhandled profile version: " .. tostring(p.version)
+        end
+        return n
+    end
+
+    local payload, err = json.decode(jpayload)
+    if payload then
+        statsd:increment("msgs.metadata")
+        local records, err = handle_clean_json(payload)
+        if records then
+            ugly.info("Processed %s into %d database records", topic, records)
+        else
+            ugly.warning("Problems with json message on %s: %s", topic, err)
+            statsd:increment("msgs.invalid-metadata")
+        end
+    else
+        statsd:increment("msgs.invalid-metadata")
+        ugly.err("Non JSON payload on topic: %s: %s ", topic, err)
+    end
 end
+
+ugly.notice("Application startup complete")
 
 mqtt.ON_MESSAGE = function(mid, topic, jpayload, qos, retain)
     if mosq.topic_matches_sub(cfg.topic_data_in, topic) then

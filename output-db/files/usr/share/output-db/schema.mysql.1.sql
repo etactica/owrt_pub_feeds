@@ -1,9 +1,11 @@
 create table if not exists sources (
 	id int auto_increment primary key,
-	pname varchar(300),
+	deviceid varchar(300),
+	pointid integer,
 	breakersize integer,
-	cabinetname varchar(1000),
 	phase integer,
+	cabinetname varchar(1000),
 	label varchar(1000),
-	gateway varchar(300)
+	gatewayid varchar(300),
+	updated_at timestamp
 );
