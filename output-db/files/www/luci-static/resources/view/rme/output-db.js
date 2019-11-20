@@ -105,12 +105,13 @@ return L.view.extend({
 			breakersize: 16
 		};
 		o = s.taboption("advanced", form.TextValue, "query_write_metadata", _("Query for metadata writing"),
-			_("The parameterized sql query that will be used to insert metadata.  <code>$variable</code> can be used, with variables as from the following snippet.<p><pre>"
+			_("The parameterized sql query that will be used to insert metadata.  Write the query as an update, though an upsert will actually be performed. "
+			+ "Variables such as <code>$variable</code> can be used, from the following snippet.<p><pre>"
 			+ JSON.stringify(sampledata, null, '\t')
 			+ "</pre>"
 			+ "<p>Fields are as provided by the user in the Cabinet Editor, with <code>ts</code> provided as a current timestamp to track updates."
 			));
-		o.rows = 3;
+		o.rows = 4;
 		o.cfgvalue = function(section_id) {
 			return load_q(section_id, "metadata");
 		};
@@ -120,7 +121,8 @@ return L.view.extend({
 
 		var sampledata = {"mean":0,"gateid":"C4930003B679","max":0,"ts_start":1574259720000,"pname":"1E1C2EF21CA1/current/5","ts_ends":"2019-11-20T14:23:00","min":0,"interval":60,"ts_end":1574259780000,"max_ts":1574259721019,"min_ts":1574259721019,"selected":0,"stddev":0,"n":29}
 		o = s.taboption("advanced", form.TextValue, "query_write_data", _("Query for data writing"),
-			_("The parameterized sql query that will be used to insert data.  <code>$variable</code> can be used, with variables as from the following snippet.<p><pre>"
+			_("The parameterized sql query that will be used to insert data. "
+			+ "Variables such as <code>$variable</code> can be used, from the following snippet.<p><pre>"
 			+ JSON.stringify(sampledata, null, '\t')
 			+ "</pre>"
 			+ "<p>The <code>selected</code> variable contains the <code>max</code> value for energy counter types, and the <code>mean</code> for other types. "

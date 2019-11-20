@@ -290,9 +290,30 @@ local function handle_metadata(topic, jpayload)
             local deviceid = p.deviceid
             for _,branch in ipairs(p.branches) do
                 for _,point in ipairs(branch.points) do
-                    -- FIXME - this isn't good enough.  we need to do an upsert here!
-                    local ok, serr = conn:execute(make_query_metadata(cabinet, deviceid, branch, point))
+                    local ok, serr
+                    local mkey = string.format("%s:%d", deviceid, point.reading + 1)
+                    -- FIXME - this hardcodes the table name! that makes a complete mockery of our templates!
+                    -- All this dance is to do an "upsert"
+                    ok, serr = conn:execute(string.format([[select deviceid from sources where deviceid = '%s' and pointid = %d]], deviceid, point.reading + 1))
                     if ok then
+                        if ok:numrows() == 0 then
+                            ok, serr = conn:execute(string.format([[insert into sources (deviceid, pointid) values ('%s', %d)]], deviceid, point.reading + 1))
+                            if ok then
+                                ugly.debug("Inserted new source for metadata <%s>", mkey)
+                            else
+                                error("Unhandled error attempting to insert new metadata: " .. mkey)
+                            end
+                        else
+                            ugly.debug("Metadata source already existed in db for <%s>", mkey)
+                        end
+                    else
+                        error("Unhandled error attempting to check for device metadata: " .. mkey)
+                    end
+                    ok, serr = conn:execute(make_query_metadata(cabinet, deviceid, branch, point))
+                    if ok then
+                        if ok == 0 then
+                            error("Metadata row wasn't found at update time for <%s:%d>", mkey)
+                        end
                         statsd:increment("db.insert-good-meta")
                         n = n + 1
                     else
