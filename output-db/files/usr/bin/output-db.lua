@@ -376,10 +376,10 @@ mqtt_idle_timer = uloop.timer(function()
     -- just handle the mosquitto idle/misc loop
     local success, errno, err = mqtt:loop_misc()
     if not success then
-        local err = string.format("Lost MQTT connection: %s", err)
-        ugly.crit(err)
+        local errs = string.format("Lost MQTT connection: %s", err)
+        ugly.crit(errs)
         -- FIXME - need to reconnect here!  (truly, monit restarting us is fast enough for 15minute data, but still....)
-        error(err)
+        error(errs)
     end
     mqtt_idle_timer:set(cfg.MOSQ_IDLE_LOOP_MS)
 end, cfg.MOSQ_IDLE_LOOP_MS)
