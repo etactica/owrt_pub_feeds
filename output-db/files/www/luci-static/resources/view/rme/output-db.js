@@ -1,5 +1,6 @@
 'use strict';
 'require form';
+'require fs';
 'require tools.widgets as widgets';
 
 return L.view.extend({
@@ -32,12 +33,15 @@ return L.view.extend({
 
 		o = s.taboption("general", form.Value, "dbpass", _("Database password"), _("The password for your database user"))
 		o.placeholder = "some-db-password"
+		o.password = true;
 
 		o = s.taboption("general", form.Value, "dbhost", _("Database hostname"), _("Hostname of your database server"))
 		o.placeholder = "my-db-instance.some-zone.rds.amazonws.com"
+		o.datatype = "host"
 
 		o = s.taboption("general", form.Value, "dbport", _("Database port"), _("Port your database server runs on. You can normally leave this blank"))
 		o.placeholder = _("default")
+		o.datatype = "port"
 
 		o = s.taboption("advanced", form.ListValue, "interval", _("Interval to monitor and forward"), _("Default is 15 minute, but you can select finer/coarser grained"));
 		o.optional = true;
@@ -63,11 +67,57 @@ return L.view.extend({
 		o.value("flowrate", _("Flow rate (m³/h)"))
 		o.value("pulsecount", _("Pulse count"))
 
-		/* FIXME - need to get something here that can load/store to a file properly, like we do in rme-alert-emailer */
+		var originals = {};
+		var load_q = function(sid, qtype) {
+			var custom_fn = "/etc/output-db/custom." + sid + "." + qtype + ".query";
+			var custom = fs.trimmed(custom_fn);
+			var def = fs.trimmed("/usr/share/output-db/default." + qtype + ".query");
+			return Promise.all([custom, def]).then(function(values) {
+				var content = values.find(function(v) {return v.length > 0}) || "Neither custom nor default file could be loaded?";
+				var key = sid + qtype;
+				originals[key] = content;
+				return content;
+			});
+		}
+
+		var save_q = function(sid, qtype, value, oldwrite) {
+			var custom_fn = "/etc/output-db/custom." + sid + "." + qtype + ".query";
+			var key = sid + qtype;
+			if (originals[key] == value) {
+				// This works, but we still need the date field to get changes applied when it _has_ changed.
+				return;
+			}
+			if (typeof(value) === "undefined") {
+				return fs.remove(custom_fn);
+			} else {
+				return fs.write(custom_fn, value.trim().replace(/\r\n/g, '\n') + '\n');
+			}
+		}
+
 		o = s.taboption("advanced", form.TextValue, "query_write_metadata", _("Query for metadata writing"), _("The parameterized sql query that will be used to insert metadata"));
+		o.rows = 6;
+		o.cfgvalue = function(section_id) {
+			return load_q(section_id, "metadata");
+		};
+		o.write = o.remove = function(section_id, formvalue) {
+			return save_q(section_id, "metadata", formvalue);
+		};
+
 		o = s.taboption("advanced", form.TextValue, "query_write_data", _("Query for data writing"), _("The parameterized sql query that will be used to insert data"));
+		o.rows = 6;
+		o.cfgvalue = function(section_id) {
+			return load_q(section_id, "data");
+		};
+		o.write = o.remove = function(section_id, formvalue) {
+			return save_q(section_id, "data", formvalue);
+		};
 
 		o = s.taboption("advanced", form.Flag, "validate_schema", _("Validate schema"), _("Whether we should attempt to update tables and schemas when we start"));
+
+		o = s.taboption("advanced", form.Value, "_lastchange", _("Last change"), _("This field is used internally to ensure changes are saved. Please ignore it"));
+		o.cfgvalue = function(section_id) {
+			return new Date().toISOString();
+		};
 
 		return m.render();
 	}

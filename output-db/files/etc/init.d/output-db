@@ -18,6 +18,8 @@ add_instance() {
 		# This is only for monit monitoring
 		procd_set_param pidfile /var/run/$APP.$cfg.pid
 		procd_append_param command -i $cfg
+		procd_append_param file /etc/output-db/custom.$cfg.metadata.query
+		procd_append_param file /etc/output-db/custom.$cfg.data.query
 		# All other options should be in UCI
 		procd_close_instance
 		# FIXME - need to monitor all instances!
