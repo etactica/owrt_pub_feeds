@@ -1,0 +1,5 @@
+check process output-db.INSTANCE with pidfile /var/run/output-db.INSTANCE.pid
+	start program = "/etc/init.d/output-db start"
+	stop program = "/etc/init.d/output-db stop"
+        if totalmemory is greater than 40% for 3 cycles then restart
+	group output-db

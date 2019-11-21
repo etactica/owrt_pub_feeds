@@ -3,19 +3,20 @@ START=85
 USE_PROCD=1
 APP=output-db
 
+INSTANCES_KNOWN=""
+
 add_instance() {
 	local cfg="$1"
 	local enabled
 	config_get_bool enabled "$cfg" enabled 0
+	INSTANCES_KNOWN="${INSTANCES_KNOWN} $cfg"
 	if [ $enabled -eq 0 ]; then
-	  # FIXME - need to monitor all instances!
-		# monit unmonitor "$APP"
 		printf "%s:%s is disabled, not starting\n" "$APP" "$cfg"
+		monit unmonitor "$APP.$cfg"
 	else
 		procd_open_instance
 		procd_set_param command output-db.lua
 		procd_set_param file /etc/config/$APP
-		# This is only for monit monitoring
 		procd_set_param pidfile /var/run/$APP.$cfg.pid
 		procd_append_param command -i $cfg
 		procd_append_param file /etc/output-db/custom.$cfg.metadata-update.query
@@ -23,13 +24,24 @@ add_instance() {
 		procd_append_param file /etc/output-db/custom.$cfg.data.query
 		# All other options should be in UCI
 		procd_close_instance
-		# FIXME - need to monitor all instances!
-		# monit monitor "$APP"
+
+		[ -f /etc/monit.d/$APP.$cfg.process.check ] || {
+			sed s/INSTANCE/$cfg/g /usr/share/$APP/monit.process.check.template > /etc/monit.d/$APP.$cfg.process.check
+			monit reload
+		}
+		monit monitor "$APP.$cfg"
 	fi
 }
 
 start_service() {
 	config_load $APP && config_foreach add_instance instance
+	# remove any dangling monit files for instances that no longer exist
+	for x in /etc/monit.d/$APP.*.process.check; do
+		tid=$(echo $x | cut -d '.' -f 3)
+		echo "${INSTANCES_KNOWN}" | grep -q $tid || {
+			rm -f "$x" && monit reload
+		}
+	done
 }
 
 service_triggers() {
