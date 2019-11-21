@@ -70,7 +70,11 @@ local function cfg_validate(c)
     c.interval = c.uci.interval or cfg.DEFAULT_INTERVAL
     c.topic_data_in = string.format(cfg.DEFAULT_TOPIC_DATA, c.interval)
     c.topic_metadata_in = cfg.DEFAULT_TOPIC_METADATA
-    c.store_types = c.uci.store_types or cfg.DEFAULT_STORE_TYPES
+    if c.uci.store_types and pl.tablex.find(c.uci.store_types, "_all") then
+        c.store_types = nil
+    else
+        c.store_types = c.uci.store_types or cfg.DEFAULT_STORE_TYPES
+    end
 
     local function read_template(instance, type)
         local err, custom, default
@@ -240,7 +244,7 @@ local function handle_interval_data(topic, jpayload)
     if not dtype then return end
     -- NB: _RIGHT_ HERE we make power bars look like anyone else. no special casing elsewhere!
     if dtype == "wh_in" then dtype = "cumulative_wh" end
-    if not pl.tablex.find(cfg.store_types, dtype) then
+    if cfg.store_types and not pl.tablex.find(cfg.store_types, dtype) then
         ugly.debug("Ignoring uninteresting data of type: %s", dtype)
         return
     end
