@@ -1,2 +1,2 @@
 -- This is the default metadata insert query. See help for variables available
-insert into sources (deviceid, pointid) values ('$deviceid', $point)
+insert into metadata (deviceid, pointid) values ('$deviceid', $point)

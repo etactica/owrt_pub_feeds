@@ -44,7 +44,6 @@ local cfg = {
     DEFAULT_TOPIC_DATA = "status/+/json/interval/%dmin/#",
     DEFAULT_TOPIC_METADATA = "status/+/json/cabinet/#",
     DEFAULT_INTERVAL = 15, -- in minutes
-    DATABASE_VERSION = 1,
     PATH_DEFAULT = "/usr/share/output-db",
     PATH_USER = "/etc/output-db",
 }
@@ -120,7 +119,7 @@ end
 
 local conn = db_connect()
 
-local function db_validate_schema(conn, driver)
+local function db_create(conn, driver)
     -- Load the schema for this driver
     -- This is convoluted, because mysql doesn't let you run multiple statements in one go.
     local schemas, ferr = pl.dir.getfiles(cfg.PATH_DEFAULT, string.format("schema.%s.*.sql", driver))
@@ -137,34 +136,10 @@ local function db_validate_schema(conn, driver)
             print("update schema returned", rows)
         end
     end
-
-    local q = [[select val from metadata where mkey = 'version']]
-    local cur = conn:execute(q)
-    if not cur then error("Couldn't execute the version check") end
-    local row = cur:fetch({}, "a")
-    local version
-    while row do
-        version = tonumber(row.val)
-        row = cur:fetch (row, "a")
-    end
-
-    if version then
-        if version < cfg.DATABASE_VERSION then
-            -- TODO Here should be a function to deal with the old database.
-            error("No Function to deal with different database version")
-        end
-        ugly.debug("Database running version: %d", version)
-    else
-        local rows, err = conn:execute(string.format([[insert into metadata (mkey, val) values ('version', '%d')]], cfg.DATABASE_VERSION))
-        if not rows then
-            print("setting version failed: ", err)
-            error("failed to set version")
-        end
-    end
 end
 
-if cfg.uci.validate_schema then
-    db_validate_schema(conn, cfg.uci.driver)
+if cfg.uci.schema_create then
+    db_create(conn, cfg.uci.driver)
 else
     ugly.notice("Assuming database is compatible with validation. If you get errors, check your queries or schemas!");
 end

@@ -154,7 +154,8 @@ return L.view.extend({
 			return save_q(section_id, "data", formvalue);
 		};
 
-		o = s.taboption("advanced", form.Flag, "validate_schema", _("Validate schema"), _("Whether we should attempt to update tables and schemas when we start"));
+		o = s.taboption("advanced", form.Flag, "schema_create", _("Create Schema"),
+			_("Whether we should attempt to create tables and schemas when we start. Do not use this if you have an existing database."));
 
 		o = s.taboption("queries", form.Value, "_lastchange", _("Last change"), _("This field is used internally to ensure changes are saved. Please ignore it"));
 		o.cfgvalue = function(section_id) {

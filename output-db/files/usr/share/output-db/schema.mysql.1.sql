@@ -1,4 +1,4 @@
-create table if not exists sources (
+create table if not exists metadata (
 	id int auto_increment primary key,
 	deviceid varchar(300),
 	pointid integer,
