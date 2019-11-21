@@ -137,7 +137,8 @@ local function db_create(conn, driver)
         ugly.debug("Attempting to process schema statement <%s>", schema)
         local rows, err = conn:execute(schema)
         if not rows then
-            error("Failed to update schema: " .. err)
+            ugly.crit("Failed to update schema: %s", err)
+            os.exit(1)
         else
             ugly.debug("schema fragment execution successful")
         end
