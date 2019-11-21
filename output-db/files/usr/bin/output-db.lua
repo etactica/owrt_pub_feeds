@@ -85,7 +85,8 @@ local function cfg_validate(c)
     end
 
     c.template_data = read_template(args.instance, "data")
-    c.template_metadata = read_template(args.instance, "metadata")
+    c.template_metadata_update = read_template(args.instance, "metadata-update")
+    c.template_metadata_insert = read_template(args.instance, "metadata-insert")
     return c
 end
 
@@ -197,7 +198,7 @@ end
 -- We write a row of metadata for every single point.  This makes some duplicates,
 -- but makes it much easier to match things up in a database later.
 -- NOTE: switching to luadbi and parameterized queries will dramatically change how the templates would work!
-local function make_query_metadata(cabinet, deviceid, branch, point)
+local function make_query_metadata_update(cabinet, deviceid, branch, point)
     -- make a timestamp for "last change"
     local ts_str = os.date("%FT%T")
     -- create a context object for them to use
@@ -212,9 +213,25 @@ local function make_query_metadata(cabinet, deviceid, branch, point)
         ts = ts_str,
     }
 
-    local t = pl.text.Template(cfg.template_metadata)
+    local t = pl.text.Template(cfg.template_metadata_update)
     return t:substitute(context)
 end
+
+-- return a properly formatted "safe" sql to execute based on a metadata branch/point
+-- This is just for doing an insert of the "primary key" (even though we don't tag it as such)
+local function make_query_metadata_insert(deviceid, point)
+    -- make a timestamp for "last change"
+    local ts_str = os.date("%FT%T")
+    -- create a context object for them to use
+    local context = {
+        deviceid = deviceid,
+        point = point.reading + 1, -- the interval data uses logical channel numbers, not zero based.
+        ts = ts_str,
+    }
+    local t = pl.text.Template(cfg.template_metadata_insert)
+    return t:substitute(context)
+end
+
 
 
 -- return a properly formatted "safe" sql to execute based on the data payload
@@ -285,6 +302,21 @@ local function handle_metadata(topic, jpayload)
             return nil, "profile version not provided"
         end
         local n = 0
+
+        -- For use with update/insert queries, that return a rowcount, not a cursor
+        local function do_query(query, prefix)
+            local ok, serr = conn:execute(query)
+            if ok then
+                if ok == 0 then
+                    return nil, prefix
+                else
+                    return true
+                end
+            else
+                error("Unhandled error attempting query" .. serr)
+            end
+        end
+
         if p.version == 0.3 then
             local cabinet = p.cabinet
             local deviceid = p.deviceid
@@ -292,35 +324,27 @@ local function handle_metadata(topic, jpayload)
                 for _,point in ipairs(branch.points) do
                     local ok, serr
                     local mkey = string.format("%s:%d", deviceid, point.reading + 1)
-                    -- FIXME - this hardcodes the table name! that makes a complete mockery of our templates!
-                    -- All this dance is to do an "upsert"
-                    ok, serr = conn:execute(string.format([[select deviceid from sources where deviceid = '%s' and pointid = %d]], deviceid, point.reading + 1))
-                    if ok then
-                        if ok:numrows() == 0 then
-                            ok, serr = conn:execute(string.format([[insert into sources (deviceid, pointid) values ('%s', %d)]], deviceid, point.reading + 1))
-                            if ok then
-                                ugly.debug("Inserted new source for metadata <%s>", mkey)
-                            else
-                                error("Unhandled error attempting to insert new metadata: " .. mkey)
-                            end
-                        else
-                            ugly.debug("Metadata source already existed in db for <%s>", mkey)
+                    -- get the query for an update, and do that first.
+                    local update = make_query_metadata_update(cabinet, deviceid, branch, point)
+                    local insert = make_query_metadata_insert(deviceid, point)
+                    ok, serr = do_query(update, "row not found for update")
+                    if not ok then
+                        ok, serr = do_query(insert, "row not found for insert")
+                        if not ok then
+                            ugly.err("Failed to insert metadata row: %s", serr)
+                            statsd:increment("db.insert-fail-meta")
+                            error("Metadata row couldn't be created for: " .. mkey)
                         end
-                    else
-                        error("Unhandled error attempting to check for device metadata: " .. mkey)
-                    end
-                    ok, serr = conn:execute(make_query_metadata(cabinet, deviceid, branch, point))
-                    if ok then
-                        if ok == 0 then
-                            error("Metadata row wasn't found at update time for <%s:%d>", mkey)
+                        ok, serr = do_query(update, "row not found for update")
+                        if not ok then
+                            -- FIXME - attempt to store a short queue here?  retry at all? or jsut log and continue?
+                            ugly.err("Failed to store metadata: %s", serr)
+                            statsd:increment("db.insert-fail-meta")
+                            error("Metadata row wasn't found at update time for: " .. mkey)
                         end
-                        statsd:increment("db.insert-good-meta")
-                        n = n + 1
-                    else
-                        -- FIXME - attempt to store a short queue here?  retry at all? or jsut log and continue?
-                        ugly.err("Failed to store metadata! %s", serr)
-                        statsd:increment("db.insert-fail-meta")
                     end
+                    statsd:increment("db.insert-good-meta")
+                    n = n + 1
                 end
             end
         else
