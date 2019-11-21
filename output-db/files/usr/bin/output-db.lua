@@ -120,22 +120,23 @@ end
 local conn = db_connect()
 
 local function db_create(conn, driver)
-    -- Load the schema for this driver
+    -- Load the schema for this driver.
     -- This is convoluted, because mysql doesn't let you run multiple statements in one go.
-    local schemas, ferr = pl.dir.getfiles(cfg.PATH_DEFAULT, string.format("schema.%s.*.sql", driver))
-    if not schemas then error(string.format("Couldn't load schema(s) for driver: %s: %s", driver, ferr)) end
+    local schemaf, ferr = pl.file.read(string.format("%s/schema.%s.sql", cfg.PATH_DEFAULT, driver))
+    if not schemaf then error(string.format("Couldn't load schema for driver: %s: %s", driver, ferr)) end
 
-    -- Creates tables if they don't exist.
-    for _,fn in ipairs(schemas) do
-        local schema, serr = pl.file.read(fn)
-        if not schema then error(string.format("Failed to read schema file: %s: %s", fn, serr)) end
+    -- split on sql statements, only include full statements. no trailers.
+    local schemas = pl.stringx.split(schemaf, ';', pl.stringx.count(schemaf, ';'))
+    for _,schema in ipairs(schemas) do
+        ugly.debug("Attempting to process schema statement <%s>", schema)
         local rows, err = conn:execute(schema)
         if not rows then
             error("Failed to update schema: " .. err)
         else
-            print("update schema returned", rows)
+            ugly.debug("schema fragment execution successful")
         end
     end
+    ugly.notice("Database schema creation complete")
 end
 
 if cfg.uci.schema_create then
