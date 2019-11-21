@@ -22,18 +22,8 @@ local args = pl.lapp [[
     -i,--instance (string) UCI service instance to run
 
     "All" configuration is loaded from the UCI file for the given instance
-
-statsd options
-    -S,--statsd_host (default "localhost") StatsD server address
-    --statsd_port (default 8125) StatsD port
-    --statsd_namespace (default "apps.output-db") (instance id will be appended)
 ]]
 
-local statsd = require("statsd")({
-    namespace = args.statsd_namespace .. "." .. args.instance,
-    host = args.statsd_host,
-    port = args.statsd_port,
-})
 -- Default global configuration
 local cfg = {
     APP_NAME = "output-db",
@@ -43,6 +33,9 @@ local cfg = {
     -- We're going to listen to more than we theoretically need to, but we can just drop it
     DEFAULT_TOPIC_DATA = "status/+/json/interval/%dmin/#",
     DEFAULT_TOPIC_METADATA = "status/+/json/cabinet/#",
+    DEFAULT_STATSD_HOST = "localhost",
+    DEFAULT_STATSD_PORT = 8125,
+    DEFAULT_STATSD_NAMESPACE = "apps.output-db",
     DEFAULT_INTERVAL = 15, -- in minutes
     PATH_DEFAULT = "/usr/share/output-db",
     PATH_USER = "/etc/output-db",
@@ -70,6 +63,9 @@ local function cfg_validate(c)
     c.interval = c.uci.interval or cfg.DEFAULT_INTERVAL
     c.topic_data_in = string.format(cfg.DEFAULT_TOPIC_DATA, c.interval)
     c.topic_metadata_in = cfg.DEFAULT_TOPIC_METADATA
+    c.statsd_host = c.uci.statsd_host or cfg.DEFAULT_STATSD_HOST
+    c.statsd_port = c.uci.statsd_port or cfg.DEFAULT_STATSD_PORT
+    c.statsd_namespace = c.uci.statsd_namespace or string.format("%s.%s", cfg.DEFAULT_STATSD_NAMESPACE, args.instance)
     if c.uci.store_types and pl.tablex.find(c.uci.store_types, "_all") then
         c.store_types = nil
     else
@@ -94,6 +90,11 @@ local function cfg_validate(c)
 end
 
 cfg = cfg_validate(cfg)
+local statsd = require("statsd")({
+    namespace = cfg.statsd_namespace,
+    host = cfg.statsd_host,
+    port = cfg.statsd_port,
+})
 ugly.debug("Starting operations with config: %s", pl.pretty.write(cfg))
 
 local function timestamp_ms()

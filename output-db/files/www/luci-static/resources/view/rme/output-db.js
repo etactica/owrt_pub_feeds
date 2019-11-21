@@ -17,6 +17,7 @@ return L.view.extend({
 		s.tab("general", _("General Settings"));
 		s.tab("advanced", _("Advanced Settings"));
 		s.tab("queries", _("SQL Queries"), _("The ability to tailor the sql queries used can make it easier to connect to an existing database."));
+		s.tab("statsd", _("StatsD"), _("Metrics on operation can be sent to a listening StatsD server, such as graphite"))
 
         o = s.taboption("general", form.Flag, "enabled", _("Enable this instance"), _("The service will not start until this is checked"));
         o.rmempty = false;
@@ -176,6 +177,20 @@ return L.view.extend({
 		o.cfgvalue = function(section_id) {
 			return new Date().toISOString();
 		};
+
+		o = s.taboption("statsd", form.Value, "statsd_namespace", _("Namespace for StatsD reporting"))
+		o.placeholder = "apps.output-db.<instanceid>"
+		o.optional = true
+
+		o = s.taboption("statsd", form.Value, "statsd_host", _("Hostname to send stats"))
+		o.placeholder = "localhost"
+		o.datatype = "host"
+		o.optional = true
+
+		o = s.taboption("statsd", form.Value, "statsd_port", _("UDP port to send stats"))
+		o.placeholder = 8125
+		o.datatype = "port"
+		o.optional = true
 
 		return m.render();
 	}
