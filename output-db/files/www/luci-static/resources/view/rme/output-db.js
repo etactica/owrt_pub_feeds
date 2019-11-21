@@ -22,9 +22,9 @@ return L.view.extend({
         o.rmempty = false;
 
 		/* We actually need to know what driver to use, because luasql doesn't do that on a magic connection url, but params on the drivers */
-		o = s.taboption("general", form.ListValue, "driver", _("Database driver"), _("What sort of database are we connecting to?"));
-		o.value('postgres', _('Postgres'));
-		o.value('mysql', _('MySQL/MariaDB'));
+		var driver = s.taboption("general", form.ListValue, "driver", _("Database driver"), _("What sort of database are we connecting to?"));
+		driver.value('postgres', _('Postgres'));
+		driver.value('mysql', _('MySQL/MariaDB'));
 
 		o = s.taboption("general", form.Value, "dbname", _("Database name"), _("The name of the database you wish to connect to"))
 		o.placeholder = "datasink"
@@ -94,6 +94,21 @@ return L.view.extend({
 				return fs.write(custom_fn, value.trim().replace(/\r\n/g, '\n') + '\n');
 			}
 		}
+
+		o = s.taboption("queries", form.DummyValue, "_download_schema", _("Schema details"),
+			_("This is the schema used to populate the Database if selected. It is provided for reference."));
+		o.cfgvalue = function(sid) {
+			var drivername = driver.cfgvalue(sid);
+			var schema_content = fs.read("/usr/share/output-db/schema." + drivername + ".sql");
+			return schema_content.then(function(content) {
+				return E([], [
+					E('a', {
+						'class': 'cbi-button cbi-button-apply',
+						'download': "schema." + sid + ".sql", // this is the filename
+						'href': "data:application/octet-stream;charset=utf-16le;base64," + btoa(content)
+					}, _("Download"))]);
+			});
+		};
 
 		var sampledata = {
 			deviceid: "1E1C2EF21CA1",
