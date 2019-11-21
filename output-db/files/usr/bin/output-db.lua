@@ -117,7 +117,8 @@ local function db_connect()
     if cfg.uci.dbport then table.insert(params, cfg.uci.dbport) end
     local conn, err = env:connect(table.unpack(params))
     if not conn then
-        error(string.format("Couldn't connect with %s: %s", pl.pretty.write(params), err))
+        ugly.crit(string.format("Couldn't connect: %s", err))
+        os.exit(1)
     end
     return conn
 end
@@ -294,6 +295,7 @@ local function handle_metadata(topic, jpayload)
                     return true
                 end
             else
+                ugly.crit("Unhandled error attempting query: %s", serr)
                 error("Unhandled error attempting query" .. serr)
             end
         end
