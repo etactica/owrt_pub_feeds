@@ -108,6 +108,16 @@ return L.view.extend({
 						'download': "schema." + sid + ".sql", // this is the filename
 						'href': "data:application/octet-stream;charset=utf-16le;base64," + btoa(content)
 					}, _("Download"))]);
+			}).catch(function(a,b,c) {
+				/*
+				 * when a new section is added, driver.cfgvalue() is empty, so it fails to load anything
+				 * One day, work out how to subscribe to the notifications, but until then, just let them know to save
+				 * their new instance before they try and download the schema
+				 */
+				return E([], [
+					E('button', {
+						'class': 'cbi-button cbi-button-reset btn disabled',
+					}, _("Schema download unavailable until configuration is saved"))]);
 			});
 		};
 
