@@ -6,8 +6,6 @@
 local json = require("cjson.safe")
 -- cjson specific
 json.encode_sparse_array(true)
-local uloop = require("uloop")
-uloop.init()
 local mosq = require("mosquitto")
 mosq.init()
 local PU = require("posix.unistd")
@@ -16,7 +14,7 @@ local uci = require("uci")
 local ugly = require("remake.uglylog")
 
 local pl = require("pl.import_into")()
-local args = pl.lapp [[
+local cliargs = pl.lapp [[
     -H,--mqtt_host (default "localhost") MQTT host to listen to
     -v,--verbose (0..7 default 4) Logging level, higher == more
     -i,--instance (string) UCI service instance to run
@@ -24,10 +22,16 @@ local args = pl.lapp [[
     "All" configuration is loaded from the UCI file for the given instance
 ]]
 
+-- "globals" that a few people need direct access to (we're not making an object just to hold them)
+local statsd
+local mqtt
+local cfg = {}
+local conn
+
 -- Default global configuration
-local cfg = {
+local default_cfg = {
     APP_NAME = "output-db",
-    MOSQ_CLIENT_ID = string.format("output-db-%s-%d", args.instance, PU.getpid()),
+    MOSQ_CLIENT_ID = string.format("output-db-%s-%d", cliargs.instance, PU.getpid()),
     MOSQ_IDLE_LOOP_MS = 500,
     DEFAULT_STORE_TYPES = {"cumulative_wh"},
     -- We're going to listen to more than we theoretically need to, but we can just drop it
@@ -40,42 +44,27 @@ local cfg = {
     PATH_DEFAULT = "/usr/share/output-db",
     PATH_USER = "/etc/output-db",
 }
-ugly.initialize(cfg.APP_NAME, args.verbose or 4)
-
--- Read instance configuration and merge
-local x = uci.cursor()
-x:foreach(cfg.APP_NAME, "instance", function(s)
-    if s[".name"] ~= args.instance then return end
-    cfg.uci = s
-end)
-
-x:foreach("system", "system", function(s)
-    if s.rme_stablemac then
-        cfg.gateid = s.rme_stablemac
-        return
-    end
-end)
-
 
 -- checks and fills in defaults
 -- raises if required fields are not available
+-- @tparam[table] c Input config object, defaults plus any initial user arguments
 local function cfg_validate(c)
-    c.interval = c.uci.interval or cfg.DEFAULT_INTERVAL
-    c.topic_data_in = string.format(cfg.DEFAULT_TOPIC_DATA, c.interval)
-    c.topic_metadata_in = cfg.DEFAULT_TOPIC_METADATA
-    c.statsd_host = c.uci.statsd_host or cfg.DEFAULT_STATSD_HOST
-    c.statsd_port = c.uci.statsd_port or cfg.DEFAULT_STATSD_PORT
-    c.statsd_namespace = c.uci.statsd_namespace or string.format("%s.%s", cfg.DEFAULT_STATSD_NAMESPACE, args.instance)
+    c.interval = c.uci.interval or c.DEFAULT_INTERVAL
+    c.topic_data_in = string.format(c.DEFAULT_TOPIC_DATA, c.interval)
+    c.topic_metadata_in = c.DEFAULT_TOPIC_METADATA
+    c.statsd_host = c.uci.statsd_host or c.DEFAULT_STATSD_HOST
+    c.statsd_port = c.uci.statsd_port or c.DEFAULT_STATSD_PORT
+    c.statsd_namespace = c.uci.statsd_namespace or string.format("%s.%s", c.DEFAULT_STATSD_NAMESPACE, c.args.instance)
     if c.uci.store_types and pl.tablex.find(c.uci.store_types, "_all") then
         c.store_types = nil
     else
-        c.store_types = c.uci.store_types or cfg.DEFAULT_STORE_TYPES
+        c.store_types = c.uci.store_types or c.DEFAULT_STORE_TYPES
     end
 
     local function read_template(instance, type)
         local err, custom, default
-        custom, err = pl.file.read(string.format("%s/custom.%s.%s.query", cfg.PATH_USER, instance, type))
-        default, err = pl.file.read(string.format("%s/default.%s.query", cfg.PATH_DEFAULT, type))
+        custom, err = pl.file.read(string.format("%s/custom.%s.%s.query", c.PATH_USER, instance, type))
+        default, err = pl.file.read(string.format("%s/default.%s.query", c.PATH_DEFAULT, type))
         if not custom and not default then
             ugly.fatal("No custom query and unable to read default either: %s", err)
             os.exit()
@@ -83,19 +72,11 @@ local function cfg_validate(c)
         return custom or default
     end
 
-    c.template_data = read_template(args.instance, "data")
-    c.template_metadata_update = read_template(args.instance, "metadata-update")
-    c.template_metadata_insert = read_template(args.instance, "metadata-insert")
+    c.template_data = read_template(c.args.instance, "data")
+    c.template_metadata_update = read_template(c.args.instance, "metadata-update")
+    c.template_metadata_insert = read_template(c.args.instance, "metadata-insert")
     return c
 end
-
-cfg = cfg_validate(cfg)
-local statsd = require("statsd")({
-    namespace = cfg.statsd_namespace,
-    host = cfg.statsd_host,
-    port = cfg.statsd_port,
-})
-ugly.debug("Starting operations with config: %s", pl.pretty.write(cfg))
 
 local function timestamp_ms()
     local tspec = Pt.clock_gettime(Pt.CLOCK_REALTIME)
@@ -115,15 +96,8 @@ local function db_connect()
     if not env then error("Couldn't open environment for driver") end
     local params = {cfg.uci.dbname, cfg.uci.dbuser, cfg.uci.dbpass, cfg.uci.dbhost}
     if cfg.uci.dbport then table.insert(params, cfg.uci.dbport) end
-    local conn, err = env:connect(table.unpack(params))
-    if not conn then
-        ugly.crit(string.format("Couldn't connect: %s", err))
-        os.exit(1)
-    end
-    return conn
+    return env:connect(table.unpack(params))
 end
-
-local conn = db_connect()
 
 local function db_create(conn, driver)
     -- Load the schema for this driver.
@@ -144,27 +118,6 @@ local function db_create(conn, driver)
         end
     end
     ugly.notice("Database schema creation complete")
-end
-
-if cfg.uci.schema_create then
-    db_create(conn, cfg.uci.driver)
-else
-    ugly.notice("Assuming database is compatible with validation. If you get errors, check your queries or schemas!");
-end
-
-local mqtt = mosq.new(cfg.MOSQ_CLIENT_ID, true)
-
-if not mqtt:connect(args.mqtt_host, 1883, 60) then
-    ugly.err("Aborting, unable to make MQTT connection")
-    os.exit(1)
-end
-
-for _,topic in ipairs({cfg.topic_data_in, cfg.topic_metadata_in}) do
-    local mid, code, err = mqtt:subscribe(topic, 0)
-    if not mid then
-        ugly.err("Aborting, unable to subscribe to: %s: %d %s", topic, code, err)
-        os.exit(1)
-    end
 end
 
 -- Make a unique key for a datapoint
@@ -214,8 +167,6 @@ local function make_query_metadata_insert(deviceid, point)
     local t = pl.text.Template(cfg.template_metadata_insert)
     return t:substitute(context)
 end
-
-
 
 -- return a properly formatted "safe" sql to execute based on the data payload
 -- NOTE: switching to luadbi and parameterized queries will dramatically change how the templates would work!
@@ -267,6 +218,8 @@ local function handle_interval_data(topic, jpayload)
             statsd:increment("db.insert-good")
         else
             -- FIXME - attempt to store a short queue here?  retry at all? or jsut log and continue?
+            -- CRITICAL FIXME - must either attempt reconnect or abort and let us be restarted!
+            -- This will _not_ recover on it's own.
             ugly.err("Failed to store data! %s", serr)
             statsd:increment("db.insert-fail")
         end
@@ -353,9 +306,7 @@ local function handle_metadata(topic, jpayload)
     end
 end
 
-ugly.notice("Application startup complete")
-
-mqtt.ON_MESSAGE = function(mid, topic, jpayload, qos, retain)
+local function mqtt_ON_MESSAGE(mid, topic, jpayload, qos, retain)
     if mosq.topic_matches_sub(cfg.topic_data_in, topic) then
         if retain then
             ugly.debug("Skipping retained messages on topic: %s, we might have already processed that", topic)
@@ -368,28 +319,83 @@ mqtt.ON_MESSAGE = function(mid, topic, jpayload, qos, retain)
     end
 end
 
+local function mqtt_ON_DISCONNECT(was_clean, rc, str)
+    if not was_clean then
+        ugly.notice("Lost connection to MQTT broker! %d %s", rc, str)
+    end
+end
+
+local function mqtt_ON_CONNECT(success, rc, str)
+    if not success then
+        ugly.notice("Failed to connect to MQTT: %d %s", rc, str)
+        return
+    end
+    for _,topic in ipairs({cfg.topic_data_in, cfg.topic_metadata_in}) do
+        local mid, code, err = mqtt:subscribe(topic, 0)
+        if not mid then
+            ugly.err("Aborting, unable to subscribe to: %s: %d %s", topic, code, err)
+            os.exit(1)
+        end
+    end
+end
 -- TODO - CAREFUL! you may want to have an onconnect handler that creates the db connection internally.
 -- you may want to do this so you can have the threaded interface, but make sure that you do everything on the correct thread.?
 
-local mqtt_read = uloop.fd_add(mqtt:socket(), function(ufd, events)
-    mqtt:loop_read()
-end, uloop.ULOOP_READ)
+local function do_main(args, default_cfg)
+    cfg = default_cfg
+    cfg.args = args
+    ugly.initialize(string.format("%s.%s", cfg.APP_NAME, args.instance), args.verbose or 4)
 
-local mqtt_write = uloop.fd_add(mqtt:socket(), function(ufd, events)
-    mqtt:loop_write()
-end, uloop.ULOOP_WRITE)
+    -- Read instance configuration and merge
+    local x = uci.cursor()
+    x:foreach(cfg.APP_NAME, "instance", function(s)
+        if s[".name"] ~= args.instance then return end
+        cfg.uci = s
+    end)
 
-local mqtt_idle_timer
-mqtt_idle_timer = uloop.timer(function()
-    -- just handle the mosquitto idle/misc loop
-    local success, errno, err = mqtt:loop_misc()
-    if not success then
-        local errs = string.format("Lost MQTT connection: %s", err)
-        ugly.crit(errs)
-        -- FIXME - need to reconnect here!  (truly, monit restarting us is fast enough for 15minute data, but still....)
-        error(errs)
+    x:foreach("system", "system", function(s)
+        if s.rme_stablemac then
+            cfg.gateid = s.rme_stablemac
+            return
+        end
+    end)
+
+    cfg = cfg_validate(cfg)
+    ugly.debug("Starting operations with config: %s", pl.pretty.write(cfg))
+
+    statsd = require("statsd")({
+        namespace = cfg.statsd_namespace,
+        host = cfg.statsd_host,
+        port = cfg.statsd_port,
+    })
+
+    mqtt = mosq.new(cfg.MOSQ_CLIENT_ID, true)
+
+    if not mqtt:connect(args.mqtt_host, 1883, 60) then
+        ugly.err("Aborting, unable to make MQTT connection")
+        os.exit(1)
     end
-    mqtt_idle_timer:set(cfg.MOSQ_IDLE_LOOP_MS)
-end, cfg.MOSQ_IDLE_LOOP_MS)
 
-uloop.run()
+    mqtt.ON_DISCONNECT = mqtt_ON_DISCONNECT
+    mqtt.ON_MESSAGE = mqtt_ON_MESSAGE
+    mqtt.ON_CONNECT = mqtt_ON_CONNECT
+
+    local dbconn, err = db_connect(cfg)
+    if not dbconn then
+        ugly.crit(string.format("Couldn't connect: %s", err))
+        os.exit(1)
+    end
+    conn = dbconn
+
+    if cfg.uci.schema_create then
+        db_create(conn, cfg.uci.driver)
+    else
+        ugly.notice("Assuming database is compatible with validation. If you get errors, check your queries or schemas!");
+    end
+
+    ugly.notice("Application startup complete")
+    mqtt:loop_forever()
+    ugly.notice("Explicitly requested termination")
+end
+
+do_main(cliargs, default_cfg)
