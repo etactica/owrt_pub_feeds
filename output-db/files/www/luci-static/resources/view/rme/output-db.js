@@ -17,6 +17,7 @@ return L.view.extend({
 		s.tab("general", _("General Settings"));
 		s.tab("advanced", _("Advanced Settings"));
 		s.tab("queries", _("SQL Queries"), _("The ability to tailor the sql queries used can make it easier to connect to an existing database."));
+		s.tab("schema", _("Database Schema"), _("The database schema itself"))
 		s.tab("statsd", _("StatsD"), _("Metrics on operation can be sent to a listening StatsD server, such as graphite"))
 
         o = s.taboption("general", form.Flag, "enabled", _("Enable this instance"), _("The service will not start until this is checked"));
@@ -69,7 +70,10 @@ return L.view.extend({
 		o.value("flowrate", _("Flow rate (m³/h)"))
 		o.value("pulsecount", _("Pulse count"))
 
-		var originals = {};
+		o = s.taboption("advanced", form.Flag, "schema_create", _("Create Schema"),
+			_("Whether we should attempt to create tables and schemas when we start. Do not use this if you have an existing database."));
+
+		var original_qs = {};
 		var load_q = function(sid, qtype) {
 			var custom_fn = "/etc/output-db/custom." + sid + "." + qtype + ".query";
 			var custom = fs.trimmed(custom_fn);
@@ -77,7 +81,7 @@ return L.view.extend({
 			return Promise.all([custom, def]).then(function(values) {
 				var content = values.find(function(v) {return v.length > 0}) || "Neither custom nor default file could be loaded?";
 				var key = sid + qtype;
-				originals[key] = content;
+				original_qs[key] = content;
 				return content;
 			});
 		}
@@ -85,7 +89,7 @@ return L.view.extend({
 		var save_q = function(sid, qtype, value, oldwrite) {
 			var custom_fn = "/etc/output-db/custom." + sid + "." + qtype + ".query";
 			var key = sid + qtype;
-			if (originals[key] == value) {
+			if (original_qs[key] == value) {
 				// This works, but we still need the date field to get changes applied when it _has_ changed.
 				return;
 			}
@@ -95,31 +99,6 @@ return L.view.extend({
 				return fs.write(custom_fn, value.trim().replace(/\r\n/g, '\n') + '\n');
 			}
 		}
-
-		o = s.taboption("queries", form.DummyValue, "_download_schema", _("Schema details"),
-			_("This is the schema used to populate the Database if selected. It is provided for reference."));
-		o.cfgvalue = function(sid) {
-			var drivername = driver.cfgvalue(sid);
-			var schema_content = fs.read("/usr/share/output-db/schema." + drivername + ".sql");
-			return schema_content.then(function(content) {
-				return E([], [
-					E('a', {
-						'class': 'cbi-button cbi-button-apply',
-						'download': "schema." + sid + ".sql", // this is the filename
-						'href': "data:application/octet-stream;charset=utf-16le;base64," + btoa(content)
-					}, _("Download"))]);
-			}).catch(function(a,b,c) {
-				/*
-				 * when a new section is added, driver.cfgvalue() is empty, so it fails to load anything
-				 * One day, work out how to subscribe to the notifications, but until then, just let them know to save
-				 * their new instance before they try and download the schema
-				 */
-				return E([], [
-					E('button', {
-						'class': 'cbi-button cbi-button-reset btn disabled',
-					}, _("Schema download unavailable until configuration is saved"))]);
-			});
-		};
 
 		var sampledata = {
 			deviceid: "1E1C2EF21CA1",
@@ -180,12 +159,35 @@ return L.view.extend({
 			return save_q(section_id, "data", formvalue);
 		};
 
-		o = s.taboption("advanced", form.Flag, "schema_create", _("Create Schema"),
-			_("Whether we should attempt to create tables and schemas when we start. Do not use this if you have an existing database."));
-
 		o = s.taboption("queries", form.Value, "_lastchange", _("Last change"), _("This field is used internally to ensure changes are saved. Please ignore it"));
 		o.cfgvalue = function(section_id) {
 			return new Date().toISOString();
+		};
+
+		var original_schema = {};
+		o = s.taboption("schema", form.TextValue, "schema", _("Schema itself"))
+		o.rows = 20;
+		o.cfgvalue = function(section_id) {
+			var custom_fn = "/etc/output-db/custom." + section_id + ".schema";
+			var custom = fs.trimmed(custom_fn);
+			var def = fs.trimmed("/usr/share/output-db/schema." + driver.cfgvalue(section_id) + ".sql");
+			return Promise.all([custom, def]).then(function(values) {
+				var content = values.find(function(v) {return v.length > 0}) || _("You must save the new configuration before the default schema can be shown. It depends on the selected database driver");
+				original_schema[section_id] = content;
+				return content;
+			});
+		};
+		o.write = o.remove = function(section_id, formvalue) {
+			var custom_fn = "/etc/output-db/custom." + section_id + ".schema";
+			if (original_schema[section_id] == formvalue) {
+				// This works, but we still need the date field to get changes applied when it _has_ changed.
+				return;
+			}
+			if (typeof(formvalue) === "undefined") {
+				return fs.remove(custom_fn);
+			} else {
+				return fs.write(custom_fn, formvalue.trim().replace(/\r\n/g, '\n') + '\n');
+			}
 		};
 
 		o = s.taboption("statsd", form.Value, "statsd_namespace", _("Namespace for StatsD reporting"))
