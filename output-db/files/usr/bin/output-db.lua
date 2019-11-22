@@ -41,8 +41,20 @@ local default_cfg = {
     DEFAULT_STATSD_PORT = 8125,
     DEFAULT_STATSD_NAMESPACE = "apps.output-db",
     DEFAULT_INTERVAL = 15, -- in minutes
+    DEFAULT_LIMIT_QD = 2000, -- 32 devices * 1 energy value => 15 hours of 15minute data, for instance.
+    DEFAULT_INTERVAL_FLUSH_QD = 5000, -- in milliseconds
     PATH_DEFAULT = "/usr/share/output-db",
     PATH_USER = "/etc/output-db",
+}
+
+local CODES = {
+    MQTT_CONNECT_FAIL = 10,
+    MQTT_SUBSCRIBE_FAIL = 11,
+    MQTT_LOOP_FAIL = 12,
+    DB_CONNECT_FAIL = 20,
+    DB_CREATE_FAIL = 21,
+    DB_QFULL = 22,
+    READ_QUERY = 30,
 }
 
 -- checks and fills in defaults
@@ -55,6 +67,8 @@ local function cfg_validate(c)
     c.statsd_host = c.uci.statsd_host or c.DEFAULT_STATSD_HOST
     c.statsd_port = c.uci.statsd_port or c.DEFAULT_STATSD_PORT
     c.statsd_namespace = c.uci.statsd_namespace or string.format("%s.%s", c.DEFAULT_STATSD_NAMESPACE, c.args.instance)
+    c.limit_qd = tonumber(c.uci.limit_qd) or c.DEFAULT_LIMIT_QD
+    c.interval_flush_qd = tonumber(c.uci.interval_flush_qd) or c.DEFAULT_INTERVAL_FLUSH_QD
     if c.uci.store_types and pl.tablex.find(c.uci.store_types, "_all") then
         c.store_types = nil
     else
@@ -67,7 +81,7 @@ local function cfg_validate(c)
         default, err = pl.file.read(string.format("%s/default.%s.query", c.PATH_DEFAULT, type))
         if not custom and not default then
             ugly.fatal("No custom query and unable to read default either: %s", err)
-            os.exit()
+            os.exit(CODES.READ_QUERY)
         end
         return custom or default
     end
@@ -85,25 +99,35 @@ end
 
 -- Live variables, just kept in a table for sanity of access
 local state = {
-
+    qd = {},
+    last_ts_flush_qd = timestamp_ms(),
 }
 
-local function db_connect()
+--- Connect and return a connection object
+-- or nil, reason
+local function db_connect(cfg)
     local dname = string.format("luasql.%s", cfg.uci.driver)
     local driver = require (dname)
-    if not driver then error("Couldn't load driver for: " .. dname) end
+    if not driver then
+        return nil, "Couldn't load driver for: " .. dname
+    end
     local env = driver[cfg.uci.driver]()
-    if not env then error("Couldn't open environment for driver") end
+    if not env then
+        return nil, "Couldn't open environment for driver"
+    end
     local params = {cfg.uci.dbname, cfg.uci.dbuser, cfg.uci.dbpass, cfg.uci.dbhost}
     if cfg.uci.dbport then table.insert(params, cfg.uci.dbport) end
     return env:connect(table.unpack(params))
 end
 
-local function db_create(conn, driver)
+local function db_create(conn, cfg)
     -- Load the schema for this driver.
+    local driver = cfg.uci.driver
     -- This is convoluted, because mysql doesn't let you run multiple statements in one go.
     local schemaf, ferr = pl.file.read(string.format("%s/schema.%s.sql", cfg.PATH_DEFAULT, driver))
-    if not schemaf then error(string.format("Couldn't load schema for driver: %s: %s", driver, ferr)) end
+    if not schemaf then
+        return nil, string.format("Couldn't load schema for driver: %s: %s", driver, ferr)
+    end
 
     -- split on sql statements, only include full statements. no trailers.
     local schemas = pl.stringx.split(schemaf, ';', pl.stringx.count(schemaf, ';'))
@@ -111,13 +135,12 @@ local function db_create(conn, driver)
         ugly.debug("Attempting to process schema statement <%s>", schema)
         local rows, err = conn:execute(schema)
         if not rows then
-            ugly.crit("Failed to update schema: %s", err)
-            os.exit(1)
+            return nil, string.format("Failed to update schema: %s", err)
         else
             ugly.debug("schema fragment execution successful")
         end
     end
-    ugly.notice("Database schema creation complete")
+    return true
 end
 
 -- Make a unique key for a datapoint
@@ -212,17 +235,8 @@ local function handle_interval_data(topic, jpayload)
     local payload, err = json.decode(jpayload)
     if payload then
         statsd:increment("msgs.data")
-        local ok, serr = conn:execute(make_query_data(key, payload))
-        if ok then
-            ugly.debug("Successfully exported data for key: %s", key)
-            statsd:increment("db.insert-good")
-        else
-            -- FIXME - attempt to store a short queue here?  retry at all? or jsut log and continue?
-            -- CRITICAL FIXME - must either attempt reconnect or abort and let us be restarted!
-            -- This will _not_ recover on it's own.
-            ugly.err("Failed to store data! %s", serr)
-            statsd:increment("db.insert-fail")
-        end
+        -- All data readings are queued so they can be handled the same way
+        table.insert(state.qd, {key=key, payload=payload})
     else
         statsd:increment("msgs.invalid-data")
         ugly.err("Non JSON payload on topic: %s: %s ", topic, err)
@@ -334,14 +348,52 @@ local function mqtt_ON_CONNECT(success, rc, str)
         local mid, code, err = mqtt:subscribe(topic, 0)
         if not mid then
             ugly.err("Aborting, unable to subscribe to: %s: %d %s", topic, code, err)
-            os.exit(1)
+            os.exit(CODES.MQTT_SUBSCRIBE_FAIL)
         end
     end
 end
--- TODO - CAREFUL! you may want to have an onconnect handler that creates the db connection internally.
--- you may want to do this so you can have the threaded interface, but make sure that you do everything on the correct thread.?
+
+local function db_flush_qd(cfg)
+    local ok, err
+    local todo = {} -- will be the new list
+    for _,entry in ipairs(state.qd) do
+        err = "No valid database connection"
+        if conn then
+            ok, err = conn:execute(make_query_data(entry.key, entry.payload))
+        end
+        if ok then
+            ugly.debug("Successfully exported data for key: %s", entry.key)
+            statsd:increment("db.insert-good")
+        else
+            statsd:increment("db.insert-fail")
+            table.insert(todo, entry)
+        end
+    end
+    state.qd = todo
+
+    -- Now, special handling if we couldn't drain our queue
+    if #state.qd > 0 then
+        if #state.qd > cfg.limit_qd then
+            ugly.crit("Too many queued data messages, aborting")
+            os.exit(CODES.DB_QFULL)
+        end
+        -- attempt to reconnect the database, next iteration will attempt to reflush
+        if conn then
+            local closed = conn:close()
+            if not closed then ugly.debug("Connection close failed, probably already closed") end
+        end
+        conn, err = db_connect(cfg)
+        if conn then
+            ugly.notice("Database connection re-established!")
+        else
+            ugly.warning("Couldn't (re)connect to database (qdepth: %d): %s", #state.qd, err)
+        end
+    end
+    statsd:gauge("qd-len", #state.qd)
+end
 
 local function do_main(args, default_cfg)
+    local ok, err
     cfg = default_cfg
     cfg.args = args
     ugly.initialize(string.format("%s.%s", cfg.APP_NAME, args.instance), args.verbose or 4)
@@ -373,29 +425,48 @@ local function do_main(args, default_cfg)
 
     if not mqtt:connect(args.mqtt_host, 1883, 60) then
         ugly.err("Aborting, unable to make MQTT connection")
-        os.exit(1)
+        os.exit(CODES.MQTT_CONNECT_FAIL)
     end
 
     mqtt.ON_DISCONNECT = mqtt_ON_DISCONNECT
     mqtt.ON_MESSAGE = mqtt_ON_MESSAGE
     mqtt.ON_CONNECT = mqtt_ON_CONNECT
 
-    local dbconn, err = db_connect(cfg)
-    if not dbconn then
+    conn, err = db_connect(cfg)
+    -- If we can't connect at startup, just let process monitoring retry later.
+    if not conn then
         ugly.crit(string.format("Couldn't connect: %s", err))
-        os.exit(1)
+        os.exit(CODES.DB_CONNECT_FAIL)
     end
-    conn = dbconn
 
     if cfg.uci.schema_create then
-        db_create(conn, cfg.uci.driver)
+        ok, err = db_create(conn, cfg)
+        if not ok then
+            ugly.crit("Failed to create database on request: %s", err)
+            os.exit(CODES.DB_CREATE_FAIL)
+        end
+        ugly.notice("Database schema creation complete")
     else
         ugly.notice("Assuming database is compatible with validation. If you get errors, check your queries or schemas!");
     end
 
     ugly.notice("Application startup complete")
-    mqtt:loop_forever()
-    ugly.notice("Explicitly requested termination")
+
+    while true do
+        local rc, code, mqerr = mqtt:loop()
+        if not rc then
+            -- let process monitoring handle this. losing our messages coming in is ~fatal.
+            ugly.warning("mqtt loop failed, exiting: %d %s", code, mqerr)
+            os.exit(CODES.MQTT_LOOP_FAIL)
+        end
+
+        -- Metadata isn't updated very often, and is sent on every start anyway, so we don't queue metadata
+        local now = timestamp_ms()
+        if now - state.last_ts_flush_qd > cfg.interval_flush_qd then
+            db_flush_qd(cfg)
+            state.last_ts_flush_qd = now
+        end
+    end
 end
 
 do_main(cliargs, default_cfg)

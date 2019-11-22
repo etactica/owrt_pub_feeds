@@ -73,6 +73,22 @@ return L.view.extend({
 		o = s.taboption("advanced", form.Flag, "schema_create", _("Create Schema"),
 			_("Whether we should attempt to create tables and schemas when we start. Do not use this if you have an existing database."));
 
+		o = s.taboption("advanced", form.Value, "interval_flush_qd", _("How often to attempt Database Flush and/or reconnect"),
+			_("This is the rate (in milliseconds) at which our message queue will be flushed to the database, and "
+			+ "how often we will attempt to reconnect if the queue flush fails. You should't have to change this"));
+		o.datatype = "range(5000,300000)";
+		o.placeholder = 5000;
+
+		o = s.taboption("advanced", form.Value, "limit_qd", _("Limit on queued data messages before abort"),
+			_("This is how many messages will be queued and retried before the service will abort."
+			+ "<p>Note, the service will be restarted periodically if it has exited, this is just how many messages to attempt "
+			+ "to keep in memory while we wait for the database to come back.  A higher number allows your database to be "
+			+ "offline for longer, but results in increased memory usage of your gateway, which may interfere with other services"
+			)
+		);
+		o.datatype = "uinteger";
+		o.placeholder = 2000;
+
 		var original_qs = {};
 		var load_q = function(sid, qtype) {
 			var custom_fn = "/etc/output-db/custom." + sid + "." + qtype + ".query";
