@@ -7,10 +7,9 @@ CFG=output-db
 # Create an example file if it doesn't exist already.
 touch /etc/config/$CFG
 uci -q batch <<-EOF >/dev/null 
-		set $CFG.default=instance
-		set $CFG.default.enabled=0
-		set $CFG.default.driver=postgres
-		set $CFG.default.connection="magic connection string"
+		set $CFG.mydatasink=instance
+		set $CFG.mydatasink.enabled=0
+		set $CFG.mydatasink.driver=postgres
 		commit $CFG
 EOF
 
