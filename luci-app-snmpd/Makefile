@@ -5,7 +5,6 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=luci-app-snmpd
 PKG_VERSION:=1
 PKG_RELEASE:=1
-PKG_ARCH:=all
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -16,6 +15,7 @@ define Package/$(PKG_NAME)
     TITLE:=LuCI support for net-snmp's snmpd configuration
     URL:=http://www.net-snmp.org
     DEPENDS:= +luci-base
+	PKGARCH:=all
     #DEPENDS:=+snmpd
     # or on snmpd-static?
 endef

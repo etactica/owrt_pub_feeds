@@ -5,7 +5,6 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=output-thingsboard
 PKG_VERSION:=1.0
 PKG_RELEASE:=1
-PKG_ARCH:=all
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -14,6 +13,7 @@ define Package/$(PKG_NAME)
     CATEGORY:=Remake
     TITLE:=$(PKG_NAME) - message output daemon
     URL:=http://github.com/etactica/owrt_pub_feeds/output-thingsboard
+    PKGARCH:=all
 endef
 
 define Package/$(PKG_NAME)/description

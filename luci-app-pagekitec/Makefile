@@ -5,7 +5,6 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=luci-app-pagekitec
 PKG_VERSION:=1.3
 PKG_RELEASE:=1
-PKG_ARCH:=all
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -16,6 +15,7 @@ define Package/$(PKG_NAME)
     SUBMENU:=3. Applications
     TITLE:=LuCI support for pagekite configuration
     URL:=http://www.pagekite.net
+    PKGARCH:=all
     DEPENDS:=+luci-base +pagekitec
 endef
 

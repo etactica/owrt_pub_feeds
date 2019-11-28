@@ -8,7 +8,6 @@ include $(INCLUDE_DIR)/version.mk
 PKG_NAME:=etactica-open-translations
 PKG_VERSION:=1.0
 PKG_RELEASE:=1
-PKG_ARCH:=all
 
 include $(INCLUDE_DIR)/package.mk
 
