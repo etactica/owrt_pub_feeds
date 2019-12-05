@@ -49,7 +49,7 @@ add_instance() {
 		rm -f /etc/cron.d/daily/republish_cabinet_model.lua
 		monit unmonitor output-klappir
 	else
-		[ -z "$username" ] && { echo "username is required!"; exit 1;}
+		[ -z "$username" ] && { echo "username is required!"; return 1;}
 		assert_ntp_up;
 		echo "Enabling Klappir"
 		add_output $username $address $gateid

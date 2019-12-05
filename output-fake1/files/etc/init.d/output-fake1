@@ -46,8 +46,8 @@ add_instance() {
 	if [ $enabled -eq 0 ]; then
 		echo "Disabling Fake1"
 	else
-		[ -z "$username" ] && { echo "username is required!"; exit 1;}
-		[ -z "$password" ] && { echo "password is required!"; exit 1;}
+		[ -z "$username" ] && { echo "username is required!"; return 1;}
+		[ -z "$password" ] && { echo "password is required!"; return 1;}
 		echo "Enabling Fake1"
 		add_output $username $password $address
 	fi

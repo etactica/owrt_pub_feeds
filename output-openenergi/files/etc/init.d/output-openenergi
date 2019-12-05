@@ -49,8 +49,8 @@ add_instance() {
 		echo "Disabling Open Energi Stream"
 		monit unmonitor output-openenergi
 	else
-		[ -z "$deviceid" ] && { echo "deviceid is required!"; exit 1;}
-		[ -z "$sastoken" ] && { echo "sastoken is required!"; exit 1;}
+		[ -z "$deviceid" ] && { echo "deviceid is required!"; return 1;}
+		[ -z "$sastoken" ] && { echo "sastoken is required!"; return 1;}
 		echo "Enabling Open Energi Stream"
 		add_output "$deviceid" "$sastoken" "$address"
 		procd_open_instance
