@@ -3,13 +3,13 @@ START=85
 USE_PROCD=1
 
 append_arg() {
-    local cfg="$1"
-    local opt="$2"
-    local var="$3"
-    local def="$4"
-    local val
-    config_get val "$cfg" "$var"
-    [ -n "$val" -o -n "$def" ] && procd_append_param command "$opt" "${val:-$def}"
+	local cfg="$1"
+	local opt="$2"
+	local var="$3"
+	local def="$4"
+	local val
+	config_get val "$cfg" "$var"
+	[ -n "$val" -o -n "$def" ] && procd_append_param command "$opt" "${val:-$def}"
 }
 
 add_instance() {
@@ -35,7 +35,7 @@ add_instance() {
 }
 
 start_service() {
-    config_load output-dexma && config_foreach add_instance general
+	config_load output-dexma && config_foreach add_instance general
 }
 
 service_triggers()
