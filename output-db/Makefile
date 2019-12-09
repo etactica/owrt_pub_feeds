@@ -22,6 +22,8 @@ Contains configs and UI for connecting an eTactica EG to a "generic"
 SQL server.  Allows some tuning of the sql statements used for various operations.
 Supports writing both cabinet metadata and aggregation data.
 
+Note: this requires luasql, so you must include a suitable backend as well.
+
 endef
 
 define Package/$(PKG_NAME)/conffiles
