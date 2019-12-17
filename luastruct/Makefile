@@ -1,19 +1,12 @@
-#
-# Copyright (C) 2009-2013 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
-
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luastruct
-PKG_VERSION:=0.2
+PKG_VERSION:=0.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=struct-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.inf.puc-rio.br/~roberto/struct
-PKG_MD5_SUM:=99384bf1f54457ec9f796ad0b539d19c
+PKG_HASH:=1669dda189f87cf8b180652411a9974d9327367f762c290962fa0d89530707f6
 # Workaround original tarball not having a parent directory
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_UNPACK:=gzip -dc $(DL_DIR)/$(PKG_SOURCE) | $(TAR) -C $(PKG_BUILD_DIR) -xf -
@@ -27,7 +20,7 @@ define Package/$(PKG_NAME)
   TITLE:=LuaStruct
   URL:=http://www.inf.puc-rio.br/~roberto/struct/
   DEPENDS:=+lua
-  MAINTAINER:=Karl Palsson <karlp@remake.is>
+  MAINTAINER:=Karl Palsson <karlp@etactica.com>
 endef
 
 define Package/$(PKG_NAME)/description
