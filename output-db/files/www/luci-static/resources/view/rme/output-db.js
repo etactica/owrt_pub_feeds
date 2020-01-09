@@ -95,7 +95,10 @@ return L.view.extend({
 			var custom = fs.trimmed(custom_fn);
 			var def = fs.trimmed("/usr/share/output-db/default." + qtype + ".query");
 			return Promise.all([custom, def]).then(function(values) {
-				var content = values.find(function(v) {return v.length > 0}) || "Neither custom nor default file could be loaded?";
+				// priority list
+				var content = _("Neither custom nor default file could be loaded?");
+				if (values[1].length > 0) { content = values[1]}
+				if (values[0].length > 0) { content = values[0]}
 				var key = sid + qtype;
 				original_qs[key] = content;
 				return content;
@@ -188,7 +191,10 @@ return L.view.extend({
 			var custom = fs.trimmed(custom_fn);
 			var def = fs.trimmed("/usr/share/output-db/schema." + driver.cfgvalue(section_id) + ".sql");
 			return Promise.all([custom, def]).then(function(values) {
-				var content = values.find(function(v) {return v.length > 0}) || _("You must save the new configuration before the default schema can be shown. It depends on the selected database driver");
+				// priority list
+				var content = _("You must save the new configuration before the default schema can be shown. It depends on the selected database driver");
+				if (values[1].length > 0) { content = values[1]}
+				if (values[0].length > 0) { content = values[0]}
 				original_schema[section_id] = content;
 				return content;
 			});
