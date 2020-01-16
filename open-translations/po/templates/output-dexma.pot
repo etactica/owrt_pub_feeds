@@ -1,0 +1,28 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: ../output-dexma/luasrc/model/cbi/rme/output-dexma.lua:33
+msgid "Aka, password. this is required to be able to publish to the stream"
+msgstr ""
+
+#: ../output-dexma/luasrc/model/cbi/rme/output-dexma.lua:28
+msgid "Enable this output service"
+msgstr ""
+
+#: ../output-dexma/luasrc/model/cbi/rme/output-dexma.lua:30
+msgid "ID for your stream"
+msgstr ""
+
+#: ../output-dexma/luasrc/model/cbi/rme/output-dexma.lua:31
+msgid ""
+"Is the Identifier (MAC address) of the gateway or the unique key that "
+"identifies the datasource which the data belongs to"
+msgstr ""
+
+#: ../output-dexma/luasrc/model/cbi/rme/output-dexma.lua:32
+msgid "The authentication token for every gateway"
+msgstr ""
+
+#: ../output-dexma/luasrc/model/cbi/rme/output-dexma.lua:29
+msgid "The service will not start until this is checked"
+msgstr ""

@@ -3,6 +3,7 @@ set -e
 # Run this to regenerate your pot files...
 # FIXME really need to get luci-app-mosquitto upstreamed!
 APPS="luci-app-mosquitto luci-app-snmpd output-klappir output-senseone output-statsd"
+APPS="${APPS} output-dexma output-db output-thingsboard"
 
 for x in ${APPS}; do
 	# you need i18-scan.pl from openwrt-19.07 or later.

@@ -1,0 +1,54 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:29
+msgid "Access Token"
+msgstr ""
+
+#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:25
+msgid "Address"
+msgstr ""
+
+#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:21
+msgid "Configuration"
+msgstr ""
+
+#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:23
+msgid "Enable this output service"
+msgstr ""
+
+#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:27
+msgid "Enable transport security (TLS/SSL)"
+msgstr ""
+
+#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:30
+msgid "Provided by ThingsBoard, identifies this device"
+msgstr ""
+
+#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:26
+msgid ""
+"Provided by ThingsBoard, the host name of your thingsboard, eg: iot.example."
+"org or iot.example.com:8883"
+msgstr ""
+
+#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:24
+msgid "The service will not start until this is checked"
+msgstr ""
+
+#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:28
+msgid ""
+"This depends on how your ThingsBoard administrator has configured your system"
+msgstr ""
+
+#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:8
+msgid ""
+"This service handles bridging eTactica live stream data, and posting it to "
+"your a ThingsBoard instance. <h4>Before you start</h4> You should "
+"<em>already</em> have your <strong>Access token</strong> for your "
+"ThingsBoard device.. <h4>About ThingsBoard <img src=\"/resources/images/TB-"
+"logo.png\" height=\"31\" style=\"vertical-align: middle\" alt=\"ThingsBoard "
+"logo\"/></H4> <p/> From their website: <blockquote> ThingsBoard IoT Platform "
+"- Device management, data collection, processing and visualization for your "
+"IoT solution </blockquote> <p/> <a href=\"http://www.thingsboard.io/\" "
+"target=\"_blank\">Visit their site for more information</a>"
+msgstr ""

@@ -1,0 +1,36 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: ../output-statsd/luasrc/model/cbi/rme/output-statsd.lua:13
+msgid "Configuration"
+msgstr ""
+
+#: ../output-statsd/luasrc/model/cbi/rme/output-statsd.lua:15
+msgid "Enable this output service"
+msgstr ""
+
+#: ../output-statsd/luasrc/model/cbi/rme/output-statsd.lua:18
+msgid "Hostname of StatsD server to post to"
+msgstr ""
+
+#: ../output-statsd/luasrc/model/cbi/rme/output-statsd.lua:20
+msgid "Normally standard"
+msgstr ""
+
+#: ../output-statsd/luasrc/model/cbi/rme/output-statsd.lua:19
+msgid "The StatsD listen port"
+msgstr ""
+
+#: ../output-statsd/luasrc/model/cbi/rme/output-statsd.lua:17
+msgid "The StatsD server hostname"
+msgstr ""
+
+#: ../output-statsd/luasrc/model/cbi/rme/output-statsd.lua:16
+msgid "The service will not start until this is checked"
+msgstr ""
+
+#: ../output-statsd/luasrc/model/cbi/rme/output-statsd.lua:8
+msgid ""
+"This service handles bridging eTactica live stream data, and posting "
+"<em>all</em> live variables to a statsd server. <h4>More information</H4>"
+msgstr ""

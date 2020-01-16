@@ -4,8 +4,10 @@
 -- Licensed under your choice of Apache2, ISC, MIT, or BSD 2 clause
 --]]
 
+local _ = luci.i18n.translate
+
 m = Map("output-dexma", "Message Output Daemon - Dexma",
-  [[This service handles parsing the eTactica live stream data, and posting it to your DEXCell account.
+  _([[This service handles parsing the eTactica live stream data, and posting it to your DEXCell account.
  <h4>Before you start</h4>
   You should have created a virtual gateway, and obtained your gateway Identifier/Token security pairs.
    Please see the following Dexma guides on setting these up
@@ -21,15 +23,15 @@ m = Map("output-dexma", "Message Output Daemon - Dexma",
    is cloud-based and hardware-neutral. It combines advanced monitoring, analysis, alerts and reporting in an easy-to-use SaaS solution.
    </blockquote>
    <a href="http://www.dexmatech.com/software/" target="_blank">Visit their site for more information</a>
- ]])
+ ]]))
 
-s = m:section(TypedSection, "general", "Configuration")
+s = m:section(TypedSection, "general", _("Configuration"))
 s.anonymous = true
-s:option(Flag, "enabled", "Enable this output service",
-        [[The service will not start until this is checked]])
-s:option(Value, "source_key", "ID for your stream",
-	[[Is the Identifier (MAC address) of the gateway or the unique key that identifies the datasource which the data belongs to]])
-s:option(Value, "dexcell_source_token", "The authentication token for every gateway",
-	[[Aka, password. this is required to be able to publish to the stream]])
+s:option(Flag, "enabled", _("Enable this output service"),
+        _([[The service will not start until this is checked]]))
+s:option(Value, "source_key", _("ID for your stream"),
+	_([[Is the Identifier (MAC address) of the gateway or the unique key that identifies the datasource which the data belongs to]]))
+s:option(Value, "dexcell_source_token", _("The authentication token for every gateway"),
+	_([[Aka, password. this is required to be able to publish to the stream]]))
 
 return m

@@ -1,0 +1,284 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:62
+msgid "Active Energy"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:18
+msgid "Advanced Settings"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:61
+msgid "All types seen"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:73
+msgid "Create Schema"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:65
+msgid "Current"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:57
+msgid "Data types to store"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:20
+msgid "Database Schema"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:27
+msgid "Database driver"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:41
+msgid "Database hostname"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:31
+msgid "Database name"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:37
+msgid "Database password"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:45
+msgid "Database port"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:34
+msgid "Database username"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:60
+msgid "Default (Active Energy)"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:49
+msgid "Default is 15 minute, but you can select finer/coarser grained"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:23
+msgid "Enable this instance"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:70
+msgid "Flow rate (m³/h)"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:67
+msgid "Frequency"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:17
+msgid "General Settings"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:41
+msgid "Hostname of your database server"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:219
+msgid "Hostname to send stats"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:76
+msgid "How often to attempt Database Flush and/or reconnect"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:12
+msgid "Instances"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:49
+msgid "Interval to monitor and forward"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:181
+msgid "Last change"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:82
+msgid "Limit on queued data messages before abort"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:21
+msgid ""
+"Metrics on operation can be sent to a listening StatsD server, such as "
+"graphite"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:29
+msgid "MySQL/MariaDB"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:215
+msgid "Namespace for StatsD reporting"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:99
+msgid "Neither custom nor default file could be loaded?"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:69
+msgid "Net Flow (m³)"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:10
+msgid "Output DB"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:10
+msgid ""
+"Output-DB offers a basic method of writing basic interval data to a given "
+"generic SQL database"
+msgstr ""
+
+#: ../output-db/luasrc/controller/rme/output-db.lua:7
+msgid "Output-Database"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:45
+msgid "Port your database server runs on. You can normally leave this blank"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:28
+msgid "Postgres"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:66
+msgid "Power Factor"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:71
+msgid "Pulse count"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:164
+msgid "Query for data writing"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:148
+msgid "Query for inserting metadata"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:132
+msgid "Query for updating metadata"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:63
+msgid "Reactive Energy"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:19
+msgid "SQL Queries"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:187
+msgid "Schema itself"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:21
+msgid "StatsD"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:68
+msgid "Temperature"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:19
+msgid ""
+"The ability to tailor the sql queries used can make it easier to connect to "
+"an existing database."
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:20
+msgid "The database schema itself"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:31
+msgid "The name of the database you wish to connect to"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:149
+msgid ""
+"The parameterized sql query that will be used to create a new metadata "
+"entry. This is used to ensure only a single entry for each unique point "
+"exists."
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:165
+msgid "The parameterized sql query that will be used to insert data."
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:133
+msgid ""
+"The parameterized sql query that will be used to update metadata. This will "
+"be used whenever new metadata arrives."
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:37
+msgid "The password for your database user"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:23
+msgid "The service will not start until this is checked"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:34
+msgid "The username to use when connecting to the database"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:181
+msgid ""
+"This field is used internally to ensure changes are saved. Please ignore it"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:83
+msgid ""
+"This is how many messages will be queued and retried before the service will "
+"abort."
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:77
+msgid ""
+"This is the rate (in milliseconds) at which our message queue will be "
+"flushed to the database, and"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:224
+msgid "UDP port to send stats"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:64
+msgid "Voltage"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:27
+msgid "What sort of database are we connecting to?"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:74
+msgid ""
+"Whether we should attempt to create tables and schemas when we start. Do not "
+"use this if you have an existing database."
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:13
+msgid ""
+"You can run multiple instances of this service. Choose a name and click "
+"'Add' to make a new instance"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:195
+msgid ""
+"You must save the new configuration before the default schema can be shown. "
+"It depends on the selected database driver"
+msgstr ""
+
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:46
+msgid "default"
+msgstr ""

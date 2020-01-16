@@ -4,7 +4,7 @@
 module("luci.controller.rme.output-db", package.seeall)
 
 function index()
-    entry({"admin", "services", "output-db"}, view("rme/output-db"), "Output-Database", 20)
+    entry({"admin", "services", "output-db"}, view("rme/output-db"), _("Output-Database"), 20)
     entry({"admin", "services", "output-db", "diag"}, call("action_diag"), nil)
 end
 

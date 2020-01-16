@@ -1,0 +1,55 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:31
+msgid "Configuration"
+msgstr ""
+
+#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:33
+msgid "Enable this output service"
+msgstr ""
+
+#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:40
+msgid "Provided by SenseOne, normally standard"
+msgstr ""
+
+#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:36
+#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:38
+msgid "Provided by SenseOne, unique for your account"
+msgstr ""
+
+#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:37
+msgid "The MQTT bridge password"
+msgstr ""
+
+#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:35
+msgid "The MQTT bridge username"
+msgstr ""
+
+#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:39
+msgid "The MQTT broker address"
+msgstr ""
+
+#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:34
+msgid "The service will not start until this is checked"
+msgstr ""
+
+#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:8
+msgid ""
+"This service handles bridging eTactica live stream data, and posting it to "
+"your SenseOne account. <h4>Before you start</h4> You should <em>already</em> "
+"have an SenseOne account. <h4>More information</H4> <p/> From their website: "
+"<blockquote> <p>At SenseOne, our vision is to deliver IoT solutions that "
+"exceed customer’s expectations. <p>We came to work on the Internet of Things "
+"from on the ground challenges to connect assets and systems inside "
+"commercial and industrial buildings. <p>From a business standpoint, we have "
+"created an IoT middleware platform that is capable of reducing the lifecycle "
+"cost and effort of multiple integrations that are central to any IoT "
+"implementation. <p>From a technical standpoint, we have focused on "
+"interoperability requirements and developed a scalable IoT middleware layer "
+"for integrating heterogeneous systems and enabling connected environments. </"
+"blockquote> <p/> <a href=\"https://www.senseone.io/\" target=\"_blank\"> "
+"<img src=\"/resources/images/senseone.png\" height=\"31\" style=\"vertical-"
+"align: middle\" alt=\"SenseOne logo\"/><br> Visit their site for more "
+"information </a> </p>"
+msgstr ""
