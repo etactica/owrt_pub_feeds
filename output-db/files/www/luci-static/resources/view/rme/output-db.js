@@ -160,7 +160,10 @@ return L.view.extend({
 			return save_q(section_id, "metadata-insert", formvalue);
 		};
 
-		var sampledata = {"mean":0,"gateid":"C4930003B679","max":0,"ts_start":1574259720000,"pname":"1E1C2EF21CA1/current/5","ts_ends":"2019-11-20T14:23:00","min":0,"interval":60,"ts_end":1574259780000,"max_ts":1574259721019,"min_ts":1574259721019,"selected":0,"stddev":0,"n":29}
+		var sampledata = {"mean":0,"gateid":"C4930003B679","max":0,"ts_start":1574259720000,"pname":"1E1C2EF21CA1/current/5","ts_ends":"2019-11-20T14:23:00",
+			"min":0,"interval":60,"ts_end":1574259780000,"max_ts":1574259721019,"min_ts":1574259721019,"selected":0,"stddev":0,"n":29,
+			"device": "1E1C2EF21CA1", "dtype": "current", "channel": 5
+			}
 		o = s.taboption("queries", form.TextValue, "query_write_data", _("Query for data writing"),
 			_("The parameterized sql query that will be used to insert data. "
 			+ "Variables such as <code>$variable</code> can be used, from the following snippet.<p><pre>"

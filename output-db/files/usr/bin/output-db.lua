@@ -193,7 +193,9 @@ end
 
 -- return a properly formatted "safe" sql to execute based on the data payload
 -- NOTE: switching to luadbi and parameterized queries will dramatically change how the templates would work!
-local function make_query_data(key, payload)
+local function make_query_data(entry)
+    local key = entry.key
+    local payload = entry.payload
     -- Convert our timestamp into an iso8601 datestring, so that it parses natively into different database backends
     -- (we don't care about milliseconds on minute level interval reporting)
     local ts_end = math.floor(payload.ts_end / 1000)
@@ -210,6 +212,9 @@ local function make_query_data(key, payload)
     payload.ts_ends = ts_str
     payload.period = cfg.interval * 60
     payload.gateid = cfg.gateid
+    for k,v in pairs(entry.context) do
+        payload[k] = v
+    end
 
     local t = pl.text.Template(cfg.template_data)
     return t:substitute(payload)
@@ -235,8 +240,13 @@ local function handle_interval_data(topic, jpayload)
     local payload, err = json.decode(jpayload)
     if payload then
         statsd:increment("msgs.data")
+        local extra_context = {
+            device = device,
+            dtype = dtype,
+            channel = channel,
+        }
         -- All data readings are queued so they can be handled the same way
-        table.insert(state.qd, {key=key, payload=payload})
+        table.insert(state.qd, {key=key, payload=payload, context=extra_context})
     else
         statsd:increment("msgs.invalid-data")
         ugly.err("Non JSON payload on topic: %s: %s ", topic, err)
@@ -359,7 +369,7 @@ local function db_flush_qd(cfg)
     for _,entry in ipairs(state.qd) do
         err = "No valid database connection"
         if conn then
-            ok, err = conn:execute(make_query_data(entry.key, entry.payload))
+            ok, err = conn:execute(make_query_data(entry))
         end
         if ok then
             ugly.debug("Successfully exported data for key: %s", entry.key)
