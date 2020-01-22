@@ -23,7 +23,7 @@ add_output() {
 	uci -q batch <<-EOF
 		set mosquitto.$newcfg.connection=klappir
 		set mosquitto.$newcfg.address="$address"
-		set mosquitto.$newcfg.cleansession=1
+		set mosquitto.$newcfg.cleansession=0
 		set mosquitto.$newcfg.attempt_unsubscribe=false
 		set mosquitto.$newcfg.notifications_local_only=true
 		set mosquitto.$newcfg.try_private=false
