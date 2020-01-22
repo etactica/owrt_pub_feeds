@@ -8,7 +8,7 @@ remove_output() {
 	local cfg="$1"
 	local connection
 	config_get connection "$cfg" connection
-	[ -n "$connection" -a "$connection" = "senseone" ] && {
+	[ -n "$connection" ] && [ "$connection" = "senseone" ] && {
 		uci delete mosquitto.$cfg
 	}
 }
@@ -38,7 +38,7 @@ add_output() {
 		add_list mosquitto.$newcfg.topic="/cabinet/# out 1 status/local/json $username/status"
 EOF
 	[ -n "$interval" ] && uci -q add_list mosquitto.$newcfg.topic="/interval/$interval/# out 1 status/local/json $username/status"
-	[ -n "$include_live" ] && [ "$include_live" == "true" ] && uci -q add_list mosquitto.$newcfg.topic="/device/# out 1 status/local/json $username/status"
+	[ -n "$include_live" ] && [ "$include_live" = "true" ] && uci -q add_list mosquitto.$newcfg.topic="/device/# out 1 status/local/json $username/status"
 	uci -q commit
 }
 
