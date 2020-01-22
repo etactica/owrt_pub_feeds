@@ -7,7 +7,7 @@ case "$ACTION" in
 		/etc/init.d/$APP start
 		;;
 	unsync)
-		logger -t $APP "Stopping on NTP unsync event"
-		/etc/init.d/$APP stop
+		logger -t $APP "NTP sync lost, timestamps will slowly drift!"
+		# Don't turn _off_ anything here, otherwise you lose all chance of offline buffering!
 		;;
 esac
