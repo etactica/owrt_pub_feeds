@@ -15,14 +15,15 @@ m = Map("output-dexma", "Message Output Daemon - Dexma",
    <li><a href="http://support.dexmatech.com/customer/portal/articles/372837-howto-add-and-configure-a-virtual-gateway">Create a virtual gateway</a>
    <li><a href="http://support.dexmatech.com/customer/portal/articles/1745489-howto-obtain-mac-and-token-from-a-gateway">Obtain gateway ID/Token</a>
    </ul>
-   <h4>About Dexma <img src="/resources/images/dexma.png" width="51" height="42" style="vertical-align: middle"/></h4>
+   <h4>About Dexma <img src="/resources/images/dexma.png" width="156" height="65" style="vertical-align: middle"/></h4>
    From their website:
    <blockquote>
-   DEXMA provides flexible, cost-effective and integrated software and hardware tools that enable full
-   visibility of energy consumption and costs. Our intelligent energy management suite, DEXCell Energy Manager,
-   is cloud-based and hardware-neutral. It combines advanced monitoring, analysis, alerts and reporting in an easy-to-use SaaS solution.
+   DEXMA Energy Intelligence is a leading provider of energy management solutions for buildings in the commercial and
+   industrial sectors. The 100% hardware-neutral, cloud SaaS tool - DEXMA Platform - combines Big Data analytics
+   with energy efficiency to help businesses and public administration Detect, Analyse and Control energy consumption,
+   become more sustainable and optimise project investment.
    </blockquote>
-   <a href="http://www.dexmatech.com/software/" target="_blank">Visit their site for more information</a>
+   <a href="http://www.dexma.com/" target="_blank">Visit their site for more information</a>
  ]]))
 
 s = m:section(TypedSection, "general", _("Configuration"))
