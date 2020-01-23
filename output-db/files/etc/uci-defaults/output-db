@@ -2,6 +2,10 @@
 # Karl Palsson, <karlp@etactica.com> Sept 2018
 
 CFG=output-db
+
+# This directory is where we keep custom queries
+[ -d /etc/$CFG ] || mkdir -p /etc/$CFG
+
 [ -f /etc/config/$CFG ] && exit 0
 
 # Create an example file if it doesn't exist already.
