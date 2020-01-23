@@ -28,7 +28,7 @@ return L.view.extend({
 		driver.value('postgres', _('Postgres'));
 		driver.value('mysql', _('MySQL/MariaDB'));
 
-		o = s.taboption("general", form.Value, "dbname", _("Database name"), _("The name of the database you wish to connect to"))
+		o = s.taboption("general", form.Value, "dbname", _("Database name"), _("The name of the database you wish to connect to. <br>For postgres, this can also be a full connection string."))
 		o.placeholder = "datasink"
 
 		o = s.taboption("general", form.Value, "dbuser", _("Database username"), _("The username to use when connecting to the database"))
