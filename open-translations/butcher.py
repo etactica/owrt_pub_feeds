@@ -6,7 +6,7 @@ def butcher(inf, outf):
     print("Butchering from {} to {}".format(inf, outf))
     po = polib.pofile(inf)
     for entry in po:
-        entry.msgstr = "x"*len(entry.msgid)
+        entry.msgstr = ' '.join(["x"*len(x) for x in entry.msgid.split()])
     po.save(outf)
 
 def main():
