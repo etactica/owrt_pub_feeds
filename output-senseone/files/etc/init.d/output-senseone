@@ -8,9 +8,7 @@ remove_output() {
 	local cfg="$1"
 	local connection
 	config_get connection "$cfg" connection
-	[ -n "$connection" ] && [ "$connection" = "senseone" ] && {
-		uci delete mosquitto.$cfg
-	}
+	[ "$connection" = "senseone" ] && uci -q delete mosquitto.$cfg
 }
 
 add_output() {
