@@ -38,9 +38,8 @@ add_output() {
 		add_list mosquitto.$newcfg.topic="/cabinet/# out 1 status/local/json $username/status"
 EOF
 	[ -n "$interval" ] && uci -q add_list mosquitto.$newcfg.topic="/interval/$interval/# out 1 status/local/json $username/status"
-	[ -n "$include_live" ] && [ "$include_live" = "true" ] && uci -q add_list mosquitto.$newcfg.topic="/device/# out 1 status/local/json $username/status"
-	# do _not_ replace with &&!
-	[ -n "$insecure" -a "$insecure" = "true" ] || uci -q set mosquitto.$newcfg.cafile=/etc/ssl/certs/senseonetech-mqtt.crt
+	[ "$include_live" = "true" ] && uci -q add_list mosquitto.$newcfg.topic="/device/# out 1 status/local/json $username/status"
+	[ "$insecure" = "true" ] || uci -q set mosquitto.$newcfg.cafile=/etc/ssl/certs/senseonetech-mqtt.crt
 	uci -q commit
 }
 
