@@ -19,6 +19,7 @@ add_output() {
 	local address="$3"
 	local interval="$4"
 	local include_live="$5"
+	local insecure="$6"
 	local gateid
 	gateid=$(uci -q get system.@system[0].rme_stablemac)
 	local newcfg
@@ -32,13 +33,14 @@ add_output() {
 		set mosquitto.$newcfg.try_private=false
 		set mosquitto.$newcfg.remote_username="$username"
 		set mosquitto.$newcfg.remote_password="$password"
-		set mosquitto.$newcfg.cafile=/etc/ssl/certs/senseonetech-mqtt.crt
 		add_list mosquitto.$newcfg.topic="/alert/new/# out 1 status/local/json $username/status"
 		add_list mosquitto.$newcfg.topic="/alert/expired/# out 1 status/local/json $username/status"
 		add_list mosquitto.$newcfg.topic="/cabinet/# out 1 status/local/json $username/status"
 EOF
 	[ -n "$interval" ] && uci -q add_list mosquitto.$newcfg.topic="/interval/$interval/# out 1 status/local/json $username/status"
 	[ -n "$include_live" ] && [ "$include_live" = "true" ] && uci -q add_list mosquitto.$newcfg.topic="/device/# out 1 status/local/json $username/status"
+	# do _not_ replace with &&!
+	[ -n "$insecure" -a "$insecure" = "true" ] || uci -q set mosquitto.$newcfg.cafile=/etc/ssl/certs/senseonetech-mqtt.crt
 	uci -q commit
 }
 
@@ -66,7 +68,7 @@ add_instance() {
 				add_output $username $password $address $interval true
 				;;
 			marel_iceland)
-				add_output $username $password $address "" true
+				add_output $username $password $address "" true true
 				;;
 			*)
 				add_output $username $password $address $interval
