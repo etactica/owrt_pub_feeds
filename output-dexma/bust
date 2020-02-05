@@ -1,0 +1,26 @@
+#!/bin/bash
+# Must use bash, we are using jobs!
+function testcon() {
+    curl -sk https://localhost:8912/ -o /dev/null
+    echo $?
+}
+
+function cleanup() {
+	kill %1
+}
+
+trap cleanup SIGHUP SIGINT SIGTERM
+
+if [ $# -ge 1 ] && [ $1 == "quiet" ]; then
+    shift
+    python3 SimpleHTTPSServer.py -k server.pem -p 8912 > /dev/null 2>&1 &
+else
+    python3 SimpleHTTPSServer.py -k server.pem -p 8912 &
+fi
+while [ "$(testcon)" -gt 0 ]; do
+    printf "Sleeping until server is up...\n"
+    sleep 0.2
+done
+busted --helper=spec/helper.lua $*
+cleanup
+
