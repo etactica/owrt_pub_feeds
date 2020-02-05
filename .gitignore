@@ -1,0 +1,7 @@
+# Ignore python virtualenvs
+.env2
+.env3
+.venv
+
+# IDE project files
+*.iml
