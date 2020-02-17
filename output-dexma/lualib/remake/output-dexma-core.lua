@@ -408,13 +408,13 @@ local function flush_qd()
 			if c == 200 then
 				statsd:increment("post-success")
 				ugly.info("Posted %d readings for ts: %s", #data.values, ts)
-				table.insert(state.ok.posts, 1,{ts=ts, ok=true, n=#data.values})
+				table.insert(state.ok.posts, 1,{at=timestamp_ms(ts), ts=ts, ok=true, n=#data.values})
 			else
 				statsd:increment("post-failure")
 				data.retries = data.retries + 1
 				ugly.warning("Dexma POST returned failure (%d): queueing for retry #%d: %s", c, data.retries, body)
 				table.insert(remaining, data)
-				table.insert(state.ok.posts, 1,{ts=ts, ok=false, err=c, retry=data.retries})
+				table.insert(state.ok.posts, 1,{at=timestamp_ms(ts), ts=ts, ok=false, err=c, retry=data.retries})
 			end
 		else
 			-- This would normally indicate a _client_ side error!
@@ -422,7 +422,7 @@ local function flush_qd()
 			data.retries = data.retries + 1
 			ugly.err("Failed to make http post at all?! %s: queuing for retry #%d", c, data.retries)
 			table.insert(remaining, data)
-			table.insert(state.ok.posts, 1,{ts=ts, ok=false, err=c, retry=data.retries})
+			table.insert(state.ok.posts, 1,{at=timestamp_ms(ts), ts=ts, ok=false, err=c, retry=data.retries})
 		end
 		-- TODO - potentially, add a backoff here for a bit of jitter in http posting?
 		-- This will attempt each queued reading immediately back to back right now.

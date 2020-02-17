@@ -1,0 +1,91 @@
+<%+header%>
+<h2><%:Output-Dexma Extended Diagnostics%></h2>
+<a href="<%=luci.dispatcher.build_url('admin/services/output-dexma')%>"><%:Return to Configuration%></a>
+<div style="color:red;display:none" data-bind="visible: errNotSupported">
+	<p><%:Your browser does not support the live data that this page needs.  You need IE 10 or
+		greater, or any recent version of Chrome, Safari, Firefox or Opera.%>
+	<p><small><%:(Specifically, you need support for WebSockets)%></small>
+</div>
+<div style="color:red;display:none" data-bind="visible: errNotConnected">
+	<p><%:Could not connect, or lost connection to the message broker on the gateway.
+		If this happens all the time, perhaps WebSockets on port 8083 is firewalled?%>
+	<p><%:It could also indicate an unexpected/unhandled error on the gateway itself%>
+		<span class="extra" data-bind="text: errNotConnected"></span>
+</div>
+<div>
+	<div data-bind="visible: active">
+		<div>
+			<img src="<%=resource%>/cbi/save.gif" height="16" alt="<%:success icon%>"/>
+			<%:Process appears to be running.%>
+		</div>
+		<h3><%:Data point summary%></h3>
+		<div data-bind="visible: dids().length == 0">
+			<img src="<%=media%>/emblem-important.png" height="16" alt="<%:failure icon%>"/>
+			<%:No data points are currently being monitored.  Unless the service has only just started, this is
+			unexpected.  Have you enabled some data points in the %><a href="<%=luci.dispatcher.build_url('admin/services/output-dexma')%>"><%:configuration%></a>
+		</div>
+		<div data-bind="visible: dids().length > 0">
+			<ul>
+				<li><img src="<%=resource%>/cbi/save.gif" height="16" alt="<%:success icon%>"/>
+					<%: Data points with cabinet model names: %><span data-bind="text: totalWith().length"></span> </li>
+				<li><img src="<%=media%>/emblem-important.png" height="16" alt="<%:caution icon%>"/>
+					<%: Data points %><em><%:without%></em> <%:cabinet model names: %><span data-bind="text: totalWithout().length"></span>
+					<a data-bind="visible: totalWithout().length > 0" href="<%= luci.dispatcher.build_url('home/wizard/cabinet_model')%>"><%:Edit the Cabinet Model%></a></li>
+			</ul>
+		</div>
+
+		<div data-bind="visible: qd() > 0">
+			<h3><%:Queued messages currently being retried: %><span data-bind="text: qd"></span></h3>
+		</div>
+
+		<div data-bind="visible: posts().length > 0">
+			<h3><%:Recent data post results:%></h3>
+			<table>
+				<tr>
+					<th><%:Status%></th>
+					<th><%:Attempted at%></th>
+					<th><%:Data from interval%></th>
+					<th><%:Readings in record%></th>
+					<th><%:Failure reason%></th>
+					<th><%:Retry%></th>
+				</tr>
+				<!-- ko foreach: posts -->
+				<tr data-bind="visible: ok">
+					<td><img src="<%=resource%>/cbi/save.gif" height="16" alt="<%:success icon%>"/></td>
+					<td><span data-bind="text: new Date(at())"></span> </td>
+					<td><span data-bind="text: new Date(ts())"></span> </td>
+					<td><span data-bind="text: n"></span> </td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr data-bind="visible: !ok()">
+					<td>
+						<img src="<%=resource%>/cbi/reset.gif" height="16" alt="<%:fail icon%>"/>
+					</td>
+					<td><span data-bind="text: new Date(at())"></span> </td>
+					<td><span data-bind="text: new Date(ts())"></span> </td>
+					<td><span data-bind="text: n"></span> </td>
+					<td><span data-bind="text: err"></span> </td>
+					<td><span data-bind="text: retry"></span> </td>
+					<td></td>
+				</tr>
+				<!-- /ko -->
+
+			</table>
+		</div>
+		<div data-bind="visible: posts().length == 0">
+			<h3><img src="<%=media%>/emblem-important.png" height="16" alt="<%:failure icon%>"/>
+				<%:No information on recent posts, has the process just started?:%></h3>
+		</div>
+	</div>
+	<div data-bind="visible: !active()">
+		<h3><%:This service does not appear to be active%></h3>
+		<p><a href="<%=luci.dispatcher.build_url('admin/services/output-dexma')%>"><%:Check the account configuration%></a> Is the service enabled?</p>
+	</div>
+</div>
+
+<script type="text/javascript" src="/resources/knockout.js" charset="utf-8"></script>
+<script type="text/javascript" src="/resources/paho/mqttws31.js"></script>
+<script type="text/javascript" src="/js/output-dexma-diags2.js?v=<%=pcdata(rme_rel)%>"></script>
+
+<%+footer%>
