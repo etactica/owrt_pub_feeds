@@ -1,6 +1,7 @@
 'use strict';
 'require form';
 'require fs';
+'require rpc';
 'require ui';
 'require tools.widgets as widgets';
 
@@ -61,22 +62,18 @@ return L.view.extend({
             console.log("and the form values are", test_key, test_token);
             var real = "https://is3.dexcell.com/readings";
             var fake = "https://192.168.253.124:8000/readings";
-            var hook = "https://hookb.in/pzRZMandn1T1GKb9nrLL";
+            var hook = "https://hookb.in/wNLJjBQoOXsYKMwPmrRl";
             ui.showModal(_('Testing credentials'), [
                                     E('p', { 'class': 'spinning' }, _('Contacting Dexma and testing your credentials'))
                             ]);
-            var r = L.Request.request(fake, {
-                method: "POST",
-                content: {},
-                query: {"source_key": test_key},
-                headers: {
-                    "x-dexcell-source-token": test_token,
-                    "Content-Type": "application/json",
-                }
-            });
+            // This is the way we inject commands, hi ho, hi ho....
+            // but.... if you are logged in with access here, you could just be calling fs.exec yourself....
+            var r = fs.exec("curl", ["-s", real + "?source_key=" + test_key, "-H", "x-dexcell-source-token: " + test_token,
+                "-H", "Content-type: application/json", "-d", "[]", "-w", "%{http_code}",
+                "-o", "/proc/self/fd/2"]);
             r.then(L.bind(function(evtarget, rv) {
                 console.log("ok?", evtarget, rv);
-                if (rv.status == 200) {
+                if (parseInt(rv.stdout) == 200) {
                     console.log("credentials look good")
                     //var buttons = document.querySelectorAll(".")
                     ui.addNotification(null, E('p', _('Credentials look good!')), 'info');
@@ -84,9 +81,9 @@ return L.view.extend({
                     evtarget.parentNode.insertAdjacentHTML("afterEnd", "<p>Validation successful");
                     //evtarget.parentNode.insertAdjacentHTML("afterEnd", E("p", _("Validation successful")).render());
                 } else {
-                    console.warn("Credentials are not ok...", rv.statusText, rv.responseText)
+                    console.warn("Credentials are not ok...", rv.stdout, rv.stderr)
                     evtarget.parentNode.insertAdjacentHTML("afterEnd", "<p>Validation FAILED");
-                    ui.addNotification(null, E('p', _("Credentials were rejected: ") + rv.responseText), 'warning');
+                    ui.addNotification(null, E('p', _("Credentials were rejected: ") + rv.stderr), 'warning');
                 }
                 ui.hideModal();
             }, this, ev.target)).catch(function(e) {
