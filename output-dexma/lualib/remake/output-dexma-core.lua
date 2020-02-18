@@ -39,10 +39,9 @@ local default_cfg = {
 	DEFAULT_STATSD_NAMESPACE = "apps.output-dexma",
 	DEFAULT_INTERVAL = 15, -- in minutes
 	DEFAULT_FLUSH_INTERVAL_MS = 5000,
-	--TEMPLATE_POST_URL = [[https://is3.dexcell.com/readings?source_key=%s]],
+	DEFAULT_DEXMA_POST_URL = [[https://is3.dexcell.com/readings?source_key=%s]],
 	--TEMPLATE_POST_URL=[[https://hookb.in/YVyJYVpm3MsgrkMNRBy8?source_key=%s]],
 	--https://hookb.in/aBOpW7r9j9sp3Gwr9kOR
-	TEMPLATE_POST_URL = [[https://localhost:8912/dexma]],
 	--- How long to ignore data for while we process cabinet model information
 	INITIAL_SLEEP_TIME = 5,
 	-- Don't change this unless you change the diags too!
@@ -147,6 +146,7 @@ local function cfg_validate(c)
 		pl.utils.quit(CODES.MISSING_KEY, "key must be provided by either environment or file")
 	end
 
+	c.url_template = c.uci.url_template or c.DEFAULT_DEXMA_POST_URL
 	c.interval = c.uci.interval or c.DEFAULT_INTERVAL
 	c.topic_data_in = string.format(c.DEFAULT_TOPIC_DATA, c.interval)
 	c.topic_metadata_in = c.DEFAULT_TOPIC_METADATA
@@ -401,8 +401,7 @@ local function flush_qd()
 	local remaining = {}
 
 	for ts, data in pairs(state.qd) do
-		ugly.debug("attempting to psot data for ts %s", ts)
-		local url = string.format(cfg.TEMPLATE_POST_URL, cfg.args.id)
+		local url = string.format(cfg.url_template, cfg.args.id)
 		local headers = {
 			["x-dexcell-source-token"] = cfg.args.key,
 		}
