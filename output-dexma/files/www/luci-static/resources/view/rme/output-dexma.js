@@ -1,7 +1,6 @@
 'use strict';
 'require form';
 'require fs';
-'require rpc';
 'require ui';
 'require tools.widgets as widgets';
 
@@ -54,36 +53,50 @@ return L.view.extend({
         b.inputstyle = 'apply';
         /* sid as a param was a patch from jow, might not be available */
         b.onclick = function(ev, sid) {
+            var btn = ev.target;
+            btn.classList.add('spinning');
             if (sid == undefined) {
                 sid = Object.keys(key.data)[0];
             }
 			var test_key = key.formvalue(sid);
 			var test_token = token.formvalue(sid);
+			var node_key = m.findElement('id', key.cbid(sid));
+			var node_token = m.findElement('id', token.cbid(sid));
             console.log("and the form values are", test_key, test_token);
+
+            var clearResults = function(tgt) {
+	            while (node_key.firstChild.nextSibling) { node_key.firstChild.nextSibling.remove() }
+	            while (node_token.firstChild.nextSibling) { node_token.firstChild.nextSibling.remove() }
+                while (tgt.nextSibling) {
+                    tgt.nextSibling.remove();
+                }
+            }
+            clearResults(btn);
+
             var real = "https://is3.dexcell.com/readings";
             var fake = "https://192.168.253.124:8000/readings";
             var hook = "https://hookb.in/wNLJjBQoOXsYKMwPmrRl";
-            ui.showModal(_('Testing credentials'), [
-                                    E('p', { 'class': 'spinning' }, _('Contacting Dexma and testing your credentials'))
-                            ]);
+            ui.showModal(_('Testing credentials'), [ E('p', { 'class': 'spinning' }, _('Contacting Dexma and testing your credentials')) ]);
             // This is the way we inject commands, hi ho, hi ho....
             // but.... if you are logged in with access here, you could just be calling fs.exec yourself....
             var r = fs.exec("curl", ["-s", real + "?source_key=" + test_key, "-H", "x-dexcell-source-token: " + test_token,
                 "-H", "Content-type: application/json", "-d", "[]", "-w", "%{http_code}",
                 "-o", "/proc/self/fd/2"]);
             r.then(L.bind(function(evtarget, rv) {
-                console.log("ok?", evtarget, rv);
                 if (parseInt(rv.stdout) == 200) {
-                    console.log("credentials look good")
-                    //var buttons = document.querySelectorAll(".")
-                    ui.addNotification(null, E('p', _('Credentials look good!')), 'info');
-                    //L.dom.append(evtarget, E('p', _('fucking magnets, how do they work')), 'info');
-                    evtarget.parentNode.insertAdjacentHTML("afterEnd", "<p>Validation successful");
-                    //evtarget.parentNode.insertAdjacentHTML("afterEnd", E("p", _("Validation successful")).render());
+		            node_key.firstChild.classList.remove("cbi-input-invalid");
+		            node_token.firstChild.classList.remove("cbi-input-invalid");
+                    var tick = E('img', { 'src': L.resource('cbi/save.gif') });
+                    node_key.insertAdjacentElement("beforeEnd", tick);
+                    node_token.insertAdjacentElement("beforeEnd", tick.cloneNode());
+                    evtarget.insertAdjacentElement("afterEnd", E("h6", _("Validation successful")));
                 } else {
-                    console.warn("Credentials are not ok...", rv.stdout, rv.stderr)
-                    evtarget.parentNode.insertAdjacentHTML("afterEnd", "<p>Validation FAILED");
-                    ui.addNotification(null, E('p', _("Credentials were rejected: ") + rv.stderr), 'warning');
+                    console.debug("Credentials are not ok...", rv.stdout, rv.stderr)
+                    node_key.firstChild.classList.add("cbi-input-invalid");
+                    node_token.firstChild.classList.add("cbi-input-invalid");
+                    var cross = E('img', { 'src': L.resource('cbi/reset.gif') });
+					evtarget.insertAdjacentElement("afterEnd", E("div", [E("h6", {class: "alert-message"}, _("Credentials were rejected: ")), E("pre", rv.stderr)]));
+                    evtarget.insertAdjacentElement("afterEnd", cross);
                 }
                 ui.hideModal();
             }, this, ev.target)).catch(function(e) {
