@@ -40,15 +40,17 @@ return L.view.extend({
         o = s.taboption("general", form.Flag, "enabled", _("Enable this service"), _("The service will not start until this is checked"));
         o.rmempty = false;
 
-		var key = s.taboption("general", form.Value, "source_key", _("ID for your stream"), _("This is the Identifier (MAC address) of the gateway or the unique key that identifies the datasource which the data belongs to."));
+		var key = s.taboption("general", form.Value, "source_key", _("Key"),
+			_("This is the <em>identifier</em> of the gateway you chose when you created the gateway in your Dexma account."
+			+ "<br>This is in your Dexma account on the gateway settings page as <em>Key</em>."));
 		key.placeholder = "example-public";
 
-		var token = s.taboption("general", form.Value, "dexcell_source_token", _("The authentication token for every gateway"),
-			_("This is your 'password' and is required to be able to publish to the stream."
-			+ "<br>You get this from your Dexma account under the gateway settings."));
+		var token = s.taboption("general", form.Value, "dexcell_source_token", _("Gateway token"),
+			_("This is your <em>password</em> and is required to be able to publish to the stream."
+			+ "<br>This is in your Dexma account on the gateway settings page as <em>Gateway token</em>."));
 		token.placeholder = "example-private";
 
-		var b = s.taboption("general", form.Button, "_testcred", _("Test your credentials"), _("This will attempt to validate your credentials against the server"));
+		var b = s.taboption("general", form.Button, "_testcred", _("Test your credentials"), _("This will attempt to validate your credentials with Dexma"));
         b.inputtitle = _("Test credentials");
         b.inputstyle = 'apply';
         /* sid as a param was a patch from jow, might not be available */
@@ -62,7 +64,6 @@ return L.view.extend({
 			var test_token = token.formvalue(sid);
 			var node_key = m.findElement('id', key.cbid(sid));
 			var node_token = m.findElement('id', token.cbid(sid));
-            console.log("and the form values are", test_key, test_token);
 
             var clearResults = function(tgt) {
 	            while (node_key.firstChild.nextSibling) { node_key.firstChild.nextSibling.remove() }
@@ -74,8 +75,6 @@ return L.view.extend({
             clearResults(btn);
 
             var real = "https://is3.dexcell.com/readings";
-            var fake = "https://192.168.253.124:8000/readings";
-            var hook = "https://hookb.in/wNLJjBQoOXsYKMwPmrRl";
             ui.showModal(_('Testing credentials'), [ E('p', { 'class': 'spinning' }, _('Contacting Dexma and testing your credentials')) ]);
             // This is the way we inject commands, hi ho, hi ho....
             // but.... if you are logged in with access here, you could just be calling fs.exec yourself....
@@ -91,7 +90,6 @@ return L.view.extend({
                     node_token.insertAdjacentElement("beforeEnd", tick.cloneNode());
                     evtarget.insertAdjacentElement("afterEnd", E("h6", _("Validation successful")));
                 } else {
-                    console.debug("Credentials are not ok...", rv.stdout, rv.stderr)
                     node_key.firstChild.classList.add("cbi-input-invalid");
                     node_token.firstChild.classList.add("cbi-input-invalid");
                     var cross = E('img', { 'src': L.resource('cbi/reset.gif') });
@@ -148,7 +146,7 @@ return L.view.extend({
 		o.placeholder = 2000;
 
 		o = s.taboption("statsd", form.Value, "statsd_namespace", _("Namespace for StatsD reporting"))
-		o.placeholder = "apps.output-db.<instanceid>"
+		o.placeholder = "apps.output-dexma"
 		o.optional = true
 
 		o = s.taboption("statsd", form.Value, "statsd_host", _("Hostname to send stats"))
@@ -190,7 +188,6 @@ return L.view.extend({
 		o = s.option(form.Value, "parameterid", _("Dexma Parameter ID"), _("Parameter ID from Dexma's API documentation"));
 		o.datatype = "uinteger";
 		o.rmempty = false;
-
 
 		return m.render();
 	}
