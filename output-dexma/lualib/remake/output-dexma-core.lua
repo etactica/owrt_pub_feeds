@@ -112,10 +112,14 @@ local function cfg_validate(c)
 				dt = s.datakey,
 				n = n,
 				f = s.field,
-				di = s.parameterid,
+				di = tonumber(s.parameterid),
 			}
-			table.insert(DEXMA_KEYS, dexma_type)
-			ugly.info("Enabling custom variable: %s", pl.pretty.write(dexma_type))
+			if dexma_type.di and dexma_type.f and dexma_type.dt then
+				table.insert(DEXMA_KEYS, dexma_type)
+				ugly.info("Enabling custom variable: %s/%s", dexma_type.dt, dexma_type.f)
+			else
+				ugly.warning("Skipping invalid custom variable: %s", pl.pretty.write(dexma_type))
+			end
 		else
 			ugly.debug("Skipping custom var that is disabled: %s", pl.pretty.write(s))
 		end
