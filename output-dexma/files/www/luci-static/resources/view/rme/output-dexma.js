@@ -78,27 +78,43 @@ return L.view.extend({
             ui.showModal(_('Testing credentials'), [ E('p', { 'class': 'spinning' }, _('Contacting Dexma and testing your credentials')) ]);
             // This is the way we inject commands, hi ho, hi ho....
             // but.... if you are logged in with access here, you could just be calling fs.exec yourself....
-            var r = fs.exec("curl", ["-s", real + "?source_key=" + test_key, "-H", "x-dexcell-source-token: " + test_token,
-                "-H", "Content-type: application/json", "-d", "[]", "-w", "%{http_code}",
-                "-o", "/proc/self/fd/2"]);
+            // Dexma doesn't allow CORS (bug filed) so we do it on the server
+            var r = fs.exec("curl", [real + "?source_key=" + test_key, "-H", "x-dexcell-source-token: " + test_token,
+                "-H", "Content-type: application/json", "-d", "[]", "-m", "15"]);
             r.then(L.bind(function(evtarget, rv) {
-                if (parseInt(rv.stdout) == 200) {
-		            node_key.firstChild.classList.remove("cbi-input-invalid");
-		            node_token.firstChild.classList.remove("cbi-input-invalid");
-                    var tick = E('img', { 'src': L.resource('cbi/save.gif') });
-                    node_key.insertAdjacentElement("beforeEnd", tick);
-                    node_token.insertAdjacentElement("beforeEnd", tick.cloneNode());
-                    evtarget.insertAdjacentElement("afterEnd", E("h6", _("Validation successful")));
-                } else {
+                // Dexma's api is plain text in the responses, and a mix of http codes.
+                // we can't separate the response and the http code from curl without using an output file, and if
+                // we do that, curl insists on printing a progress bar.  If we use -s to silence the progress bar,
+                // we no longer get meaningful error messages on timeouts or network failures.
+                // => so, we string parse the responses from dexma :(
+                var markError = function(tgt, descr, details) {
                     node_key.firstChild.classList.add("cbi-input-invalid");
                     node_token.firstChild.classList.add("cbi-input-invalid");
                     var cross = E('img', { 'src': L.resource('cbi/reset.gif') });
-					evtarget.insertAdjacentElement("afterEnd", E("div", [E("h6", {class: "alert-message"}, _("Credentials were rejected: ")), E("pre", rv.stderr)]));
-                    evtarget.insertAdjacentElement("afterEnd", cross);
+					tgt.insertAdjacentElement("afterEnd", E("div", [E("h6", {class: "alert-message"}, descr), E("pre", details)]));
+                    tgt.insertAdjacentElement("afterEnd", cross);
+                };
+                if (rv.code == 0) {
+                    // curl succeeded, so stdout has the good/bad dexma reply, and stderr is a useless progress meter.
+                    if (rv.stdout.indexOf("OK") == 0) {
+			            node_key.firstChild.classList.remove("cbi-input-invalid");
+			            node_token.firstChild.classList.remove("cbi-input-invalid");
+	                    var tick = E('img', { 'src': L.resource('cbi/save.gif') });
+	                    node_key.insertAdjacentElement("beforeEnd", tick);
+	                    node_token.insertAdjacentElement("beforeEnd", tick.cloneNode());
+	                    evtarget.insertAdjacentElement("afterEnd", E("h6", _("Validation successful")));
+                    } else {
+	                    markError(evtarget, _("Credentials were rejected: "), rv.stdout);
+                    }
+                } else {
+                    // curl itself failed.  stderr now has the useful error, not the progress meter.
+                    markError(evtarget, _("Failed to test credentials: "), rv.stderr);
                 }
                 ui.hideModal();
-            }, this, ev.target)).catch(function(e) {
-                ui.addNotification(null, E('p', _("Failed to test credentials: ") + e), 'warning');
+            }, this, ev.target), function(rv) { console.log("Rejected promise handler? How would this be reached?", rv)}
+            ).catch(function(e) {
+                // This is an unexpected internal failure, try again?
+                ui.addNotification(null, E('p', _("Failed to test credentials, perhaps try again?: ") + e), 'warning');
                 ui.hideModal();
             });
         }
