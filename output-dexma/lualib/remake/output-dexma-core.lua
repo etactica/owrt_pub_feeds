@@ -363,12 +363,12 @@ local function httppost(url, data, userheaders, opts)
 			options = { "no_sslv2", "no_sslv3", "no_ticket", "no_compression", "cipher_server_preference", "single_dh_use", "single_ecdh_use" },
 			capath = "/etc/ssl/certs",
 		}, useropts, true)
-
 	local reqbody = data
 	if opts.json_encode then
 		reqbody = json.encode(data)
 		headers["Content-Type"] = "application/json;charset=utf-8"
 	end
+	https.TIMEOUT = 10 -- Default is 60, which is _way_ too long for our little single threaded brain.
 	ugly.debug("posting now: %s", reqbody)
 	headers["content-length"] = #reqbody
 	local http_req = {
