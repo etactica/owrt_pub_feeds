@@ -38,7 +38,7 @@ local default_cfg = {
 	DEFAULT_STATSD_PORT = 8125,
 	DEFAULT_STATSD_NAMESPACE = "apps.output-dexma",
 	DEFAULT_INTERVAL = 15, -- in minutes
-	DEFAULT_FLUSH_INTERVAL_MS = 5000,
+	DEFAULT_FLUSH_INTERVAL_MS = 500,
 	DEFAULT_DEXMA_POST_URL = [[https://is3.dexcell.com/readings?source_key=%s]],
 	--TEMPLATE_POST_URL=[[https://hookb.in/YVyJYVpm3MsgrkMNRBy8?source_key=%s]],
 	--https://hookb.in/aBOpW7r9j9sp3Gwr9kOR
@@ -77,7 +77,7 @@ local DEXMA_KEYS = {
 
 local state = {
 	sqn = 1,
-	last_ts_flush_qd = timestamp_ms(),
+	flush_last_ts = timestamp_ms(),
 	qd = {},
 	-- This will be written to file/mqtt for external usage.
 	ok = {
@@ -88,6 +88,15 @@ local state = {
 
 ---
 local cabinet_model = {}
+
+-- For a nominal number, add jitter
+local function jitter(nominal, factor)
+	local f = 10;
+	if factor then f = factor end
+	local offset = nominal / f;
+	return nominal - offset + math.random() * (offset * 2);
+end
+
 
 local function cfg_validate(c)
 	-- Load UCI config too
@@ -156,6 +165,7 @@ local function cfg_validate(c)
 	c.statsd_namespace = c.uci.statsd_namespace or c.DEFAULT_STATSD_NAMESPACE
 
 	c.flush_interval_ms = tonumber(c.uci.flush_interval_ms) or c.DEFAULT_FLUSH_INTERVAL_MS
+	state.flush_jitter_time = jitter(c.flush_interval_ms)
 	c.limit_qd = tonumber(c.uci.limit_qd) or c.DEFAULT_LIMIT_QD
 	c.store_types = c.uci.store_types or c.DEFAULT_STORE_TYPES
 	c.state_file = c.uci.state_file or c.DEFAULT_STATE_FILE
@@ -395,44 +405,71 @@ local function httppost(url, data, userheaders, opts)
 end
 
 
+--- Attempt to flush our stored readings.
+-- We only attempt to post one message each call here, to allow the main loop to still run healthily and service
+-- MQ messages.  Even if we only post one message every ~500ms, with a weekend's worth of offline data, that's only
+-- ~192 messages, or ~90seconds to repost them all.  That avoids us locking up attempting to retry readings,
+-- and also avoids hammering the dexma backend too much on retries.  (If _they_ have problems, we're going to be
+-- trying every ~500ms though, so we _may_ wish to implement some extended backoff based on certain response codes.
+-- Algorithm is:
+-- * sort the stored readings by ts to find oldest (or, via config, newest for instance)
+-- * pop the first one
+-- * post it,
+-- * if it fails, push it back on front.
+-- * return and let jitter and looping retry.
+-- @returns nil - if nothing to post, or nothing to retry
+-- @returns <integer> the retry count of the last attempt if a retry was required.
 local function flush_qd()
-	-- how are we batching messages from different topics that are the same 15 minute interval?
-	-- we can just batch based on timestamps, no problem.
-	local remaining = {}
+	local size = pl.tablex.size(state.qd)
+	ugly.debug("entering flush.... with %d queued", size)
+	if size == 0 then return end
 
-	for ts, data in pairs(state.qd) do
+	local function sort_oldest_first(a,b)
+		return a.ts < b.ts
+	end
+
+	-- remember, state.qd is just the same data, with element.ts being used as the key, you can just toss the keys and still have all data.
+	local remaining = pl.tablex.values(state.qd)
+	table.sort(remaining, sort_oldest_first)
+
+	local proposed = table.remove(remaining, 1)
+
+	local function post_to_dexma(data)
+		local ts = data.ts
 		local url = string.format(cfg.url_template, cfg.args.id)
 		local headers = {
 			["x-dexcell-source-token"] = cfg.args.key,
 		}
-		local httpok, c, h, body = httppost(url, data.values, headers)
+		local httpok, c, h, body = httppost(url, data.values, headers, {verify={}})
 		if httpok then
 			statsd:increment(string.format("http-post.code-%d", c))
 			if c == 200 then
 				statsd:increment("post-success")
 				ugly.info("Posted %d readings for ts: %s", #data.values, ts)
 				table.insert(state.ok.posts, 1,{at=timestamp_ms(ts), ts=ts, ok=true, n=#data.values})
+				return true
 			else
 				statsd:increment("post-failure")
 				data.retries = data.retries + 1
 				ugly.warning("Dexma POST returned failure (%d): queueing for retry #%d: %s", c, data.retries, body)
-				table.insert(remaining, data)
 				table.insert(state.ok.posts, 1,{at=timestamp_ms(ts), ts=ts, ok=false, err=c, retry=data.retries})
+				return nil, data
 			end
 		else
 			-- This would normally indicate a _client_ side error!
 			statsd:increment("post-error")
 			data.retries = data.retries + 1
 			ugly.err("Failed to make http post at all?! %s: queuing for retry #%d", c, data.retries)
-			table.insert(remaining, data)
 			table.insert(state.ok.posts, 1,{at=timestamp_ms(ts), ts=ts, ok=false, err=c, retry=data.retries})
+			return nil, data
 		end
-		-- TODO - potentially, add a backoff here for a bit of jitter in http posting?
-		-- This will attempt each queued reading immediately back to back right now.
 	end
-	-- sort remaining by ts, so that people could choose most recent, or oldest to discard, and so that
-	-- regardless of what we choose, we're consistent each time. (fixed sort right now still)
-	table.sort(remaining, function(a,b) return a.ts < b.ts end)
+
+	local postok, data_to_retry = post_to_dexma(proposed)
+	if not postok then
+		table.insert(remaining, 1, data_to_retry)
+	end
+
 	-- Now we throw away entries longer than our queue depth...
 	if #remaining > cfg.limit_qd then
 		local discarded = #remaining - cfg.limit_qd
@@ -456,9 +493,14 @@ local function flush_qd()
 		mqtt:publish(cfg.topic_state_out, status_message, 0, true)
 		state.last_status_message = status_message
 	end
+
+	if data_to_retry then
+		return data_to_retry.retries
+	end
 end
 
 local function do_main(args)
+	math.randomseed(os.time())
 	mosq.init()
 	cfg = default_cfg
 	cfg.args = args
@@ -497,11 +539,16 @@ local function do_main(args)
 		end
 
 		local now = timestamp_ms()
-		if now - state.last_ts_flush_qd > cfg.flush_interval_ms then
-			flush_qd(cfg)
+		if now - state.flush_last_ts > state.flush_jitter_time then
+			local retries = flush_qd(cfg)
 			local delta = timestamp_ms() - now
 			statsd:timer("flush-qd", delta)
-			state.last_ts_flush_qd = now
+			state.flush_last_ts = now
+			-- Backoff a bit more if it's retrying a lot.  This will automatically speed up again on successes.
+			-- TODO - allow this to be configurable?
+			local extra_backoff = 0
+			if retries and retries > 10 then extra_backoff = 10*1000 end
+			state.flush_jitter_time = jitter(cfg.flush_interval_ms) + extra_backoff
 		end
 	end
 
@@ -510,6 +557,7 @@ end
 local M = {
 	do_main = do_main,
 	httppost = httppost,
+	jitter = jitter,
 }
 
 return M
