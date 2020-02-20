@@ -18,4 +18,11 @@ local cliargs = pl.lapp [[
     -c,--capath (string default "") path to directory of certs
 ]]
 
-core.do_main(cliargs)
+local ugly = require("remake.uglylog")
+ugly.initialize("output-dexma", cliargs.verbose or 4)
+
+local ok, err = pcall(core.do_main, cliargs)
+if not ok then
+	ugly.emerg("Crashed! %s", err)
+	os.exit(1)
+end
