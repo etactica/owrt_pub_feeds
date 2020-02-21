@@ -1,40 +1,40 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
-#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:31
+#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:32
 msgid "Configuration"
 msgstr ""
 
-#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:33
+#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:34
 msgid "Enable this output service"
 msgstr ""
 
-#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:40
+#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:41
 msgid "Provided by SenseOne, normally standard"
 msgstr ""
 
-#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:36
-#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:38
+#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:37
+#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:39
 msgid "Provided by SenseOne, unique for your account"
 msgstr ""
 
-#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:37
+#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:38
 msgid "The MQTT bridge password"
 msgstr ""
 
-#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:35
+#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:36
 msgid "The MQTT bridge username"
 msgstr ""
 
-#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:39
+#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:40
 msgid "The MQTT broker address"
 msgstr ""
 
-#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:34
+#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:35
 msgid "The service will not start until this is checked"
 msgstr ""
 
-#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:8
+#: ../output-senseone/luasrc/model/cbi/rme/output-senseone.lua:9
 msgid ""
 "This service handles bridging eTactica live stream data, and posting it to "
 "your SenseOne account. <h4>Before you start</h4> You should <em>already</em> "

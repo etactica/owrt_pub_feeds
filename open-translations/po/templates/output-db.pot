@@ -81,7 +81,7 @@ msgstr ""
 msgid "Hostname of your database server"
 msgstr ""
 
-#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:219
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:222
 msgid "Hostname to send stats"
 msgstr ""
 
@@ -97,7 +97,7 @@ msgstr ""
 msgid "Interval to monitor and forward"
 msgstr ""
 
-#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:181
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:184
 msgid "Last change"
 msgstr ""
 
@@ -115,7 +115,7 @@ msgstr ""
 msgid "MySQL/MariaDB"
 msgstr ""
 
-#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:215
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:218
 msgid "Namespace for StatsD reporting"
 msgstr ""
 
@@ -157,7 +157,7 @@ msgstr ""
 msgid "Pulse count"
 msgstr ""
 
-#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:164
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:167
 msgid "Query for data writing"
 msgstr ""
 
@@ -177,7 +177,7 @@ msgstr ""
 msgid "SQL Queries"
 msgstr ""
 
-#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:187
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:190
 msgid "Schema itself"
 msgstr ""
 
@@ -200,24 +200,30 @@ msgid "The database schema itself"
 msgstr ""
 
 #: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:31
-msgid "The name of the database you wish to connect to"
+msgid ""
+"The name of the database you wish to connect to. <br>For postgres, this can "
+"also be a full connection string."
 msgstr ""
 
 #: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:149
 msgid ""
 "The parameterized sql query that will be used to create a new metadata "
 "entry. This is used to ensure only a single entry for each unique point "
-"exists."
+"exists.Variables such as <code>$variable</code> can be used, from the "
+"following snippet.<p><pre>"
 msgstr ""
 
-#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:165
-msgid "The parameterized sql query that will be used to insert data."
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:168
+msgid ""
+"The parameterized sql query that will be used to insert data. Variables such "
+"as <code>$variable</code> can be used, from the following snippet.<p><pre>"
 msgstr ""
 
 #: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:133
 msgid ""
 "The parameterized sql query that will be used to update metadata. This will "
-"be used whenever new metadata arrives."
+"be used whenever new metadata arrives.Variables such as <code>$variable</"
+"code> can be used, from the following snippet.<p><pre>"
 msgstr ""
 
 #: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:37
@@ -232,7 +238,7 @@ msgstr ""
 msgid "The username to use when connecting to the database"
 msgstr ""
 
-#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:181
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:184
 msgid ""
 "This field is used internally to ensure changes are saved. Please ignore it"
 msgstr ""
@@ -240,16 +246,21 @@ msgstr ""
 #: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:83
 msgid ""
 "This is how many messages will be queued and retried before the service will "
-"abort."
+"abort.<p>Note, the service will be restarted periodically if it has exited, "
+"this is just how many messages to attempt to keep in memory while we wait "
+"for the database to come back. A higher number allows your database to be "
+"offline for longer, but results in increased memory usage of your gateway, "
+"which may interfere with other services"
 msgstr ""
 
 #: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:77
 msgid ""
 "This is the rate (in milliseconds) at which our message queue will be "
-"flushed to the database, and"
+"flushed to the database, and how often we will attempt to reconnect if the "
+"queue flush fails. You should't have to change this"
 msgstr ""
 
-#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:224
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:227
 msgid "UDP port to send stats"
 msgstr ""
 
@@ -273,7 +284,7 @@ msgid ""
 "'Add' to make a new instance"
 msgstr ""
 
-#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:195
+#: ../output-db/files/www/luci-static/resources/view/rme/output-db.js:198
 msgid ""
 "You must save the new configuration before the default schema can be shown. "
 "It depends on the selected database driver"

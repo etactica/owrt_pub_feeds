@@ -9,10 +9,6 @@ msgstr ""
 msgid "Enable this output service"
 msgstr ""
 
-#: ../output-klappir/luasrc/controller/rme/output-klappir.lua:15
-msgid "Klappir Smart Environmental Management"
-msgstr ""
-
 #: ../output-klappir/luasrc/model/cbi/rme/output-klappir.lua:8
 msgid "Message Output Daemon - Klappir"
 msgstr ""

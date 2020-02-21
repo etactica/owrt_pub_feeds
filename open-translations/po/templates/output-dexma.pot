@@ -1,28 +1,390 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
-#: ../output-dexma/luasrc/model/cbi/rme/output-dexma.lua:33
-msgid "Aka, password. this is required to be able to publish to the stream"
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:7
+msgid "(Specifically, you need support for WebSockets)"
 msgstr ""
 
-#: ../output-dexma/luasrc/model/cbi/rme/output-dexma.lua:28
-msgid "Enable this output service"
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:135
+msgid "Active Energy"
 msgstr ""
 
-#: ../output-dexma/luasrc/model/cbi/rme/output-dexma.lua:30
-msgid "ID for your stream"
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:177
+msgid "Add new custom Dexma variable mapping"
 msgstr ""
 
-#: ../output-dexma/luasrc/model/cbi/rme/output-dexma.lua:31
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:37
+msgid "Advanced Settings"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:46
+msgid "Attempted at"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:83
+msgid "Check the account configuration"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:74
+msgid "Contacting Dexma and testing your credentials"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:10
 msgid ""
-"Is the Identifier (MAC address) of the gateway or the unique key that "
-"identifies the datasource which the data belongs to"
+"Could not connect, or lost connection to the message broker on the gateway. "
+"If this happens all the time, perhaps WebSockets on port 8083 is firewalled?"
 msgstr ""
 
-#: ../output-dexma/luasrc/model/cbi/rme/output-dexma.lua:32
-msgid "The authentication token for every gateway"
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:103
+msgid "Credentials were rejected:"
 msgstr ""
 
-#: ../output-dexma/luasrc/model/cbi/rme/output-dexma.lua:29
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:139
+msgid "Current (interval maximum)"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:138
+msgid "Current (interval mean)"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:175
+msgid "Custom Parameters"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:176
+msgid ""
+"Custom mappings of data stream variables to Dexma Parameter IDs not handled "
+"automatically"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:47
+msgid "Data from interval"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:21
+msgid "Data point summary"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:32
+msgid "Data points"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:30
+msgid "Data points with cabinet model names:"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:128
+msgid "Data types to store"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:191
+msgid "Datakey"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:134
+msgid "Default (Active Energy)"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:201
+msgid "Dexma Parameter ID"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:33
+msgid "Edit the Cabinet Model"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:40
+msgid "Enable this service"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:189
+msgid "Enabled"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:113
+msgid "Failed to test credentials, perhaps try again?:"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:107
+msgid "Failed to test credentials:"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:49
+msgid "Failure reason"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:193
+msgid "Field"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:48
+msgid "Gateway token"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:36
+msgid "General Settings"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:165
+msgid "Hostname to send stats"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:144
+msgid "How often to attempt message flushing and/or reconnect"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:118
+msgid "Interval to monitor and forward"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:12
+msgid ""
+"It could also indicate an unexpected/unhandled error on the gateway itself"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:43
+msgid "Key"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:150
+msgid "Limit on queued interval data messages before abort"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:38
+msgid ""
+"Metrics on operation can be sent to a listening StatsD server, such as "
+"graphite"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:199
+msgid "Multiplier"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:199
+msgid "Multiplier to apply before sending to Dexma"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:161
+msgid "Namespace for StatsD reporting"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:24
+msgid ""
+"No data points are currently being monitored. Unless the service has only "
+"just started, this is unexpected. Have you enabled some data points in the"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:78
+msgid "No information on recent posts, has the process just started?:"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:33
+msgid "Options"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:31
+msgid "Output Dexma"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:2
+msgid "Output-Dexma Extended Diagnostics"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:201
+msgid "Parameter ID from Dexma's API documentation"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:140
+msgid "Power Factor (interval mean)"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:19
+msgid "Process appears to be running."
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:142
+msgid "Pulse count"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:38
+msgid "Queued messages currently being retried:"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:136
+msgid "Reactive Energy"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:48
+msgid "Readings in record"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:42
+msgid "Recent data post results:"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:129
+msgid ""
+"Remember, Dexma charges per data point, so only enable data points you're "
+"interested in.<br>If you have custom variables you'd like to include, list "
+"them below under 'Custom variables'"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:50
+msgid "Retry"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:3
+msgid "Return to Configuration"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:38
+msgid "StatsD"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:45
+msgid "Status"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:141
+msgid "Temperature (interval mean)"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:54
+msgid "Test credentials"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:53
+msgid "Test your credentials"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:74
+msgid "Testing credentials"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:191
+msgid "The name of the datatype in the aggregate stream"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:40
 msgid "The service will not start until this is checked"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:119
+msgid ""
+"There's a modest bandwidth reduction to use 60minute, but it's not "
+"significant."
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:151
+msgid ""
+"This is how many intervals of messages will be queued and retried before the "
+"service will abort.<p>Note, the service will be restarted periodically if it "
+"has exited, this is just how many messages to attempt to keep in memory "
+"while we wait for the service endpoint to come back. A higher number allows "
+"your network to be offline for longer, but results in increased memory usage "
+"of your gateway, which may interfere with other services.For 15 minute "
+"intervals, the default is about 5 days worth of data."
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:44
+msgid ""
+"This is the <em>identifier</em> of the gateway you chose when you created "
+"the gateway in your Dexma account.<br>This is in your Dexma account on the "
+"gateway settings page as <em>Key</em>."
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:145
+msgid ""
+"This is the rate (in milliseconds) at which our message queue will be "
+"flushed to the service, and how often we will attempt to reconnect if the "
+"queue flush fails. You should't have to change this"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:49
+msgid ""
+"This is your <em>password</em> and is required to be able to publish to the "
+"stream.<br>This is in your Dexma account on the gateway settings page as "
+"<em>Gateway token</em>."
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:82
+msgid "This service does not appear to be active"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:7
+msgid ""
+"This service handles parsing the eTactica live stream data, and posting it "
+"to your DEXCell account.<h4>Before you start</h4>You should have created a "
+"virtual gateway, and obtained your gateway Identifier/Token security pairs."
+"Please see the following Dexma guides on setting these up<ul><li><a href="
+"\"http://support.dexmatech.com/customer/portal/articles/372837-howto-add-and-"
+"configure-a-virtual-gateway\">Create a virtual gateway</a><li><a href="
+"\"http://support.dexmatech.com/customer/portal/articles/1745489-howto-obtain-"
+"mac-and-token-from-a-gateway\">Obtain gateway ID/Token</a></ul><h4>About "
+"Dexma <img src=\"/resources/images/dexma.png\" width=\"156\" height=\"65\" "
+"style=\"vertical-align: middle\"/></h4>From their website:<blockquote>DEXMA "
+"Energy Intelligence is a leading provider of energy management solutions for "
+"buildings in the commercial andindustrial sectors. The 100% hardware-"
+"neutral, cloud SaaS tool - DEXMA Platform - combines Big Data analytics with "
+"energy efficiency to help businesses and public administration Detect, "
+"Analyse and Control energy consumption,become more sustainable and optimise "
+"project investment.</blockquote><a href=\"http://www.dexma.com/\" target="
+"\"_blank\">Visit their site for more information</a>"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:53
+msgid "This will attempt to validate your credentials with Dexma"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:170
+msgid "UDP port to send stats"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:101
+msgid "Validation successful"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:137
+msgid "Voltage interval average"
+msgstr ""
+
+#: ../output-dexma/files/www/luci-static/resources/view/rme/output-dexma.js:193
+msgid "Which field of the aggregate to select"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:5
+msgid ""
+"Your browser does not support the live data that this page needs. You need "
+"IE 10 or greater, or any recent version of Chrome, Safari, Firefox or Opera."
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:32
+msgid "cabinet model names:"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:31
+msgid "caution icon"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:25
+msgid "configuration"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:63
+msgid "fail icon"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:23
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:77
+msgid "failure icon"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:18
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:29
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:54
+msgid "success icon"
+msgstr ""
+
+#: ../output-dexma/luasrc/view/rme/output-dexma-diags2.htm:32
+msgid "without"
 msgstr ""

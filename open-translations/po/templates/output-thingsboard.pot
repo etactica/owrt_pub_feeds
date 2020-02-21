@@ -1,46 +1,46 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
-#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:29
+#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:30
 msgid "Access Token"
 msgstr ""
 
-#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:25
+#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:26
 msgid "Address"
 msgstr ""
 
-#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:21
+#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:22
 msgid "Configuration"
 msgstr ""
 
-#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:23
+#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:24
 msgid "Enable this output service"
 msgstr ""
 
-#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:27
+#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:28
 msgid "Enable transport security (TLS/SSL)"
 msgstr ""
 
-#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:30
+#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:31
 msgid "Provided by ThingsBoard, identifies this device"
 msgstr ""
 
-#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:26
+#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:27
 msgid ""
 "Provided by ThingsBoard, the host name of your thingsboard, eg: iot.example."
 "org or iot.example.com:8883"
 msgstr ""
 
-#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:24
+#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:25
 msgid "The service will not start until this is checked"
 msgstr ""
 
-#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:28
+#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:29
 msgid ""
 "This depends on how your ThingsBoard administrator has configured your system"
 msgstr ""
 
-#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:8
+#: ../output-thingsboard/luasrc/model/cbi/rme/output-thingsboard.lua:9
 msgid ""
 "This service handles bridging eTactica live stream data, and posting it to "
 "your a ThingsBoard instance. <h4>Before you start</h4> You should "
