@@ -119,8 +119,8 @@ return L.view.extend({
 			_("There's a modest bandwidth reduction to use 60minute, but it's not significant."));
 		o.optional = true;
 		// dexma would rather we didn't offer less than 15 minutes
-		o.value("1", "1 Minute");
-		o.value("5", "5 Minute");
+		//o.value("1", "1 Minute");
+		//o.value("5", "5 Minute");
 		o.value("15", "15 Minute");
 		o.value("60", "60 Minute");
 		o.placeholder = "Default (15 Minute)";
@@ -144,18 +144,19 @@ return L.view.extend({
 		o = s.taboption("advanced", form.Value, "flush_interval_ms", _("How often to attempt message flushing and/or reconnect"),
 			_("This is the rate (in milliseconds) at which our message queue will be flushed to the service, and "
 			+ "how often we will attempt to reconnect if the queue flush fails. You should't have to change this"));
-		o.datatype = "range(5000,300000)";
-		o.placeholder = 5000;
+		o.datatype = "range(500,300000)";
+		o.placeholder = 500;
 
-		o = s.taboption("advanced", form.Value, "limit_qd", _("Limit on queued data messages before abort"),
-			_("This is how many messages will be queued and retried before the service will abort."
+		o = s.taboption("advanced", form.Value, "limit_qd", _("Limit on queued interval data messages before abort"),
+			_("This is how many intervals of  messages will be queued and retried before the service will abort."
 			+ "<p>Note, the service will be restarted periodically if it has exited, this is just how many messages to attempt "
 			+ "to keep in memory while we wait for the service endpoint to come back.  A higher number allows your network to be "
-			+ "offline for longer, but results in increased memory usage of your gateway, which may interfere with other services"
+			+ "offline for longer, but results in increased memory usage of your gateway, which may interfere with other services."
+			+ "For 15 minute intervals, the default is about 5 days worth of data."
 			)
 		);
 		o.datatype = "uinteger";
-		o.placeholder = 2000;
+		o.placeholder = 500;
 
 		o = s.taboption("statsd", form.Value, "statsd_namespace", _("Namespace for StatsD reporting"))
 		o.placeholder = "apps.output-dexma"
