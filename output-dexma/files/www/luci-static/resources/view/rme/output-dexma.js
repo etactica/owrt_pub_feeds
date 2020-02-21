@@ -53,13 +53,9 @@ return L.view.extend({
 		var b = s.taboption("general", form.Button, "_testcred", _("Test your credentials"), _("This will attempt to validate your credentials with Dexma"));
         b.inputtitle = _("Test credentials");
         b.inputstyle = 'apply';
-        /* sid as a param was a patch from jow, might not be available */
         b.onclick = function(ev, sid) {
             var btn = ev.target;
             btn.classList.add('spinning');
-            if (sid == undefined) {
-                sid = Object.keys(key.data)[0];
-            }
 			var test_key = key.formvalue(sid);
 			var test_token = token.formvalue(sid);
 			var node_key = m.findElement('id', key.cbid(sid));
