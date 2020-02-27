@@ -314,6 +314,8 @@ local function handle_message_data(mid, topic, jpayload, qos, retain)
 		return
 	end
 	statsd:increment("msgs.data")
+	-- reset the flush time to now, this stops us from flushing until after we've been idle after a message chunk.
+	state.flush_last_ts = timestamp_ms()
 
 	-- Note: we'll make multiple records here with the same "did", but that's ok, dexma shows it nicely grouped.
 
