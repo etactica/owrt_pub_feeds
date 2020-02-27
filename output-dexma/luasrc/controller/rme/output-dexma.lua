@@ -31,7 +31,7 @@ function action_diag()
                     process_extra = string.format("Last message post to dexma failed: %s", details.posts[1].err)
                 end
             else
-                process_extra = string.format("No data has been posted yet, perhaps the service has just started?")
+                summary = string.format("No data has been posted yet, perhaps the service has just started, or the first interval has not yet completed?")
             end
         end
     else
