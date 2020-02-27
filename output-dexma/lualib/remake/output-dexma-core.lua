@@ -493,14 +493,18 @@ local function flush_qd()
 	end
 end
 
-local function do_main(args)
+local function do_init(args)
 	math.randomseed(os.time())
 	mosq.init()
+	args = args or {}
 	cfg = default_cfg
 	cfg.args = args
 	ugly.initialize(cfg.APP_NAME, args.verbose or 4)
 
 	cfg = cfg_validate(cfg)
+end
+
+local function do_main()
 	ugly.debug("Starting operation with config: %s", pl.pretty.write(cfg))
 	-- Delete any existing state file.
 	pl.file.delete(cfg.state_file)
@@ -515,7 +519,7 @@ local function do_main(args)
 	-- Clear our state message on exit
 	mqtt:will_set(cfg.topic_state_out, nil, 0, true)
 
-	if not mqtt:connect(args.mqtt_host, 1883, 60) then
+	if not mqtt:connect(cfg.args.mqtt_host, 1883, 60) then
 		ugly.err("Aborting, unable to make MQTT connection")
 		os.exit(CODES.MQTT_CONNECT_FAIL)
 	end
@@ -557,7 +561,8 @@ local function do_main(args)
 end
 
 local M = {
-	do_main = do_main,
+	init = do_init,
+	main = do_main,
 	httppost = httppost,
 	jitter = jitter,
 }

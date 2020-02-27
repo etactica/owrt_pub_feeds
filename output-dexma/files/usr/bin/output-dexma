@@ -21,7 +21,8 @@ local cliargs = pl.lapp [[
 local ugly = require("remake.uglylog")
 ugly.initialize("output-dexma", cliargs.verbose or 4)
 
-local ok, err = pcall(core.do_main, cliargs)
+core.init(cliargs)
+local ok, err = pcall(core.main)
 if not ok then
 	ugly.emerg("Crashed! %s", err)
 	os.exit(1)
