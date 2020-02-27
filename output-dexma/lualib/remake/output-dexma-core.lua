@@ -502,18 +502,32 @@ local function do_init(args)
 	ugly.initialize(cfg.APP_NAME, args.verbose or 4)
 
 	cfg = cfg_validate(cfg)
+
+	local stub_statsd = {
+		counter = function() end,
+		decrement = function() end,
+		gauge = function() end,
+		histogram = function() end,
+		increment = function() end,
+		meter = function() end,
+		timer = function() end,
+	}
+	statsd = stub_statsd
+	local has_statsd, statsdmodule = pcall(require, "statsd")
+	if has_statsd then
+		ugly.debug("statsd module available, enabling.")
+		statsd = statsdmodule({
+			namespace = cfg.statsd_namespace,
+			host = cfg.statsd_host,
+			port = cfg.statsd_port,
+		})
+	end
 end
 
 local function do_main()
 	ugly.debug("Starting operation with config: %s", pl.pretty.write(cfg))
 	-- Delete any existing state file.
 	pl.file.delete(cfg.state_file)
-
-	statsd = require("statsd")({
-		namespace = cfg.statsd_namespace,
-		host = cfg.statsd_host,
-		port = cfg.statsd_port,
-	})
 
 	mqtt = mosq.new(cfg.MOSQ_CLIENT_ID, true)
 	-- Clear our state message on exit
