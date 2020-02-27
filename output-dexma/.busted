@@ -1,5 +1,6 @@
 return {
 	_all = {
-		lpath = './lualib/?.lua'
+		lpath = './lualib/?.lua',
+		helper = 'spec/helper.lua',
 	}
 }

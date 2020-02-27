@@ -46,6 +46,12 @@ local default_cfg = {
 	INITIAL_SLEEP_TIME = 5,
 	-- Don't change this unless you change the diags too!
 	DEFAULT_STATE_FILE = "/tmp/output-dexma.state",
+	-- These types should be named with "label-<channel>" others as just "label"
+	DEFAULT_PER_CHANNEL_TYPES = {
+		"current",
+		"volt",
+		"pf",
+	}
 }
 
 local CODES = {
@@ -169,6 +175,8 @@ local function cfg_validate(c)
 	c.limit_qd = tonumber(c.uci.limit_qd) or c.DEFAULT_LIMIT_QD
 	c.store_types = c.uci.store_types or c.DEFAULT_STORE_TYPES
 	c.state_file = c.uci.state_file or c.DEFAULT_STATE_FILE
+	-- TODO no support for loading a list from config at this point, see if we actually need to do this? Will custom types need this?
+	c.per_channel_types = c.DEFAULT_PER_CHANNEL_TYPES
 
 	return c
 end
@@ -239,7 +247,13 @@ local function get_did_from_model(model, devid, dtype, channel)
 				for nn,point in pairs(mbranch.points) do
 					-- the channels are 1 based, but the cabinet model is historically 0 based.
 					if point.reading + 1 == tonumber(channel) then
-						return string.format("%s-%s-%d", mbranch.cabinet, mbranch.label, point.phase)
+						-- If it's the type of data that _must_ be done per channel, make a channel based key.
+						-- energy for instance can be summed, but not volts, or pf
+						if pl.tablex.find(cfg.per_channel_types, dtype) then
+							return string.format("%s-%s-%d", mbranch.cabinet, mbranch.label, point.phase)
+						else
+							return string.format("%s-%s", mbranch.cabinet, mbranch.label)
+						end
 					end
 				end
 			end
@@ -404,6 +418,46 @@ local function httppost(url, data, userheaders, opts)
 	end
 end
 
+--- Coalesce multiple readings from the same points into single values.
+-- This results in compact json with only one entry for each label, with multiple parameters, instead
+-- of separate entries for every parameter.  Dexma was ok with that, but coalescing is required to be able
+-- to sum up readings, such as per channel energy from bars.
+local function coalesce(blob)
+	local out = {
+		sqn = blob.sqn,
+		ts = blob.ts,
+		retries = blob.retries,
+		values = {},
+	}
+	for _,v in pairs(blob.values) do
+		local did = v.did
+		-- look in the (possibly already coalesced) incoming values for this did.
+		for _,new in pairs(v.values) do
+			-- must find in the long list, based on inner did...
+			local found, match = pl.tablex.find_if(out.values, function(element, arg)
+				if element.did == arg then return element end
+			end, did)
+			if found then
+				local handled = false
+				-- look for any matching in the output set to sum/join with
+				for _, prior in pairs(match.values) do
+					if prior.p == new.p then
+						-- TODO - _only_ support summing of duplicate entries.
+						prior.v = prior.v + new.v
+						handled = true
+					end
+				end
+				if not handled then
+					table.insert(match.values, new)
+				end
+			else
+				table.insert(out.values, v)
+			end
+		end
+	end
+	return out
+end
+
 
 --- Attempt to flush our stored readings.
 -- We only attempt to post one message each call here, to allow the main loop to still run healthily and service
@@ -433,6 +487,8 @@ local function flush_qd()
 	table.sort(remaining, sort_oldest_first)
 
 	local proposed = table.remove(remaining, 1)
+
+	proposed = coalesce(proposed)
 
 	local function post_to_dexma(data)
 		local ts = data.ts
@@ -579,6 +635,9 @@ local M = {
 	main = do_main,
 	httppost = httppost,
 	jitter = jitter,
+	on_message = mqtt_ON_MESSAGE,
+	coalesce = coalesce,
+	_state = state,
 }
 
 return M
