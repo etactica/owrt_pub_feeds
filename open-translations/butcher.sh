@@ -1,5 +1,5 @@
 #!/bin/sh
-LANG=${1:-no}
+LANG=${1:-nb_NO}
 T=/tmp/security_is_for_the....$$
 
 [ -d $LANG ] || {
