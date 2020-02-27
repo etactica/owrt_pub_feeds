@@ -5,7 +5,7 @@ local m = require("remake.output-dexma-core")
 local ENDPOINT = "localhost:8912/"
 local BASE = "https://" .. ENDPOINT
 
-describe("Basic sanity of HTTPS client code: ", function()
+describe("Basic sanity of HTTPS client code: #integ", function()
 	it("handles normal case", function()
 		local a, b, c = m.httppost(BASE .. "dexma", {dummy=123}, {["x-dexcell-source-token"] = "mysecret" }, {verify={}})
 		assert.is.truthy(a)
