@@ -7,7 +7,7 @@ local BASE = "https://" .. ENDPOINT
 
 describe("Basic sanity of HTTPS client code: ", function()
 	it("handles normal case", function()
-		local a, b, c = m.httppost(BASE .. "dexma", {dummy=123}, nil, {verify={}})
+		local a, b, c = m.httppost(BASE .. "dexma", {dummy=123}, {["x-dexcell-source-token"] = "mysecret" }, {verify={}})
 		assert.is.truthy(a)
 		assert.are.equal(200, b)
 	end)

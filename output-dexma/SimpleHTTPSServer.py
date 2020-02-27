@@ -29,11 +29,13 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 		self.end_headers()
 
 	def do_POST(self):
-		rc = 200
 		time.sleep(0.7)
 		bits = self.path.split("/")
 		if len(bits) == 3 and bits[1] == "makeerror":
 			rc = int(bits[2])
+			self.send_response(rc)
+			self.end_headers()
+			return
 
 		content_length = int(self.headers['Content-Length'])
 		token = self.headers["x-dexcell-source-token"]
@@ -44,7 +46,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 			self.wfile.write(b"token not recognised")
 			return
 		body = self.rfile.read(content_length)
-		self.send_response(rc)
+		self.send_response(200)
 		self.send_header("Access-Control-Allow-Origin", "*")
 		self.end_headers()
 		response = io.BytesIO()
