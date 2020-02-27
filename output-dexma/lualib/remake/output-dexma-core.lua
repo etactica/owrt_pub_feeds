@@ -133,8 +133,8 @@ local function cfg_validate(c)
 		end
 	end)
 
-	if #c.args.cafile == 0 then c.args.cafile = nil end
-	if #c.args.capath == 0 then c.args.cafile = nil end
+	if c.args.cafile and #c.args.cafile == 0 then c.args.cafile = nil end
+	if c.args.capath and #c.args.capath == 0 then c.args.capath = nil end
 	if not c.args.cafile and not c.args.capath then
 		pl.utils.quit(CODES.MISSING_TLS, "Either cafile or capath must be provided")
 	end
