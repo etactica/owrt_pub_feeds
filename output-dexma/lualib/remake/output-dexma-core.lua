@@ -487,12 +487,6 @@ local function flush_qd()
 	-- Truncate our status file to last ~x attempts too
 	state.ok.posts = pl.tablex.removevalues(state.ok.posts, 8)
 	state.ok.qd = #remaining
-	local status_message = json.encode(state.ok)
-	if status_message ~= state.last_status_message then
-		pl.file.write(cfg.state_file, status_message)
-		mqtt:publish(cfg.topic_state_out, status_message, 0, true)
-		state.last_status_message = status_message
-	end
 
 	if data_to_retry then
 		return data_to_retry.retries
@@ -549,6 +543,14 @@ local function do_main(args)
 			local extra_backoff = 0
 			if retries and retries > 10 then extra_backoff = 10*1000 end
 			state.flush_jitter_time = jitter(cfg.flush_interval_ms) + extra_backoff
+
+			local status_message = json.encode(state.ok)
+			if status_message ~= state.last_status_message then
+				pl.file.write(cfg.state_file, status_message)
+				mqtt:publish(cfg.topic_state_out, status_message, 0, true)
+				state.last_status_message = status_message
+			end
+
 		end
 	end
 
