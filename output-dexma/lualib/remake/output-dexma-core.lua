@@ -395,8 +395,9 @@ local function httppost(url, data, userheaders, opts)
 		headers["Content-Type"] = "application/json;charset=utf-8"
 	end
 	https.TIMEOUT = 10 -- Default is 60, which is _way_ too long for our little single threaded brain.
-	ugly.debug("posting now: %s", reqbody)
-	headers["content-length"] = #reqbody
+	local blen = #reqbody
+	ugly.debug("posting %d bytes body: %s", blen, reqbody)
+	headers["content-length"] = blen
 	local http_req = {
 		method = opts.method,
 		url = url,
