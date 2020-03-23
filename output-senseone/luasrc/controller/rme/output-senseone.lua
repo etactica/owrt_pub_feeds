@@ -6,7 +6,7 @@ local ru = require("remake.utils")
 local uci = require("luci.model.uci")
 
 function index()
-	entry({"admin", "services", "output-senseone"}, cbi("rme/output-senseone"), "Output-SenseOne", 20)
+	entry({"admin", "services", "output-senseone"}, view("rme/output-senseone"), "Output-SenseOne", 20)
 	entry({"admin", "services", "output-senseone", "diag"}, call("action_diag"), nil)
 end
 
