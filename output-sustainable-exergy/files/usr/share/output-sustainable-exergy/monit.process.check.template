@@ -1,0 +1,5 @@
+check process output-sustainable-exergy.INSTANCE with pidfile /var/run/output-sustainable-exergy.INSTANCE.pid
+	start program = "/etc/init.d/output-sustainable-exergy start"
+	stop program = "/etc/init.d/output-sustainable-exergy stop"
+        if totalmemory is greater than 40% for 3 cycles then restart
+	group output-sustainable-exergy

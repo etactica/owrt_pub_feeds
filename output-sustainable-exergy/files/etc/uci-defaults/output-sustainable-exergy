@@ -1,0 +1,20 @@
+#!/bin/sh
+# Karl Palsson, <karlp@etactica.com> March 2020
+
+CFG=output-sustainable-exergy
+
+# This directory is where we keep custom queries
+[ -d /etc/$CFG ] || mkdir -p /etc/$CFG
+
+[ -f /etc/config/$CFG ] && exit 0
+
+# Create an example file if it doesn't exist already.
+touch /etc/config/$CFG
+# Run the migration script
+migrate-sustainable-exergy.lua
+reload_config
+
+# Helps us work if we're installed later
+rm -f /tmp/luci-indexcache
+
+exit 0

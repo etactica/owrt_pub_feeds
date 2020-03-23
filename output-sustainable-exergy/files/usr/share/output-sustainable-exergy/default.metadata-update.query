@@ -1,0 +1,4 @@
+-- This is the default metadata update query. See help for variables available
+update metadata set deviceid = '$deviceid', pointid = $point, breakersize = $breakersize, phase = $phase,
+ 	cabinetname = '$cabinet', label = '$label', gatewayid = '$gateid', updated_at = '$ts'
+ 	where deviceid = '$deviceid' and pointid = $point

@@ -1,0 +1,2 @@
+-- This is the default data query. See help for variables available
+insert into data (pname, ts_end, period, val) values ('$pname', '$ts_ends', $period, $selected)
