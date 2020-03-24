@@ -99,7 +99,8 @@ function MQTTHandler(name, msgHandler, sublist, supportedCB, connectedCB) {
         self.mqclient.connect({
             mqttVersion: 4,
             onFailure: self.wsLostHandler,
-            onSuccess: self.wsConnected
+            onSuccess: self.wsConnected,
+            useSSL: window.location.protocol === "https:"
         });
         self.errNotConnected(false);
     };
