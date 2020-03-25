@@ -3,6 +3,12 @@
 'require fs';
 'require tools.widgets as widgets';
 
+var TrimmedValue = form.Value.extend({
+	write: function(sid, formvalue) {
+		this.super("write", [sid, formvalue.trim()]);
+	}
+})
+
 return L.view.extend({
 	render: function() {
 		var m, s, o;
@@ -28,13 +34,13 @@ return L.view.extend({
 		driver.value('postgres', _('Postgres'));
 		driver.value('mysql', _('MySQL/MariaDB'));
 
-		o = s.taboption("general", form.Value, "dbname", _("Database name"), _("The name of the database you wish to connect to. <br>For postgres, this can also be a full connection string."))
+		o = s.taboption("general", TrimmedValue, "dbname", _("Database name"), _("The name of the database you wish to connect to. <br>For postgres, this can also be a full connection string."))
 		o.placeholder = "datasink"
 
-		o = s.taboption("general", form.Value, "dbuser", _("Database username"), _("The username to use when connecting to the database"))
+		o = s.taboption("general", TrimmedValue, "dbuser", _("Database username"), _("The username to use when connecting to the database"))
 		o.placeholder = "some-user-name"
 
-		o = s.taboption("general", form.Value, "dbpass", _("Database password"), _("The password for your database user"))
+		o = s.taboption("general", TrimmedValue, "dbpass", _("Database password"), _("The password for your database user"))
 		o.placeholder = "some-db-password"
 		o.password = true;
 
@@ -215,7 +221,7 @@ return L.view.extend({
 			}
 		};
 
-		o = s.taboption("statsd", form.Value, "statsd_namespace", _("Namespace for StatsD reporting"))
+		o = s.taboption("statsd", TrimmedValue, "statsd_namespace", _("Namespace for StatsD reporting"))
 		o.placeholder = "apps.output-db.<instanceid>"
 		o.optional = true
 
