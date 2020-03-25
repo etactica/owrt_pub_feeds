@@ -28,6 +28,7 @@ endef
 
 define Package/$(PKG_NAME)/conffiles
 /etc/config/$(PKG_NAME)
+/etc/$(PKG_NAME)
 endef
 
 # Below here is common, based on notes from jow_laptop

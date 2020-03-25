@@ -24,6 +24,12 @@ var desc = _(""
   	+ '<a href="http://www.dexma.com/" target="_blank">Visit their site for more information</a>'
 );
 
+var TrimmedValue = form.Value.extend({
+	write: function(sid, formvalue) {
+		this.super("write", [sid, formvalue.trim()]);
+	}
+})
+
 return L.view.extend({
 	render: function() {
 		var m, s, o;
@@ -40,12 +46,12 @@ return L.view.extend({
         o = s.taboption("general", form.Flag, "enabled", _("Enable this service"), _("The service will not start until this is checked"));
         o.rmempty = false;
 
-		var key = s.taboption("general", form.Value, "source_key", _("Key"),
+		var key = s.taboption("general", TrimmedValue, "source_key", _("Key"),
 			_("This is the <em>identifier</em> of the gateway you chose when you created the gateway in your Dexma account."
 			+ "<br>This is in your Dexma account on the gateway settings page as <em>Key</em>."));
 		key.placeholder = "example-public";
 
-		var token = s.taboption("general", form.Value, "dexcell_source_token", _("Gateway token"),
+		var token = s.taboption("general", TrimmedValue, "dexcell_source_token", _("Gateway token"),
 			_("This is your <em>password</em> and is required to be able to publish to the stream."
 			+ "<br>This is in your Dexma account on the gateway settings page as <em>Gateway token</em>."));
 		token.placeholder = "example-private";
@@ -158,7 +164,7 @@ return L.view.extend({
 		o.datatype = "uinteger";
 		o.placeholder = 500;
 
-		o = s.taboption("statsd", form.Value, "statsd_namespace", _("Namespace for StatsD reporting"))
+		o = s.taboption("statsd", TrimmedValue, "statsd_namespace", _("Namespace for StatsD reporting"))
 		o.placeholder = "apps.output-dexma"
 		o.optional = true
 
@@ -188,7 +194,7 @@ return L.view.extend({
 
 		o = s.option(form.Flag, "enabled", _("Enabled"));
 		// really? o.editable = true;
-		o = s.option(form.Value, "datakey", _("Datakey"), _("The name of the datatype in the aggregate stream"));
+		o = s.option(TrimmedValue, "datakey", _("Datakey"), _("The name of the datatype in the aggregate stream"));
 		o.rmempty = false;
 		o = s.option(form.ListValue, "field", _("Field"), _("Which field of the aggregate to select"));
 		o.value("mean", "Mean");
