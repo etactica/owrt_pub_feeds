@@ -1,0 +1,6 @@
+check process et-remote with pidfile /var/run/et-remote.pid
+	start program = "/etc/init.d/et-remote start"
+	stop program = "/etc/init.d/et-remote stop"
+        if totalmemory is greater than 40% for 3 cycles then restart
+        if totalcpu is greater than 40% for 3 cycles then restart
+	group et-remote

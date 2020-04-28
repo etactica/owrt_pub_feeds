@@ -1,0 +1,22 @@
+#!/bin/sh
+# Karl Palsson, <karlp@etactica.com> Sept 2018
+
+CFG=et-remote
+
+[ -f /etc/config/$CFG ] && exit 0
+
+# Create an example file if it doesn't exist already.
+touch /etc/config/$CFG
+uci -q set $CFG.options=options
+uci -q set $CFG.options.enabled=0
+
+# Set them if they were found, and enable it.
+fw_printenv -n et-ra-name && uci -q set $CFG.options.kitename=$(fw_printenv -n et-ra-name)
+fw_printenv -n et-ra-key && uci -q set $CFG.options.kitesecret=$(fw_printenv -n et-ra-key) && uci -q set $CFG.options.enabled=1
+
+uci commit
+
+# Helps us work if we're installed later
+rm -f /tmp/luci-indexcache
+
+exit 0

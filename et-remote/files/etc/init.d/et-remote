@@ -1,0 +1,48 @@
+#!/bin/sh /etc/rc.common
+# April 2020, karlp@etactica.copm
+START=99
+APP=et-remote
+USE_PROCD=1
+SFILE=/tmp/remake.d/et-remote.status.json
+
+add_instance() {
+	local cfg="$1"
+	local kitename kitesecret
+	rm -f $SFILE
+	config_get kitename "$cfg" kitename
+	config_get kitesecret "$cfg" kitesecret
+	[ -z "$kitename" -o -z "$kitesecret" ] && {
+		echo "Both kitename and kitesecret must be specified"
+		return 1
+	}
+	config_get_bool enabled "$cfg" enabled 0
+	[ $enabled -eq 1 ] || {
+	    echo "$APP is not enabled"
+	    monit unmonitor $APP
+	    return 1
+	}
+	monit monitor $APP
+	kitename=$kitename.myetactica.com
+
+	procd_open_instance
+	procd_set_param command pagekitec
+	procd_append_param command -s
+	procd_append_param command -a $APP
+	procd_set_param pidfile /var/run/$APP.pid
+	procd_append_param command -w myetactica.com
+	procd_append_param command -Y json:$SFILE
+	procd_append_param command 80 http $kitename 0 $kitesecret
+	procd_append_param command 22 raw-22 $kitename 0 $kitesecret
+	procd_append_param command 8083 websocket-8083 $kitename 0 $kitesecret
+
+	procd_close_instance
+}
+
+start_service() {
+	config_load $APP && config_foreach add_instance options
+}
+
+service_triggers()
+{
+	procd_add_reload_trigger $APP
+}
