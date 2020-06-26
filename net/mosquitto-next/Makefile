@@ -30,7 +30,7 @@ define Package/$(PKG_NAME)
   TITLE:=mosquitto-next - an MQTT message broker
   URL:=http://www.mosquitto.org/
   MAINTAINER:=Karl Palsson <karlp@etactica.com>
-  DEPENDS:= +librt +libuuid
+  DEPENDS:= +librt +libuuid @BROKEN
   DEPENDS+= +libopenssl libwebsockets
   USERID:=mosquitto=200:mosquitto=200
   PROVIDES:= mosquitto
