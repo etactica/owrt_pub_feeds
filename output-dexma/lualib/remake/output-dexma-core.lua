@@ -319,8 +319,8 @@ local function handle_message_data(mid, topic, jpayload, qos, retain)
 
 	-- Note: we'll make multiple records here with the same "did", but that's ok, dexma shows it nicely grouped.
 
-	-- dexma wants usage from 08:00 to 08:15 to report at 08:00
-	local ts = Pt.strftime('%Y-%m-%dT%H:%M:00Z', Pt.gmtime(payload.ts_start / 1000))
+	-- dexma docs imply start, but empiracally, it needs to be the end.
+	local ts = Pt.strftime('%Y-%m-%dT%H:%M:00Z', Pt.gmtime(payload.ts_end / 1000))
 	-- Create a new chunk for each interval's data
 	if not state.qd[ts] then
 		state.qd[ts] = {
