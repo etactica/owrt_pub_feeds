@@ -58,9 +58,11 @@ function PageModel(pagename) {
 		self.active(true); // if the message is real, we're alive!
 		self.qd(p.qd);
 		self.posts([]);
-		Array.from(p.posts).forEach(function(v, i, a) {
-			self.posts.push(new Post(v));
-		});
+		if (Object.keys(p.posts).length > 0) {
+			p.posts.forEach(function(v, i, a) {
+				self.posts.push(new Post(v));
+			});
+		}
 		self.dids([]);
 		Object.keys(p.dids).forEach(function(v, i, m) {
 			self.dids.push(new DexmaID(v, p.dids[v]));
