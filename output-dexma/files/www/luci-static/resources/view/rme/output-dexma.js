@@ -147,7 +147,7 @@ return L.view.extend({
 		o.placeholder = _("Default (Active Energy)");
 		o.value("cumulative_wh", _("Active Energy"));
 		o.value("cumulative_varh", _("Reactive Energy"));
-		o.value("voltage", _("Voltage interval average"));
+		o.value("voltage", _("Voltage (interval mean)"));
 		o.value("current_mean", _("Current (interval mean)"));
 		o.value("current_max", _("Current (interval maximum)"));
 		o.value("pf", _("Power Factor (interval mean)"));
