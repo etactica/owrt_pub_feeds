@@ -46,6 +46,13 @@ return L.view.extend({
         o = s.taboption("general", form.Flag, "enabled", _("Enable this service"), _("The service will not start until this is checked"));
         o.rmempty = false;
 
+		o = s.taboption("general", form.DummyValue, "_linkbutton", _("Runtime diagnostics"), _("Displays more detailed information about the state of the service"));
+		o.href = L.url("admin/services/output-dexma/diags2");
+		o.cfgvalue = function(s) {
+			return _("Runtime diagnostics");
+		};
+		o.depends("enabled", "1");
+
 		var key = s.taboption("general", TrimmedValue, "source_key", _("Key"),
 			_("This is the <em>identifier</em> of the gateway you chose when you created the gateway in your Dexma account."
 			+ "<br>This is in your Dexma account on the gateway settings page as <em>Key</em>."));
