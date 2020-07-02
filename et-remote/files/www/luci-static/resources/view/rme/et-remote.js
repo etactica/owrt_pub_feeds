@@ -61,13 +61,21 @@ function updateStatusRunning(info) {
 		status.textContent = (info.pagekitec_status + " (" + info.pagekitec_status_code + ")" || 'unknown');
 		var human = document.getElementById('status-human');
 		switch (info.pagekitec_status_code) {
+		case 0: /* init */
+		case 10: /* startup */
+		case 20: /* connecting */
+		case 30: /* updating DNS */
+			human.textContent = _("Preparing service...");
+			break;
 		case 40: /* flying */
 			human.textContent = _('Everything appears normal');
+			break;
+		case 50: /* problems */
+			human.textContent= _("Something isn't working. Check your access credentials or the logs for hints");
 			break;
 		case 90: /* no_network */
 			human.textContent = _('Check your network connection, and/or the access credentials');
 			break;
-		case 20: /* connecting */
 		default:
 			break;
 		}
