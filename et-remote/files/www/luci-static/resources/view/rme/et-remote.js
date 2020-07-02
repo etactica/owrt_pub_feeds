@@ -41,7 +41,7 @@ function updateStatusNotRunning(rawmsg) {
 	var status = document.getElementById('status-human');
 	var raw = document.getElementById('status-raw');
 	if (status && raw) {
-		status.textContent = _("Not running: Do you have an internet connection? Do you have the correct credentials?") + blob.human;
+		status.textContent = _("Not running: Do you have an internet connection? Do you have the correct credentials?");
 		raw.textContent = rawmsg;
 
 		var f = document.getElementById('pkversion');
