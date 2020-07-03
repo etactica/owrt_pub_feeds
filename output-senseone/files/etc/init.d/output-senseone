@@ -11,13 +11,22 @@ remove_output() {
 	[ "$connection" = "senseone" ] && uci -q delete mosquitto.$cfg
 }
 
+add_data_types() {
+	local dtype="$1"
+	local newcfg="$2"
+	local interval="$3"
+	local username="$4"
+	uci -q add_list mosquitto.$newcfg.topic="/interval/$interval/+/$dtype/# out 1 status/local/json $username/status"
+}
+
 add_output() {
-	local username="$1"
-	local password="$2"
-	local address="$3"
-	local interval="$4"
-	local include_live="$5"
-	local insecure="$6"
+	local cfg="$1"
+	local username="$2"
+	local password="$3"
+	local address="$4"
+	local interval="$5"
+	local include_live="$6"
+	local insecure="$7"
 	local gateid
 	gateid=$(uci -q get system.@system[0].rme_stablemac)
 	local newcfg
@@ -35,7 +44,16 @@ add_output() {
 		add_list mosquitto.$newcfg.topic="/alert/expired/# out 1 status/local/json $username/status"
 		add_list mosquitto.$newcfg.topic="/cabinet/# out 1 status/local/json $username/status"
 EOF
-	[ -n "$interval" ] && uci -q add_list mosquitto.$newcfg.topic="/interval/$interval/# out 1 status/local/json $username/status"
+	[ -n "$interval" ] && {
+		config_load output-senseone # "context" was still mosquitto at this point
+		config_get dtypes $cfg store_types
+		if [ -z $dtypes ]; then
+			add_data_types cumulative_wh "$newcfg" $interval $username
+			add_data_types wh_in "$newcfg" $interval $username
+		else
+			config_list_foreach "$cfg" store_types add_data_types "$newcfg" $interval $username
+		fi
+	}
 	[ "$include_live" = "true" ] && uci -q add_list mosquitto.$newcfg.topic="/device/# out 1 status/local/json $username/status"
 	[ "$insecure" = "true" ] || uci -q set mosquitto.$newcfg.cafile=/etc/ssl/certs/senseonetech-mqtt.crt
 	uci -q commit
@@ -62,13 +80,13 @@ add_instance() {
 		echo "Enabling SenseOne"
 		case "$username" in
 			etactica_hq)
-				add_output $username $password $address $interval true
+				add_output $cfg $username $password $address $interval true
 				;;
 			marel_iceland)
-				add_output $username $password $address "" true true
+				add_output $cfg $username $password $address "" true true
 				;;
 			*)
-				add_output $username $password $address $interval
+				add_output $cfg $username $password $address $interval
 				;;
 		esac
 		[ -f /etc/cron.d/daily/republish_cabinet_model.lua ] || ln -s /usr/bin/republish_cabinet_model.lua /etc/cron.d/daily/

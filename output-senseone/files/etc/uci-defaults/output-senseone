@@ -2,9 +2,33 @@
 # Karl Palsson, <karlp@etactica.com> Sept 2018
 
 CFG=output-senseone
-[ -f /etc/config/$CFG ] && exit 0
 
-# Create an example file if it doesn't exist already.
+kklog() {
+	echo $CFG: $@ > /dev/kmsg
+}
+
+# Legacy installations sent _all_ data to SenseOne.
+# Modern installations only send energy out of the box (and if nothing is set for store_types)
+# Make sure that store_types is set to all for legacy installations, but ensure that
+# any subsequent upgrade of a modern system doesn't reset it!
+migrate_legacy_2020() {
+	existing=$(uci -q get $CFG.@general[0].store_types)
+	migrated=$(uci -q get $CFG.@general[0]._migr2020)
+	[ -z $existing ] && [ -z $migrated ] && {
+		kklog "Preserving transport of ALL datatypes for legacy SenseOne installation"
+		uci -q add_list $CFG.@general[0].store_types="+"
+		uci -q set $CFG.@general[0]._migr2020=complete
+		uci -q commit
+		reload_config
+	}
+}
+
+[ -f /etc/config/$CFG ] && {
+	migrate_legacy_2020
+	exit 0
+}
+
+# Otherwise, create a basic example file
 touch /etc/config/$CFG
 uci -q batch <<-EOF >/dev/null 
 		delete $CFG.@general[0]
@@ -14,6 +38,7 @@ uci -q batch <<-EOF >/dev/null
 		set $CFG.@general[0].username=example-username
 		set $CFG.@general[0].password=example-password
 		set $CFG.@general[0].address=mqtt.senseonetech.com:8883
+		set $CFG.@general[0]._migr2020=complete
 		commit $CFG
 EOF
 

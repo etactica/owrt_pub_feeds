@@ -43,20 +43,48 @@ return L.view.extend({
 		s = m.section(form.TypedSection, 'general',	_("Options"));
 		s.anonymous = true;
 
-		o = s.option(form.Flag, "enabled", _("Enable this service"), _("The service will not start until this is checked"));
+		s.tab("general", _("General Settings"));
+		s.tab("advanced", _("Advanced Settings"));
+
+		o = s.taboption("general", form.Flag, "enabled", _("Enable this service"), _("The service will not start until this is checked"));
 		o.rmempty = false;
 
-		o = s.option(TrimmedValue, "username", _("The MQTT bridge username"),
+		o = s.taboption("general", TrimmedValue, "username", _("The MQTT bridge username"),
 			_("Provided by SenseOne, unique for your account"));
 		o.placeholder = "example-username";
 
-		o = s.option(TrimmedValue, "password", _("The MQTT bridge password"),
+		o = s.taboption("general", TrimmedValue, "password", _("The MQTT bridge password"),
 			_("Provided by SenseOne, unique for your account"));
 		o.placeholder = "example-private";
 
-		o = s.option(TrimmedValue, "address", _("The MQTT broker address"),
+		o = s.taboption("general", TrimmedValue, "address", _("The MQTT broker address"),
 			_("Provided by SenseOne, normally standard"));
 		o.placeholder = "mqtt.senseonetech.com:8883"
+
+		o = s.taboption("advanced", form.ListValue, "interval", _("Interval to monitor and forward"),
+			_("There's a modest bandwidth reduction to use 60minute, but it's not significant."));
+		o.optional = true;
+		// Senseone would rather we didn't offer less than 15 minutes
+		//o.value("1min", "1 Minute");
+		//o.value("5min", "5 Minute");
+		o.value("15min", "15 Minute");
+		o.value("60min", "60 Minute");
+		o.placeholder = "Default (15 Minute)";
+
+		o = s.taboption("advanced", form.DynamicList, "store_types", _("Data types to store"),
+			_("Remember, you are charged per data point, so only enable data points you're interested in."));
+		o.multiple = true;
+		o.optional = true;
+		o.placeholder = _("Default (Active Energy)");
+		o.value("+", _("Everything!"));
+		o.value("cumulative_wh", _("Active Energy"));
+		o.value("cumulative_varh", _("Reactive Energy"));
+		o.value("volt", _("Voltage"));
+		o.value("current", _("Current"));
+		o.value("pf", _("Power Factor"));
+		o.value("temp", _("Temperature"));
+		o.value("pulse_count", _("Pulse count"));
+		o.editable = true;
 
 		return m.render();
 	}
