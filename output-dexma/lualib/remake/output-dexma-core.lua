@@ -106,7 +106,7 @@ end
 
 local function cfg_validate(c)
 	-- Load UCI config too
-	local x = uci.cursor()
+	local x = uci.cursor(uci.get_confdir())
 	x:foreach(c.APP_NAME, "general", function(s)
 		if c.uci then
 			error("Duplicate 'general' section in uci config!")
