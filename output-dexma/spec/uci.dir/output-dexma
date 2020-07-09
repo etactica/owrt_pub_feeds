@@ -1,0 +1,2 @@
+config general
+	option interval 1
