@@ -1,2 +1,5 @@
 config general
 	option interval 1
+	list store_types 'cumulative_wh'
+	list store_types 'temp'
+
