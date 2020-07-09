@@ -18,7 +18,7 @@ else
     python3 SimpleHTTPSServer.py -k server.pem -p 8912 &
 fi
 while [ "$(testcon)" -gt 0 ]; do
-    printf "Sleeping until server is up...\n"
+    printf "Sleeping until server is up...\n" >&2
     sleep 0.2
 done
 busted --helper=spec/helper.lua $*

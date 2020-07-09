@@ -96,7 +96,7 @@ insulate("coalese can run twice", function()
 				key_is_file=true,
 		})
 		local data, err = pl.data.read(TESTDATA, {delim=" ", fieldnames={"topic", "msg"}, last_field_collect=true})
-		print("data loaded is ", data, err)
+		--print("data loaded is ", data, err)
 		for i,v in ipairs(data) do
 			local topic, msg = table.unpack(v)
 			m.on_message(i, topic, msg, 1, false)
