@@ -38,7 +38,7 @@ insulate("handling grouped breakers: ", function()
 
 		local expected = {
 			sqn = 2,
-			ts = "2020-02-27T15:15:00Z",
+			ts = "2020-02-27T15:16:00Z",
 			values = {
 				{
 					p = 402,
@@ -61,7 +61,7 @@ insulate("handling grouped breakers: ", function()
 
 		local expected = {
 			sqn = 2,
-			ts = "2020-02-27T15:15:00Z",
+			ts = "2020-02-27T15:16:00Z",
 			-- we're expecting to see two entries here, not just one
 			values = {
 				{
