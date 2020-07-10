@@ -299,11 +299,12 @@ local function handle_message_data(mid, topic, jpayload, qos, retain)
 	end
 	if not dko.n then dko.n = 1 end
 	if not dko.di then error("Programming error, dexma key contains no dexma parameter! " .. pl.pretty.write(dko)) end
+	local hwid = get_did_default(device, dtype, channel)
 	local did, _nodid = get_did_from_model(cabinet_model, device, dtype, channel)
 	if did then
 		state.ok.dids[did] = {has_model = true}
 	else
-		did = get_did_default(device, dtype, channel)
+		did = hwid
 		state.ok.dids[did] = {has_model = false}
 	end
 
@@ -335,6 +336,7 @@ local function handle_message_data(mid, topic, jpayload, qos, retain)
 
 	local dex_value_reading = {
 		did = did,
+		hwid = hwid,  -- we keep this for later, to make sure we're not merging duplicates, only multi channels
 		sqn = state.qd[ts].sqn,
 		ts = ts,
 		values = {
@@ -445,8 +447,10 @@ local function coalesce(blob)
 				-- look for any matching in the output set to sum/join with
 				for _, prior in pairs(match.values) do
 					if prior.p == new.p then
-						-- TODO - _only_ support summing of duplicate entries.
-						prior.v = prior.v + new.v
+						if match.hwid ~= v.hwid then
+							ugly.debug("Summing for: %s from different hwid: (%s|%s)", did, match.hwid, v.hwid)
+							prior.v = prior.v + new.v
+						end
 						handled = true
 					end
 				end
@@ -499,6 +503,11 @@ local function flush_qd()
 		local headers = {
 			["x-dexcell-source-token"] = cfg.args.key,
 		}
+		-- Now, we stored a "hwid" tag in the data, to avoid duplicates and track the original source.
+		-- but we can't send that to dexma, so strip it out here.
+		for _,v in pairs(data.values) do
+			v.hwid = nil
+		end
 		local httpok, c, h, body = httppost(url, data.values, headers, {verify={}})
 		if httpok then
 			statsd:increment(string.format("http-post.code-%d", c))
