@@ -8,6 +8,8 @@ local pl = require("pl.import_into")()
 
 local TESTDATA = "spec/channel-groups-sums.testdata"
 
+local unpack = table.unpack or unpack
+
 local function noit() end
 local function nodescribe() end
 
@@ -99,7 +101,7 @@ insulate("coalese can run twice", function()
 		local data, err = pl.data.read(TESTDATA, {delim=" ", fieldnames={"topic", "msg"}, last_field_collect=true})
 		--print("data loaded is ", data, err)
 		for i,v in ipairs(data) do
-			local topic, msg = table.unpack(v)
+			local topic, msg = unpack(v)
 			m.on_message(i, topic, msg, 1, false)
 		end
 	end)
