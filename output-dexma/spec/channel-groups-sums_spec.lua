@@ -39,6 +39,7 @@ insulate("handling grouped breakers: ", function()
 		local expected = {
 			sqn = 2,
 			ts = "2020-02-27T15:16:00Z",
+			hwid = 'CAFEBABE000B-cumulative_wh-4',
 			values = {
 				{
 					p = 402,
