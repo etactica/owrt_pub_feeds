@@ -41,9 +41,9 @@ insulate("handling grouped breakers: ", function()
 		local expected = {
 			sqn = 2,
 			ts = "2020-02-27T15:16:00Z",
-			hwid = 'CAFEBABE000B-cumulative_wh-4',
 			values = {
 				{
+					hwid = 'CAFEBABE000B-cumulative_wh-4',
 					p = 402,
 					-- We expect this to be the _sum_ of each of the values.
 					v = 2.188405344
@@ -60,7 +60,8 @@ insulate("handling grouped breakers: ", function()
 
 	it("merges different parameter types", function()
 		local remaining = pl.tablex.values(m._state.qd)
-		local proposed = m.coalesce(remaining[1])
+		local proposed = remaining[1]
+		local proposed = m.coalesce(proposed)
 
 		local expected = {
 			sqn = 2,
@@ -68,12 +69,14 @@ insulate("handling grouped breakers: ", function()
 			-- we're expecting to see two entries here, not just one
 			values = {
 				{
+					hwid = "CAFEBABE0001-temp",
 					p = 701,
 					v = 0.0,
 				},
 				{
+					hwid = "CAFEBABE0001-cumulative_wh",
 					p = 402,
-					v = 4092.9811400000003232,
+					v = 1023.2452850000000808,
 				},
 			},
 			did = "thedesk-MAIN Tri"

@@ -336,16 +336,30 @@ local function handle_message_data(mid, topic, jpayload, qos, retain)
 
 	local dex_value_reading = {
 		did = did,
-		hwid = hwid,  -- we keep this for later, to make sure we're not merging duplicates, only multi channels
 		sqn = state.qd[ts].sqn,
 		ts = ts,
-		values = {
-			{ p = dko.di, v = payload[dko.f] * dko.n }
+		value = {
+			p = dko.di,
+			v = payload[dko.f] * dko.n,
+			hwid = hwid,  -- we keep this for later, to make sure we're not merging duplicates, only multi channels
 		},
 	}
 
 	-- queue everything so we can process all items the same way
-	table.insert(state.qd[ts].values, dex_value_reading)
+	-- this will _happily_ enter repeated timestamps over again, we should _replace_ with a new reading for the samw hwid
+	local handled = false
+	for _,item in pairs(state.qd[ts].values) do
+		if item.did == dex_value_reading.did and
+			item.value.hwid == dex_value_reading.value.hwid and
+			item.value.p == dex_value_reading.value.p then
+			item.value.v = dex_value_reading.value.v
+			ugly.debug("Replacing repeated data at ts for %s (%s)", item.did, item.value.hwid)
+			handled = true
+		end
+	end
+	if not handled then
+		table.insert(state.qd[ts].values, dex_value_reading)
+	end
 end
 
 local function mqtt_ON_MESSAGE(mid, topic, jpayload, qos, retain)
@@ -435,31 +449,33 @@ local function coalesce(blob)
 		values = {},
 	}
 	for _,v in pairs(blob.values) do
+		-- v is a {ts, value{ v,p,hwid}, sqn, did} object
 		local did = v.did
-		-- look in the (possibly already coalesced) incoming values for this did.
-		for _,new in pairs(v.values) do
-			-- must find in the long list, based on inner did...
-			local found, match = pl.tablex.find_if(out.values, function(element, arg)
-				if element.did == arg then return element end
-			end, did)
-			if found then
-				local handled = false
-				-- look for any matching in the output set to sum/join with
-				for _, prior in pairs(match.values) do
-					if prior.p == new.p then
-						if match.hwid ~= v.hwid then
-							ugly.debug("Summing for: %s from different hwid: (%s|%s)", did, match.hwid, v.hwid)
-							prior.v = prior.v + new.v
-						end
-						handled = true
+		-- must find in the long list, based on inner did...
+		local found, match = pl.tablex.find_if(out.values, function(element, arg)
+			if element.did == arg then return element end
+		end, did)
+		if found then
+			local handled = false
+			-- look for any matching in the output set to sum/join with
+			for _, prior in pairs(match.values) do
+				--ugly.debug("Considering prior.p: %d vs v.value.p %d for prior.hwid: %s, v.value.hwid: %s", prior.p, v.value.p, prior.hwid, v.value.hwid)
+				if prior.p == v.value.p then
+					if prior.hwid ~= v.value.hwid then
+						prior.v = prior.v + v.value.v
+						ugly.debug("Summing for: %s (%f) from different hwid: (%s|%s)", did, prior.v, prior.hwid, v.value.hwid)
+						-- this _still_ lets a hwid/ts pair contribute multiple times if it was in the source more than once.
+						-- but thankfully, we swallow them on insertion instead.
 					end
+					handled = true
 				end
-				if not handled then
-					table.insert(match.values, new)
-				end
-			else
-				table.insert(out.values, v)
 			end
+			if not handled then
+				table.insert(match.values, v.value)
+			end
+		else
+			-- This lets us build the multi-value output set without making the internal code more complicated.
+			table.insert(out.values, {ts= v.ts, values={v.value}, sqn=v.sqn, did=v.did})
 		end
 	end
 	return out
@@ -495,7 +511,7 @@ local function flush_qd()
 
 	local proposed = table.remove(remaining, 1)
 
-	proposed = coalesce(proposed)
+	local postable = coalesce(proposed)
 
 	local function post_to_dexma(data)
 		local ts = data.ts
@@ -506,7 +522,9 @@ local function flush_qd()
 		-- Now, we stored a "hwid" tag in the data, to avoid duplicates and track the original source.
 		-- but we can't send that to dexma, so strip it out here.
 		for _,v in pairs(data.values) do
-			v.hwid = nil
+			for _,vv in pairs(v.values) do
+				vv.hwid = nil
+			end
 		end
 		local httpok, c, h, body
 		if cfg.args.nopost then
@@ -539,9 +557,9 @@ local function flush_qd()
 		end
 	end
 
-	local postok, data_to_retry = post_to_dexma(proposed)
+	local postok, data_to_retry = post_to_dexma(postable)
 	if not postok then
-		table.insert(remaining, 1, data_to_retry)
+		table.insert(remaining, 1, proposed)
 	end
 
 	-- Now we throw away entries longer than our queue depth...
