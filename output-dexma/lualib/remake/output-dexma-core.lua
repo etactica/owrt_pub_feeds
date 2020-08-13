@@ -508,7 +508,13 @@ local function flush_qd()
 		for _,v in pairs(data.values) do
 			v.hwid = nil
 		end
-		local httpok, c, h, body = httppost(url, data.values, headers, {verify={}})
+		local httpok, c, h, body
+		if cfg.args.nopost then
+			httpok, c, h, body = true, 200, nil, "fake post was ok :)"
+			ugly.info("NotPosting to dexma: %s", pl.pretty.write(data.values))
+		else
+			httpok, c, h, body = httppost(url, data.values, headers, {verify={}})
+		end
 		if httpok then
 			statsd:increment(string.format("http-post.code-%d", c))
 			if c == 200 then

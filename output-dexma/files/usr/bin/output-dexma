@@ -16,6 +16,7 @@ local cliargs = pl.lapp [[
     -v,--verbose (0..7 default 5) Logging level, higher == more
     -C,--cafile (string default "") path to ca bundle
     -c,--capath (string default "") path to directory of certs
+    -n,--nopost Don't post anything to dexma, just dump what would have been posted.
 ]]
 
 local ugly = require("remake.uglylog")
