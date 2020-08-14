@@ -42,6 +42,8 @@ local default_cfg = {
 	DEFAULT_DEXMA_POST_URL = [[https://is3.dexcell.com/readings?source_key=%s]],
 	--TEMPLATE_POST_URL=[[https://hookb.in/YVyJYVpm3MsgrkMNRBy8?source_key=%s]],
 	--https://hookb.in/aBOpW7r9j9sp3Gwr9kOR
+	-- How long to wait to ensure that all MQ messages for an interval have been received
+	DEFAULT_MQ_QUIET_TIME_MS = 5000,
 	-- Don't change this unless you change the diags too!
 	DEFAULT_STATE_FILE = "/tmp/output-dexma.state",
 	-- These types should be named with "label-<channel>" others as just "label"
@@ -161,6 +163,7 @@ local function cfg_validate(c)
 
 	c.url_template = c.uci.url_template or c.DEFAULT_DEXMA_POST_URL
 	c.interval = c.uci.interval or c.DEFAULT_INTERVAL
+	c.mq_quiet_time_ms = c.uci.mq_quiet_time_ms or c.DEFAULT_MQ_QUIET_TIME_MS
 	c.topic_data_in = string.format(c.DEFAULT_TOPIC_DATA, c.interval)
 	c.topic_metadata_in = c.DEFAULT_TOPIC_METADATA
 	c.topic_state_out = c.uci.topic_state_out or c.DEFAULT_TOPIC_STATE
@@ -366,6 +369,7 @@ local function mqtt_ON_MESSAGE(mid, topic, jpayload, qos, retain)
 		if not ok then
 			ugly.crit("Exception in message handler! %s", tostring(err))
 		end
+		state.last_mq_message_ts = timestamp_ms()
 	end
 	if mosq.topic_matches_sub(cfg.topic_metadata_in, topic) then
 		local ok, err = pcall(handle_message_cabinet, mid, topic, jpayload, qos, retain)
@@ -498,6 +502,10 @@ local function flush_qd()
 	local size = pl.tablex.size(state.qd)
 	ugly.debug("entering flush.... with %d queued", size)
 	if size == 0 then return end
+
+	-- We get NNN messages every interval, make sure we've got them all before we try and process.
+	local now = timestamp_ms()
+	if now - state.last_mq_message_ts < cfg.mq_quiet_time_ms then return end
 
 	local function sort_oldest_first(a,b)
 		return a.ts < b.ts
