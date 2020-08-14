@@ -42,8 +42,6 @@ local default_cfg = {
 	DEFAULT_DEXMA_POST_URL = [[https://is3.dexcell.com/readings?source_key=%s]],
 	--TEMPLATE_POST_URL=[[https://hookb.in/YVyJYVpm3MsgrkMNRBy8?source_key=%s]],
 	--https://hookb.in/aBOpW7r9j9sp3Gwr9kOR
-	--- How long to ignore data for while we process cabinet model information
-	INITIAL_SLEEP_TIME = 5,
 	-- Don't change this unless you change the diags too!
 	DEFAULT_STATE_FILE = "/tmp/output-dexma.state",
 	-- These types should be named with "label-<channel>" others as just "label"
