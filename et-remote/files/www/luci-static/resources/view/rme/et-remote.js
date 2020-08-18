@@ -126,7 +126,7 @@ return L.view.extend({
 					E('div', { 'class': 'cbi-value', 'style': 'margin-bottom:5px' }, [
 					E('label', { 'class': 'cbi-value-title', 'style': 'padding-top:0rem' }, _('Your remote access URL')),
 					E('div', { 'class': 'cbi-value-field', 'id': 'raurl', 'style': 'font-weight: bold;margin-bottom:5px;color:#37c' },
-					  E('a', {'href': 'https://' + kname + '.myetactica.com'}, 'https://' + kname + '.myetactica.com'),
+					  E('a', {'href': 'https://' + kname + '.myetactica.com'}, 'https://' + kname + '.myetactica.com')
 					  )]),
 
 					E('div', { 'class': 'cbi-value', 'style': 'margin-bottom:5px' }, [
