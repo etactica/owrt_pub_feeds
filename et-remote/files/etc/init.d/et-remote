@@ -9,17 +9,17 @@ add_instance() {
 	local cfg="$1"
 	local kitename kitesecret
 	rm -f $SFILE
-	config_get kitename "$cfg" kitename
-	config_get kitesecret "$cfg" kitesecret
-	[ -z "$kitename" -o -z "$kitesecret" ] && {
-		echo "Both kitename and kitesecret must be specified"
-		return 1
-	}
 	config_get_bool enabled "$cfg" enabled 0
 	[ $enabled -eq 1 ] || {
 	    echo "$APP is not enabled"
 	    monit unmonitor $APP
 	    return 1
+	}
+	config_get kitename "$cfg" kitename
+	config_get kitesecret "$cfg" kitesecret
+	[ -z "$kitename" -o -z "$kitesecret" ] && {
+		echo "Both kitename and kitesecret must be specified"
+		return 1
 	}
 	monit monitor $APP
 	kitename=$kitename.myetactica.com
