@@ -37,9 +37,11 @@ start_service() {
 	config_load $APP && config_foreach add_instance instance
 	# remove any dangling monit files for instances that no longer exist
 	for x in /etc/monit.d/$APP.*.process.check; do
-		tid=$(echo $x | cut -d '.' -f 3)
-		echo "${INSTANCES_KNOWN}" | grep -q $tid || {
-			rm -f "$x" && monit reload
+		[ -e "$x" ] && {
+			tid=$(echo $x | cut -d '.' -f 3)
+			echo "${INSTANCES_KNOWN}" | grep -q $tid || {
+				rm -f "$x" && monit reload
+			}
 		}
 	done
 }
