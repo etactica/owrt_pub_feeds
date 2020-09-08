@@ -22,6 +22,9 @@ endef
 define Package/$(PKG_NAME)/description
  Provides a webadmin for some basic mosquitto parameters. (Not even close to
 all of them)
+
+NOTE: this package is now maintained in luci core.  If you can read this,
+you are using the older original out of tree source!
 endef
 
 define Package/$(PKG_NAME)/conffiles
