@@ -68,7 +68,7 @@ local CODES = {
 -- * un "user (visible) name" we present in the UI for them to select
 -- * dt "datatype" the key in the interval stream that holds the data
 -- * f "field" the field in the interval stream message to use
--- * n multiplier to apply to the interval stream data
+-- * n (optional) multiplier to apply to the interval stream data
 -- * di "dexma id" the parameter id to use to send to dexma
 local DEXMA_KEYS = {
 	{un="cumulative_wh", dt="cumulative_wh", n=1e-3, f="max", di=402},
@@ -118,27 +118,6 @@ local function cfg_validate(c)
 		c.uci = {}
 	end
 
-	x:foreach(cfg.APP_NAME, "customvar", function(s)
-		-- Unfortunately we don't get booleans here nicely from uci.
-		if s.enabled == "1" or s.enabled == "true" then
-			local n = tonumber(s.multiplier) or 1
-			local dexma_type = {
-				dt = s.datakey,
-				n = n,
-				f = s.field,
-				di = tonumber(s.parameterid),
-			}
-			if dexma_type.di and dexma_type.f and dexma_type.dt then
-				table.insert(DEXMA_KEYS, dexma_type)
-				ugly.info("Enabling custom variable: %s/%s", dexma_type.dt, dexma_type.f)
-			else
-				ugly.warning("Skipping invalid custom variable: %s", pl.pretty.write(dexma_type))
-			end
-		else
-			ugly.debug("Skipping custom var that is disabled: %s", pl.pretty.write(s))
-		end
-	end)
-
 	if c.args.cafile and #c.args.cafile == 0 then c.args.cafile = nil end
 	if c.args.capath and #c.args.capath == 0 then c.args.capath = nil end
 	if not c.args.cafile and not c.args.capath then
@@ -178,6 +157,30 @@ local function cfg_validate(c)
 	c.state_file = c.uci.state_file or c.DEFAULT_STATE_FILE
 	-- TODO no support for loading a list from config at this point, see if we actually need to do this? Will custom types need this?
 	c.per_channel_types = c.DEFAULT_PER_CHANNEL_TYPES
+
+	-- Load custom variables
+	x:foreach(cfg.APP_NAME, "customvar", function(s)
+		-- Unfortunately we don't get booleans here nicely from uci.
+		if s.enabled == "1" or s.enabled == "true" then
+			local n = tonumber(s.multiplier) or 1
+			local dexma_type = {
+				dt = s.datakey,
+				n = n,
+				f = s.field,
+				di = tonumber(s.parameterid),
+				un = "custom-" .. s[".name"], -- use the automatic uci config id as a un key.
+			}
+			if dexma_type.di and dexma_type.f and dexma_type.dt then
+				table.insert(DEXMA_KEYS, dexma_type)
+				table.insert(cfg.store_types, dexma_type.un)
+				ugly.info("Enabling custom variable: %s/%s", dexma_type.dt, dexma_type.f)
+			else
+				ugly.warning("Skipping invalid custom variable: %s", pl.pretty.write(dexma_type))
+			end
+		else
+			ugly.debug("Skipping custom var that is disabled: %s", pl.pretty.write(s))
+		end
+	end)
 
 	return c
 end
@@ -271,6 +274,38 @@ local function get_did_default(devid, dtype, channel)
 	end
 end
 
+--- Find the dexma type mapping(s) for a given mqtt message data type
+-- We might find multiple types, if we want to make multiple dexma types from the
+-- same base type, eg, both current max and current mean are both from teh same "current"
+-- mqtt message!
+-- @param dt the type name from the mqtt topic, eg "current"
+-- @param dexma_keys the set of dexma variables we know how to send
+-- @param store_types the list of config strings enabled to send, eg "current_max, voltage_mean"
+-- @return[1] a list of suitable dexma key objects.
+-- @return[2] nil, reason for not found
+local function find_datatypes(dt, dexma_keys, store_types)
+	-- First, get a list of the right data types
+	local dkos = pl.tablex.filter(dexma_keys, function(t, key)
+		if t.dt == key then return true end
+	end, dt)
+	if not dkos then
+		return nil, "No matching dexma config for type: " .. dt
+	end
+
+	-- then, keep all that are on the allowed list
+	local matches = pl.tablex.filter(dkos, function(dko, allowed)
+		for _,v in pairs(allowed) do
+			if v == dko.un then return true end
+		end
+		return false
+	end, store_types)
+	if #matches > 0 then
+		return matches
+	else
+		return nil, "data type is not configured to send: " .. dt
+	end
+end
+
 local function handle_message_data(mid, topic, jpayload, qos, retain)
 	if retain then
 		ugly.debug("Ignoring retained message on: %s, presumed already posted", topic)
@@ -285,21 +320,11 @@ local function handle_message_data(mid, topic, jpayload, qos, retain)
 	-- NB: _RIGHT_ HERE we make power bars look like anyone else. no special casing elsewhere!
 	if dtype == "wh_in" then dtype = "cumulative_wh" end
 
-	-- First, get any dexma key objects matching the dtype.  _then_ if the key is in cfg.store_types, continue
-	local found, dko = pl.tablex.find_if(DEXMA_KEYS, function(t, dt)
-		if t.dt == dt then return t end
-	end, dtype)
-	if not found then
-		ugly.debug("Ignoring datatype we have no dexma config for: %s", dtype)
+	local dkos, reason = find_datatypes(dtype, DEXMA_KEYS, cfg.store_types)
+	if not dkos then
+		ugly.debug("Ignoring reading: %s", reason)
 		return
 	end
-	-- explicit custom vars simply don't provide a un field.
-	if dko.un and not pl.tablex.find(cfg.store_types, dko.un) then
-		ugly.debug("Ignoring uninteresting data of type: %s", dtype)
-		return
-	end
-	if not dko.n then dko.n = 1 end
-	if not dko.di then error("Programming error, dexma key contains no dexma parameter! " .. pl.pretty.write(dko)) end
 	local hwid = get_did_default(device, dtype, channel)
 	local did, _nodid = get_did_from_model(cabinet_model, device, dtype, channel)
 	if did then
@@ -335,31 +360,40 @@ local function handle_message_data(mid, topic, jpayload, qos, retain)
 		state.sqn = state.sqn + 1
 	end
 
-	local dex_value_reading = {
-		did = did,
-		sqn = state.qd[ts].sqn,
-		ts = ts,
-		value = {
-			p = dko.di,
-			v = payload[dko.f] * dko.n,
-			hwid = hwid,  -- we keep this for later, to make sure we're not merging duplicates, only multi channels
-		},
-	}
+	local function handle_dko(dko)
+		if not dko.n then dko.n = 1 end
+		if not dko.di then error("Programming error, dexma key contains no dexma parameter! " .. pl.pretty.write(dko)) end
+		local dex_value_reading = {
+			did = did,
+			sqn = state.qd[ts].sqn,
+			ts = ts,
+			value = {
+				p = dko.di,
+				v = payload[dko.f] * dko.n,
+				hwid = hwid,  -- we keep this for later, to make sure we're not merging duplicates, only multi channels
+			},
+		}
 
-	-- queue everything so we can process all items the same way
-	-- this will _happily_ enter repeated timestamps over again, we should _replace_ with a new reading for the samw hwid
-	local handled = false
-	for _,item in pairs(state.qd[ts].values) do
-		if item.did == dex_value_reading.did and
-			item.value.hwid == dex_value_reading.value.hwid and
-			item.value.p == dex_value_reading.value.p then
-			item.value.v = dex_value_reading.value.v
-			ugly.debug("Replacing repeated data at ts for %s (%s)", item.did, item.value.hwid)
-			handled = true
+		-- queue everything so we can process all items the same way
+		-- this will _happily_ enter repeated timestamps over again, we should _replace_ with a new reading for the samw hwid
+		local handled = false
+		for _,item in pairs(state.qd[ts].values) do
+			if item.did == dex_value_reading.did and
+				item.value.hwid == dex_value_reading.value.hwid and
+				item.value.p == dex_value_reading.value.p then
+				item.value.v = dex_value_reading.value.v
+				ugly.debug("Replacing repeated data at ts for %s (%s)", item.did, item.value.hwid)
+				handled = true
+			end
+		end
+		if not handled then
+			table.insert(state.qd[ts].values, dex_value_reading)
 		end
 	end
-	if not handled then
-		table.insert(state.qd[ts].values, dex_value_reading)
+
+	-- Remember that we could be processing multiple types from the same message
+	for _,dko in pairs(dkos) do
+		handle_dko(dko)
 	end
 end
 
@@ -680,6 +714,7 @@ local M = {
 	on_message = mqtt_ON_MESSAGE,
 	coalesce = coalesce,
 	_state = state,
+	_find_datatypes = find_datatypes,
 }
 
 return M
