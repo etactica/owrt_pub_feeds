@@ -9,9 +9,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openocd-next
 PKG_RELEASE:=1
-PKG_REV:=ded67990255cc1e63c77832ffd6e6bef9120873d
+PKG_REV:=3934483429b77525f25922787933fb7ee3e73a0f
 PKG_SOURCE_VERSION:=$(PKG_REV)
-PKG_VERSION:=v0.10.90-$(PKG_SOURCE_VERSION)
+PKG_VERSION:=v0.10.91-$(PKG_SOURCE_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://git.code.sf.net/p/openocd/code
@@ -55,7 +55,7 @@ telnet, TCL, and GDB. The GDB server enables OpenOCD to function as a
 the GNU GDB program (and the others who talk GDB protocol, e.g. IDA
 Pro).
 
-This package of openocd is a rolling target of "latest" code, not the last tagged release.
+This package of openocd is a (manually) rolling target of "latest" code, not the last tagged release.
 endef
 
 CONFIGURE_ARGS += \
