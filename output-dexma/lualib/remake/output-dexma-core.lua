@@ -577,7 +577,7 @@ local function flush_qd()
 			statsd:increment(string.format("http-post.code-%d", c))
 			if c == 200 then
 				statsd:increment("post-success")
-				ugly.info("Posted %d readings for ts: %s", #data.values, ts)
+				ugly.notice("Posted %d readings for ts: %s", #data.values, ts)
 				table.insert(state.ok.posts, 1,{at=timestamp_ms(ts), ts=ts, ok=true, n=#data.values})
 				return true
 			else
