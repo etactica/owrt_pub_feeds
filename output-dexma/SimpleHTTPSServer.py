@@ -7,6 +7,7 @@ openssl req -new -x509 -keyout server.pem -out server.pem -days 365 -nodes
 """
 import argparse
 from http.server import HTTPServer, BaseHTTPRequestHandler
+import json
 import io
 import logging
 import ssl
@@ -54,6 +55,13 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 		response.write(b'Received: ')
 		response.write(body)
 		self.wfile.write(response.getvalue())
+		# For helping diagnose, print out at least the first value from each did.
+		# TODO - make the end of the line be compact p/v pairs, not just the v
+		rdata = json.loads(body)
+		tuples = [(x['did'], x['sqn'], x['values'][0]['v']) for x in rdata]
+		for x in tuples:
+			print(f"Received: {rdata[0]['ts']} -> {x}")
+
 
 parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-p", "--port", help="Port to listen to", default=8912, type=int)
