@@ -511,7 +511,12 @@ local function coalesce(blob)
 			end
 		else
 			-- This lets us build the multi-value output set without making the internal code more complicated.
-			table.insert(out.values, {ts= v.ts, values={v.value}, sqn=v.sqn, did=v.did})
+			if v.value then
+				table.insert(out.values, {ts= v.ts, values={v.value}, sqn=v.sqn, did=v.did})
+			elseif v.values then
+				-- pre-coalseced! just put back into the output data!
+				table.insert(out.values, v)
+			end
 		end
 	end
 	return out
@@ -599,7 +604,7 @@ local function flush_qd()
 
 	local postok, data_to_retry = post_to_dexma(postable)
 	if not postok then
-		table.insert(remaining, 1, proposed)
+		table.insert(remaining, 1, postable)
 	end
 
 	-- Now we throw away entries longer than our queue depth...

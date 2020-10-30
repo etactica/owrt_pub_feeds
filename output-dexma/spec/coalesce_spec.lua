@@ -143,4 +143,40 @@ describe("coalescing functions", function()
 		assert.are.same(expected_post_summed_bar, out.values)
 	end)
 
+	local input_already_coalesced = {
+  sqn = 3,
+  ts = "2020-10-30T12:00:00Z",
+  values = {
+    {
+      sqn = 3,
+      ts = "2020-10-30T12:00:00Z",
+      values = {
+        {
+          p = 402,
+          v = 560.218959654
+        }
+      },
+      did = "LJ30-a2/1"
+    },
+    {
+      sqn = 3,
+      ts = "2020-10-30T12:00:00Z",
+      values = {
+        {
+          p = 402,
+          v = 0
+        }
+      },
+      did = "LJ30-FAKEE"
+    }
+  },
+  retries = 1
+}
+	it("should not touch already coaleseced entries", function()
+		local m = require("remake.output-dexma-core")
+		local out = m.coalesce(input_already_coalesced)
+		assert.are.same(input_already_coalesced, out)
+	end)
+
+
 end)
