@@ -21,6 +21,7 @@ add_instance() {
 		echo "Output service not enabled"
 		return 1
 	}
+	assert_ntp_up;
 	procd_open_instance
 	procd_set_param command output-dexma
 	append_arg "$cfg" --id source_key
