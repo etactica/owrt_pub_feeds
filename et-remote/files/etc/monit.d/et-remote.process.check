@@ -4,3 +4,9 @@ check process et-remote with pidfile /var/run/et-remote.pid
         if totalmemory is greater than 40% for 3 cycles then restart
         if totalcpu is greater than 40% for 3 cycles then restart
 	group et-remote
+
+check file et-remote.status-file path /tmp/remake.d/et-remote.status.json
+    restart program = "/etc/init.d/et-remote restart"
+    if does not exist then restart
+    depends on et-remote
+    group et-remote
