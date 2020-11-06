@@ -1,0 +1,11 @@
+{
+	"io-charging-on": {
+		"description": "Grant UCI access for app",
+		"read": {
+			"uci": [ "io-charging-on" ]
+		},
+		"write": {
+			"uci": [ "io-charging-on" ]
+		}
+	}
+}

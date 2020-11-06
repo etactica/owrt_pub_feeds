@@ -1,0 +1,43 @@
+#!/bin/sh /etc/rc.common
+START=85
+USE_PROCD=1
+APP=io-charging-on
+
+# Usage: append_only cfg uci_name option_name
+# appends "option_name uci-variable" to the commandline, only if it existed.
+# (Allows application defaults without having to provide them here)
+append_only() {
+	local cfg="$1"
+	local var="$2"
+	local opt="$3"
+	config_get val $cfg $var
+	[ -n "$val" ] && procd_append_param command "$opt" "${val}"
+}
+
+add_instance() {
+	local cfg="$1"
+	local enabled
+	config_get_bool enabled "$cfg" enabled 0
+	if [ $enabled -eq 0 ]; then
+		monit unmonitor "$APP"
+		printf "%s is disabled, not starting\n" "$APP"
+	else
+		procd_open_instance
+		procd_set_param command io-charging-on.lua
+		procd_set_param file /etc/config/$APP
+		procd_set_param pidfile /var/run/$APP.pid
+		append_only "$cfg" statsd_host "-S"
+		append_only "$cfg" statsd_port "--statsd_port"
+		append_only "$cfg" statsd_namespace "--statsd_namespace"
+		procd_close_instance
+		monit monitor "$APP"
+	fi
+}
+
+start_service() {
+	config_load $APP && config_foreach add_instance general
+}
+
+service_triggers() {
+	procd_add_reload_trigger $APP
+}

@@ -1,0 +1,14 @@
+{
+  "admin/services/io-charging-on": {
+    "title": "Charging: ON.is",
+    "order": 20,
+    "action": {
+      "type": "view",
+      "path": "rme/io-charging-on"
+    },
+    "depends": {
+      "acl": [ "io-charging-on" ],
+      "uci": { "io-charging-on": true }
+    }
+  }
+}

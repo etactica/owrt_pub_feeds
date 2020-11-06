@@ -1,0 +1,5 @@
+check process io-charging-on with pidfile /var/run/io-charging-on.pid
+	start program = "/etc/init.d/io-charging-on start"
+	stop program = "/etc/init.d/io-charging-on stop"
+        if totalmemory is greater than 40% for 3 cycles then restart
+	group io-charging-on
