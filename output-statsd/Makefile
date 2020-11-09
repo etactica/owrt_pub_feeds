@@ -53,10 +53,8 @@ define Package/$(PKG_NAME)/install
 	# Install luci stuff...
 	[ -d $(PKG_BUILD_DIR)/luasrc ] && \
           $(INSTALL_DIR) $(1)$(LUCI_LIBRARYDIR) && \
-          $(CP) $(PKG_BUILD_DIR)/luasrc/* $(1)$(LUCI_LIBRARYDIR)/
-	[ -d $(PKG_BUILD_DIR)/luasrc ] && \
-          $(INSTALL_DIR) $(1)$(LUCI_LIBRARYDIR) && \
-          $(CP) $(PKG_BUILD_DIR)/luasrc/* $(1)$(LUCI_LIBRARYDIR)/
+          $(CP) $(PKG_BUILD_DIR)/luasrc/* $(1)$(LUCI_LIBRARYDIR)/ \
+          || true
 	[ -d $(PKG_BUILD_DIR)/htdocs ] && \
           $(INSTALL_DIR) $(1)$(HTDOCS) && \
           $(CP) $(PKG_BUILD_DIR)/htdocs/* $(1)$(HTDOCS)/ \
