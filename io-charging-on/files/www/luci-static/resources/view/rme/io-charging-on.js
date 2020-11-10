@@ -178,9 +178,10 @@ return L.view.extend({
                 var d = hwc.devices[i];
                 if (d.deviceid != null) {
                     if (mmeter == null) {
-                        mmeter = s.taboption("general", form.ListValue, "mains_id", _("Mains ID"),
+                        mmeter = s.taboption("general", form.Value, "mains_id", _("Mains ID"),
                                         _("Identifier of the mains meter"));
                         mmeter.optional = false;
+                        mmeter.placeholder = "Serial of meter, from plugin, eg 23523452";
                     }
                     if (chargers == null) {
                         chargers = s.taboption("general", form.MultiValue, "charger_ids", _("Charger IDs"),
