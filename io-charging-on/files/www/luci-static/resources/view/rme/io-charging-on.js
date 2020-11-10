@@ -89,7 +89,7 @@ var WsOnMessage = function(message) {
 return L.view.extend({
 
     load: function() {
-        Promise.all(['/resources/paho/mqttws31.js'].map(function(src) {
+        Promise.all(['/resources/paho/mqttws31.js', '/resources/product_codes.jsonp'].map(function(src) {
                 return new Promise(function(resolveFn, rejectFn) {
                     document.querySelector('head').appendChild(E('script', {
                         src: src,
@@ -176,8 +176,16 @@ return L.view.extend({
                         chargers.optional = true;
                         chargers.placeholder = _("Pick all charger units");
                     }
-                    mmeter.value(d.deviceid, d.deviceid + ": " + d.vendorName + " " + d.productName + ": " + d.mbDevice + "/" + d.slaveId + "(" + d.pluginName + ")");
-                    chargers.value(d.deviceid, d.deviceid + ": " + d.vendorName + " " + d.productName + ": " + d.mbDevice + "/" + d.slaveId + "(" + d.pluginName + ")");
+                    // et devices have product codes, not names...
+                    var pName = d.productName;
+                    if (pName == null && d.vendor == 21069) {
+                        var prod = product_map(d.product);
+                        if (prod && prod.name) {
+                            pName = prod.name;
+                        }
+                    }
+                    mmeter.value(d.deviceid, d.deviceid + ": " + d.vendorName + " " + pName + " @ " + d.mbDevice + "/" + d.slaveId + " (" + d.pluginName + ")");
+                    chargers.value(d.deviceid, d.deviceid + ": " + d.vendorName + " " + pName + " @ " + d.mbDevice + "/" + d.slaveId + " (" + d.pluginName + ")");
                     // TODO - warn the user if they have _some_ devices with no deviceid? they might have partial config available?
                     foundValid = true;
                 }
