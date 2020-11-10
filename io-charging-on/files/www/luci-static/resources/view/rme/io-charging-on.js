@@ -42,15 +42,18 @@ var WsConnected = function(obj) {
     }
 
     function request_hwc() {
-      var m = new Paho.MQTT.Message("{}");
-      m.destinationName = "command/local/json/getmodbusdevicemodel";
-      self.mqclient.send(m);
-      self.hwc_attempts = self.hwc_attempts + 1;
-      setTimeout(function() {
-          if (!self.hwc) {
-              request_hwc();
-          }
-      }, 2500);
+        var m = new Paho.MQTT.Message("{}");
+        m.destinationName = "command/local/json/getmodbusdevicemodel";
+        self.mqclient.send(m);
+        if (self.hwc_attempts == null) {
+            self.hwc_attempts = 0
+        }
+        self.hwc_attempts = self.hwc_attempts + 1;
+        setTimeout(function() {
+            if (!self.hwc) {
+                request_hwc();
+            }
+        }, 2500);
     }
 
     self.mqclient.subscribe("status/+/json/modbusdevicemodel/#", {
@@ -110,13 +113,33 @@ return L.view.extend({
         });
         // Wait here until the hwc is loaded.
         var waitForHWC = function(resolve, reject) {
+            console.log("waiting for hwc: ", self.hwc_attempts);
             if (self.hwc) {
                 resolve(self.hwc);
             } else {
+                    if (self.hwc_attempts >= 3) {
+                        console.log("Giving up and falling back to static config");
+                        //reject("gave up?");
+                        // Fake out a blank response
+                        self.hwc = {}
+                        //ui.addNotification(null, E('p', _('Fetching the Hardware Config has failed %d times, are devices configured?').format(self.hwc_attempts)));
+                        //ui.showIndicator(123, _("Waiting on HWC"));
+                    }
                 setTimeout(function(x) {
                     waitForHWC(resolve, reject)
                 }, 500);
             }
+            var hwcWarning = E([], [
+                E('h5', [ _('Restore Database Backup') ]),
+                E('p', [_("Some warning text on no-hwc?" ) + self.hwc_attempts])
+            ]);
+//            if (self.hwc_attempts >= 3) {
+//                console.log("Giving up and falling back to static config");
+//                //reject("gave up?");
+//                // Fake out a blank response
+//                self.hwc = {}
+//                //resolve(self.hwc); // resolve with empty, let the render() end handle it.
+//            }
             // TODO if (self.hwc_attempts > 2) { make a warning element somewhere and insert it to say we're waiting on shit? }
             // followup, if you insert it, make sure to remove/hide it when you get the hwc.
         }
