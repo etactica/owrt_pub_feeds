@@ -31,7 +31,7 @@ var TrimmedValue = form.Value.extend({
 })
 
 var WsLostHandler = function(obj) {
-    console.warning(obj.errorMessage);
+    console.warn(obj.errorMessage);
     setTimeout(self.wsDoConnect, 5000);
 };
 
@@ -47,24 +47,16 @@ var WsConnected = function(obj) {
       self.mqclient.send(m);
       self.hwc_attempts = self.hwc_attempts + 1;
       setTimeout(function() {
-          if (!self.hwc_received) {
+          if (!self.hwc) {
               request_hwc();
           }
-      }, 5000);
+      }, 2500);
     }
 
     self.mqclient.subscribe("status/+/json/modbusdevicemodel/#", {
       qos: 0, onFailure: subFail
     });
     request_hwc();
-    // For the logical cabinet information
-    self.mqclient.subscribe("status/+/json/cabinet/#", {
-      qos: 0, onFailure: subFail
-    });
-    // For the data
-    self.mqclient.subscribe("status/+/json/device/#", {
-      qos: 0, onFailure: subFail
-    });
 }
 
 var WsDoConnect = function() {
@@ -74,11 +66,9 @@ var WsDoConnect = function() {
         onSuccess: WsConnected,
         useSSL: window.location.protocol === "https:"
     });
-    //self.errNotConnected(false);
 }
 
 var WsOnMessage = function(message) {
-    console.log("woop: ", message.destinationName);
     var topics = message.destinationName.split("/");
     if (topics.length < 1) {
       console.log("shouldn't happen, ignoring message on topic: " + message.destinationName);
@@ -89,13 +79,17 @@ var WsOnMessage = function(message) {
       console.log("shouldn't happen, getting sent invalid json on topic: " + message.destinationName);
       return;
     }
+
+    if (topics[3] === "modbusdevicemodel") {
+        self.hwc = payload;
+    }
+
 }
 
 return L.view.extend({
 
     load: function() {
-        console.log("load called");
-        return Promise.all(['/resources/paho/mqttws31.js'].map(function(src) {
+        Promise.all(['/resources/paho/mqttws31.js'].map(function(src) {
                 return new Promise(function(resolveFn, rejectFn) {
                     document.querySelector('head').appendChild(E('script', {
                         src: src,
@@ -103,27 +97,42 @@ return L.view.extend({
                         error: rejectFn
                 }));
             })
-        }));
+        }))
+        .then(function(a) {
+            self.mqclient = new Paho.MQTT.Client(location.hostname, 8083,
+                            "io-charging-on-" + (Math.random() + 1).toString(36).substring(2,8));
+            self.mqclient.onConnectionLost = WsLostHandler;
+            self.mqclient.onMessageArrived = WsOnMessage;
+            WsDoConnect();
+        })
+        .catch(function(a) {
+            console.error("failed to load and initialize...? try reloading the page?", a)
+        });
+        // Wait here until the hwc is loaded.
+        var waitForHWC = function(resolve, reject) {
+            if (self.hwc) {
+                resolve(self.hwc);
+            } else {
+                setTimeout(function(x) {
+                    waitForHWC(resolve, reject)
+                }, 500);
+            }
+            // TODO if (self.hwc_attempts > 2) { make a warning element somewhere and insert it to say we're waiting on shit? }
+            // followup, if you insert it, make sure to remove/hide it when you get the hwc.
+        }
+        return new Promise(waitForHWC);
     },
 
     hwc_attempts: 0,
-    hwc_received: false,
     wsLostHandler: WsLostHandler,
     wsConnected: WsConnected,
     wsDoConnect: WsDoConnect,
     wsOnMessage: WsOnMessage,
 
-	render: function(loadresults) {
+	render: function(hwc) {
 		var m, s, o;
-		console.log("loadresults are...", loadresults);
-
-
-		self.mqclient = new Paho.MQTT.Client(location.hostname, 8083,
-                        "chanmon-" + (Math.random() + 1).toString(36).substring(2,8));
-        self.mqclient.onConnectionLost = WsLostHandler;
-        self.mqclient.onMessageArrived = WsOnMessage;
-        WsDoConnect();  // this is going to go bang too
-
+		console.debug("hardware config is...", hwc);
+		// TODO - if loadresults is empty, and we've got the right warning text from the load(), then just let people enter ids?
 
 		m = new form.Map('io-charging-on', _('IO Charging ON.is'), desc);
 
@@ -131,7 +140,6 @@ return L.view.extend({
 		s.anonymous = true;
 
 		s.tab("general", _("General Settings"));
-		s.tab("advanced", _("Advanced Settings"));
 		s.tab("statsd", _("StatsD"), _("Metrics on operation can be sent to a listening StatsD server, such as graphite"))
 
         o = s.taboption("general", form.Flag, "enabled", _("Enable this service"), _("The service will not start until this is checked"));
@@ -149,19 +157,44 @@ return L.view.extend({
 			_("The assigned capacity of the mains supply."));
 		key.placeholder = "400";
 
-        // FIXME- classically, we've done just modbus lists here... but... can we expect this to be probed already?
-		var token = s.taboption("general", TrimmedValue, "mains_id", _("Mains ID"),
-			_("Identifier of the Mains meter"));
-		token.placeholder = "1234568 (fixme, dropdown from model?)";
+        var foundValid = false;
+        var mmeter;
+        var chargers;
+        if (hwc && hwc.devices && hwc.devices.length > 0) {
+            // Provide all known devices as pick options for mains + chargers
+            for (var i = 0; i < hwc.devices.length; i++) {
+                var d = hwc.devices[i];
+                if (d.deviceid != null) {
+                    if (mmeter == null) {
+                        mmeter = s.taboption("general", form.ListValue, "mains_id", _("Mains ID"),
+                                        _("Identifier of the mains meter"));
+                        mmeter.optional = false;
+                    }
+                    if (chargers == null) {
+                        chargers = s.taboption("general", form.MultiValue, "charger_ids", _("Charger IDs"),
+                                        _("Identifiers of each charger to handle"));
+                        chargers.optional = true;
+                        chargers.placeholder = _("Pick all charger units");
+                    }
+                    mmeter.value(d.deviceid, d.deviceid + ": " + d.vendorName + " " + d.productName + ": " + d.mbDevice + "/" + d.slaveId + "(" + d.pluginName + ")");
+                    chargers.value(d.deviceid, d.deviceid + ": " + d.vendorName + " " + d.productName + ": " + d.mbDevice + "/" + d.slaveId + "(" + d.pluginName + ")");
+                    // TODO - warn the user if they have _some_ devices with no deviceid? they might have partial config available?
+                    foundValid = true;
+                }
+            }
+        }
+        if (!foundValid) {
+            // No hwc, or hwc, but no-valid devices, require static config!
+            mmeter = s.taboption("general", TrimmedValue, "mains_id", _("Mains ID"),
+                _("Identifier of the mains meter"));
+            mmeter.optional = false;
+            mmeter.placeholder = "Serial of meter, from plugin, eg 23523452";
 
-        // otherwise, this whole section becomes pairs of host/port/(optional?)unitids
-		o = s.taboption("advanced", form.MultiValue, "charger_ids", _("Charger IDs"),
-			_("Identifiers of each charger to handle"));
-		o.multiple = true;
-		o.optional = true;
-		o.placeholder = _("FIXME - picklist from model");
-		o.value("id111", _("111"));
-		o.value("id222", _("222"));
+            chargers = s.taboption("general", form.DynamicList, "charger_ids", _("Charger IDs"),
+                                         _("Identifiers of each charger to handle"));
+            chargers.optional = true;
+            chargers.placeholder = _("Serials of all chargers, from plugin, eg 234325443");
+        }
 
 
 		o = s.taboption("statsd", TrimmedValue, "statsd_namespace", _("Namespace for StatsD reporting"))
