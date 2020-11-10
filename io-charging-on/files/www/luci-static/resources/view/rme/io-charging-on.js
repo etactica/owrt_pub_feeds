@@ -129,18 +129,7 @@ return L.view.extend({
                     waitForHWC(resolve, reject)
                 }, 500);
             }
-            var hwcWarning = E([], [
-                E('h5', [ _('Restore Database Backup') ]),
-                E('p', [_("Some warning text on no-hwc?" ) + self.hwc_attempts])
-            ]);
-//            if (self.hwc_attempts >= 3) {
-//                console.log("Giving up and falling back to static config");
-//                //reject("gave up?");
-//                // Fake out a blank response
-//                self.hwc = {}
-//                //resolve(self.hwc); // resolve with empty, let the render() end handle it.
-//            }
-            // TODO if (self.hwc_attempts > 2) { make a warning element somewhere and insert it to say we're waiting on shit? }
+            // TODO if (self.hwc_attempts > 1) { make a warning element somewhere and insert it to say we're waiting? }
             // followup, if you insert it, make sure to remove/hide it when you get the hwc.
         }
         return new Promise(waitForHWC);
@@ -216,6 +205,22 @@ return L.view.extend({
         }
         if (!foundValid) {
             // No hwc, or hwc, but no-valid devices, require static config!
+            o = s.taboption("general", form.DummyValue, '_dummy', _('Status'));
+            o.render = function(section_id) {
+                // TODO - styling could be better?
+                var hwcWarning = E([], [
+                    E('h5', [ _('No Hardware config found, or no valid devices, static configuration only!') ]),
+                    E('p', [_("If all modbus devices have been configured and detected, we can provide an automatic"
+                     + " list here.  As the hardware configuration couldn't be loaded, only static entries are available!"),
+                        E('ul', [
+                            E('li', _('Check that all devices are reachable!')),
+                            E('li', _('Check that you have configured devices!')),
+                        ])
+                     ])
+                ]);
+                return hwcWarning;
+            };
+
             mmeter = s.taboption("general", TrimmedValue, "mains_id", _("Mains ID"),
                 _("Identifier of the mains meter"));
             mmeter.optional = false;
