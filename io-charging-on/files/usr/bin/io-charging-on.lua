@@ -9,6 +9,7 @@ json.encode_sparse_array(true)
 local uci = require("uci")
 local uloop = require("uloop")
 uloop.init()
+local mb = require("libmodbus")
 local mosq = require("mosquitto")
 local PU = require("posix.unistd")
 local Pt = require("posix.time")
@@ -20,7 +21,7 @@ local args = pl.lapp [[
     -v,--verbose (0..7 default 4) Logging level, higher == more
     -S,--statsd_host (default "localhost") StatsD server address
     --statsd_port (default 8125) StatsD port
-    --statsd_namespace (default "live") Namespace for this data
+    --statsd_namespace (default "io-charging-on") Namespace for this data
 ]]
 
 local statsd = require("statsd")({
@@ -29,11 +30,14 @@ local statsd = require("statsd")({
     port = args.statsd_port,
 })
 
+local _APP_NAME = "io-charging-on"
 local cfg = {
-    APP_NAME = "io-charging-on",
+    APP_NAME = _APP_NAME,
     MOSQ_CLIENT_ID = string.format("io-charging-on-%d", PU.getpid()),
     MOSQ_IDLE_LOOP_MS = 100,
+    APP_MAIN_LOOP_MS = 500,
     TOPIC_LISTEN_TEMPLATE = "status/local/json/device/%s/#",
+    TOPIC_APP_STATE = "status/local/json/applications/" .. _APP_NAME .. "/state",
 }
 
 local function timestamp_ms()
@@ -44,13 +48,91 @@ end
 -- Live variables, just kept in a table for sanity of access
 local state = {
     sum_power = 0, -- Current running sum of power on all chargers.
+    chargers = {},
 }
+
+local ChargerBase = {}
+ChargerBase.__index = ChargerBase
+
+setmetatable(ChargerBase, {
+    __call = function(cls, ...)
+        local self = setmetatable({}, cls)
+        self:_create(...)
+        return self
+    end
+})
+
+function ChargerBase:_create(serial, mbunit, mbaddress, mbservice)
+    self.serial = serial
+    self.mbunit = mbunit
+    self.mbaddress = mbaddress
+    self.mbservice = mbservice
+
+    local err
+    self.dev, err = mb.new_tcp_pi(mbaddress, mbservice)
+    if not self.dev then
+        -- This is a rather fatal type of error, can't even create a modbus context.
+        error("Couldn't create a modbus client context: " .. err)
+    end
+    -- "fast" We're using modbus/tcp, on LAN, if it's more than 200ms, we already have problems.
+    self.dev:set_response_timeout(0, 200 * 1000)
+end
+
+function ChargerBase:__tostring()
+    return string.format("Charger<serial:%s, %d(%#x) @ %s:%s>", self.serial, self.mbunit, self.mbunit, self.mbaddress, tostring(self.mbservice))
+end
+
+function ChargerBase:set_available_power(power)
+    error("must be implemented by derived classes")
+end
+
+
+local AlpitronicHypercharger = {}
+AlpitronicHypercharger.__index = AlpitronicHypercharger
+
+setmetatable(AlpitronicHypercharger, {
+    __index = ChargerBase,
+    __call = function(cls, ...)
+        local self = setmetatable({}, cls)
+        self:_create(...)
+        return self
+    end
+})
+
+-- we don't actually need this at the moment...
+function AlpitronicHypercharger:_create(serial, mbunit, mbaddress, mbservice)
+    ChargerBase._create(self, serial, mbunit, mbaddress, mbservice)
+    -- fake demo blah.
+    self._extra = 123
+end
+
+
+--- Set the available power on a charger.
+-- We reconnect every time, as the charger docs expliciltly note that it must
+-- be reconnected if it ever loses connections.
+-- It's always tcp, so, just connect every time?  At least for now...
+-- we can later try and disconnect/connect on demand....
+-- @tparam number power in watts to make available to the charger.
+-- @return true, or nil if it failed to write.  Callee can retry, report, or wait til next write.
+-- @return nil, or error message
+function AlpitronicHypercharger:set_available_power(power)
+    local ok, err = self.dev:connect()
+    if not ok then return nil, err end
+
+    local regs = {mb.set_s32(power)}
+    ok, err = self.dev:write_registers(0, regs)
+    if not ok then return nil, err end
+    self.dev:disconnect()
+    return true
+end
+
 
 ugly.initialize(cfg.APP_NAME, args.verbose or 4)
 
 mosq.init()
 local mqtt = mosq.new(cfg.MOSQ_CLIENT_ID, true)
 
+mqtt:will_set(cfg.TOPIC_APP_STATE, nil, 1, true)
 if not mqtt:connect(args.mqtt_host, 1883, 60) then
     ugly.err("Aborting, unable to make MQTT connection")
     os.exit(1)
@@ -113,11 +195,13 @@ local function handle_mains(topic, payload)
             if e.n == string.format("pf/%d", ph) then power_phase[ph].pf = e.v end
         end
     end
-    ugly.warning("karl: %s", json.encode(power_phase))
     -- now we have total power used....
     local power_used = pl.tablex.reduce(function(a,b)
         return a + (b.v * b.i * b.pf)
     end, power_phase, 0)
+    -- FIXME - this is... ok, but if mains fails for a while, the chargers will keep summing.
+    -- we really need to make sure we're only summing "one" iteration of all the chargers.
+    -- timestamp age is probably safest? take sum from all state.chargers, as long as no reading is more than 5 seconds from another?
     local aux_used = power_used - state.sum_power
     -- They are reporting this in _AMPS_ we need to get current power at current voltage, assuming pf1.0
     -- Common usage is that "size" of a breaker is 630A breaker has 630A on each phase.
@@ -131,8 +215,6 @@ local function handle_mains(topic, payload)
     local avail_to_chargers = cfg_max_power - aux_used
     ugly.notice("xxx: available to chargers = %f", avail_to_chargers)
 
-    -- TODO - publish mqtt state information here?
-    -- IMPORTANT! we've gotten a mains loop, reset the sum counters of chargers!
     local rv = {
         power_avail = avail_to_chargers,
         usage_total = power_used,
@@ -140,6 +222,7 @@ local function handle_mains(topic, payload)
         usage_chargers = state.sum_power,
         cfg_total_adj = cfg_max_power, -- configured total, adjusted for voltage
     }
+    -- IMPORTANT! we've gotten a mains loop, reset the sum counters of chargers! (but see other fixmes!)
     state.sum_power = 0
     return rv
 end
@@ -152,8 +235,6 @@ local function handle_charger(topic, payload)
         if e.n == "power" then this_power = e.v end
         if e.n == "state" then this_state = e.v end
     end
-    state.sum_power = state.sum_power + this_power
-
     local status_map = {
         "0-Available",
         "1-Preparing_TagId_Ready",
@@ -168,7 +249,30 @@ local function handle_charger(topic, payload)
         "10-Faulted",
         "11-UnavailableConnObj",
     }
-    ugly.debug("Handle charger: %s (%s): %f current power", payload.deviceid, status_map[this_state+1], this_power)
+    this_state = status_map[this_state+1]
+    local charger = state.chargers[payload.deviceid]
+    if not charger then
+        -- first time we've seen this charger, fetch it's modbus info and create a helper object
+        local unitid = payload.hwc.slaveId
+        local mbdev = payload.hwc.mbDevice
+        local mbc = cfg.mbc[mbdev]
+        if not mbc then
+            -- this... shouldn't happen?  We only get mqtt messages from mlifter, and mlifter has them all?
+            error("Charger has no Modbus connection information! Application error!")
+        end
+        -- TODO - make different ones if we like....
+        charger = AlpitronicHypercharger(payload.deviceid, unitid, mbc.address, mbc.service)
+        ugly.info("Created new charger: %s", tostring(charger))
+        state.chargers[charger.serial] = charger
+    end
+
+    -- We... probably want to use the charger class better to track it's readings.
+    -- sequence numbers? timestamps with N second bounding?
+    charger.this_power = this_power
+    charger.this_state = this_state
+    ugly.debug("Handle charger: %s (%s): %f current power", charger.serial, this_state, this_power)
+
+    state.sum_power = state.sum_power + this_power
 
     return true
 end
@@ -220,6 +324,32 @@ mqtt_idle_timer = uloop.timer(function()
     mqtt_idle_timer:set(cfg.MOSQ_IDLE_LOOP_MS)
 end, cfg.MOSQ_IDLE_LOOP_MS)
 
+local app_main_timer
+app_main_timer = uloop.timer(function()
+
+    -- do main loop... write work item to chargers
+    if state.work_item then
+        mqtt:publish(cfg.TOPIC_APP_STATE, json.encode(state.work_item), 1, true)
+        statsd:gauge("available-power", state.work_item.power_avail)
+        statsd:gauge("usage-total", state.work_item.usage_total)
+        statsd:gauge("usage-chargers", state.work_item.usage_chargers)
+        for _,charger in pairs(state.chargers) do
+            ugly.debug("Writing avail: %f to charger: %s", state.work_item.power_avail, tostring(charger))
+            local ok, err = charger:set_available_power(state.work_item.power_avail)
+            if not ok then
+                -- that's all we need though, we'll just retry next time, it's about all we _can_ do.
+                ugly.warning("Failed to set available power (%f W) on charger: %s: %s",
+                        state.work_item.power_avail, tostring(charger), err)
+                statsd:increment("charger." .. charger.serial .. ".write-failure")
+            end
+        end
+        state.work_item = nil
+    end
+
+    app_main_timer:set(cfg.APP_MAIN_LOOP_MS)
+end, cfg.APP_MAIN_LOOP_MS)
+
+
 local function load_config()
     local x = uci.cursor(uci.get_confdir())
     x:foreach(cfg.APP_NAME, "general", function(s)
@@ -228,7 +358,13 @@ local function load_config()
         end
         cfg.uci = s
     end)
-    -- FIXME - definitely need more modbus connection details here....
+    -- We also need to load mlifter modbus connection config, for remote devices
+    cfg.mbc = {}
+    x:foreach("mlifter", "device", function(s)
+        cfg.mbc[s['.name']] = s
+    end)
+    -- We can't create any "charger" devices here, as we need to get some live data
+    -- to correlate with the modbus information
 end
 
 load_config()
@@ -242,7 +378,5 @@ end
 
 local ok, err = mqtt:subscribe(string.format(cfg.TOPIC_LISTEN_TEMPLATE, cfg.uci.mains_id), 0)
 if not ok then error("Failed to subscribe to mains topic: " .. err) end
-
-
 
 uloop.run()
