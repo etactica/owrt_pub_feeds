@@ -165,7 +165,7 @@ return L.view.extend({
 //		};
 //		o.depends("enabled", "1");
 
-		var key = s.taboption("general", TrimmedValue, "mains_size", _("Mains size"),
+		var key = s.taboption("general", TrimmedValue, "mains_size", _("Mains size (Amps)"),
 			_("The assigned capacity of the mains supply."));
 		key.placeholder = "400";
 

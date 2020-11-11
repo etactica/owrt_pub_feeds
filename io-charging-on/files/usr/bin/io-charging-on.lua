@@ -6,6 +6,7 @@
 local json = require("cjson.safe")
 -- cjson specific
 json.encode_sparse_array(true)
+local uci = require("uci")
 local uloop = require("uloop")
 uloop.init()
 local mosq = require("mosquitto")
@@ -42,7 +43,7 @@ end
 
 -- Live variables, just kept in a table for sanity of access
 local state = {
-
+    sum_power = 0, -- Current running sum of power on all chargers.
 }
 
 ugly.initialize(cfg.APP_NAME, args.verbose or 4)
@@ -55,12 +56,7 @@ if not mqtt:connect(args.mqtt_host, 1883, 60) then
     os.exit(1)
 end
 
-if not mqtt:subscribe(cfg.TOPIC_LISTEN_DATA, 0) then
-    ugly.err("Aborting, unable to subscribe to live data stream")
-    os.exit(1)
-end
-
-
+--- Validates the entries of a senml block, must have v, n, a time somewhere, etc
 local function validate_entries(eee, bt)
     local rval = true
     for k,e in pairs(eee) do
@@ -82,6 +78,7 @@ local function validate_entries(eee, bt)
     return rval
 end
 
+--- Validates the metadata (very rarely used) in a senml block
 -- will modify meta if necessary!
 local function validate_meta(eee)
     if eee.bn and type(eee.bn) ~= "string" then return false end
@@ -101,52 +98,105 @@ local function validate_senml(senml)
     return senml
 end
 
---- Take a senml blob, and updates everything necessary for delta processing
--- Does validation on the input data
--- @param senml_in a table of senml.
--- @return[1] nil if the senml failed validation.
--- @return[1] errmsg why it failed validation
--- @return[2] true normal case.
-local function add_senml(senml_in)
-    local senml, err = validate_senml(senml_in)
-    if not senml then return nil, err end
-    for _,e in pairs(senml.e) do
-        local fulln = senml.bn .. e.n
-        -- translate MQTT '/' separated topic levels into statsd '.' separated
-        fulln = fulln:gsub("/", ".")
-        ugly.debug("Adding gauge for %s with v %f", fulln, e.v)
-        --statsd:gauge(fulln, e.v)
+--- Handle periodic update of mains consumption information
+--- As all devices are read in turn, each time we get a mains reading, we've (at least attempted to) read
+--- all chargers as well.  Take all summed charging info since last time, and use that to generate the available
+local function handle_mains(topic, payload)
+    ugly.debug("Handle mains: %s", topic)
+    -- NOTE, using the "sdevice" tree would be nice here! ;)
+    -- Firstly, we have to scan the senml list to get all the per phase elements
+    local power_phase = {{},{},{}}
+    for _,e in pairs(payload.e) do
+        for ph=1,3 do
+            if e.n == string.format("volt/%d", ph) then power_phase[ph].v = e.v end
+            if e.n == string.format("current/%d", ph) then power_phase[ph].i = e.v end
+            if e.n == string.format("pf/%d", ph) then power_phase[ph].pf = e.v end
+        end
     end
+    ugly.warning("karl: %s", json.encode(power_phase))
+    -- now we have total power used....
+    local power_used = pl.tablex.reduce(function(a,b)
+        return a + (b.v * b.i * b.pf)
+    end, power_phase, 0)
+    local aux_used = power_used - state.sum_power
+    -- They are reporting this in _AMPS_ we need to get current power at current voltage, assuming pf1.0
+    -- Common usage is that "size" of a breaker is 630A breaker has 630A on each phase.
+    -- We're dynamically adjusting the "system max power" a bit based on current supply voltage.
+    local cfg_max_power = pl.tablex.reduce(function(a,b)
+        return a + (b.v * cfg.uci.mains_size)
+    end, power_phase, 0)
+
+    ugly.notice("configured max: %f, used now total: %f", cfg_max_power, power_used)
+    ugly.notice("xxx: current charger sum used: %f, aux used :%f", state.sum_power, aux_used)
+    local avail_to_chargers = cfg_max_power - aux_used
+    ugly.notice("xxx: available to chargers = %f", avail_to_chargers)
+
+    -- TODO - publish mqtt state information here?
+    -- IMPORTANT! we've gotten a mains loop, reset the sum counters of chargers!
+    local rv = {
+        power_avail = avail_to_chargers,
+        usage_total = power_used,
+        usage_aux = aux_used,
+        usage_chargers = state.sum_power,
+        cfg_total_adj = cfg_max_power, -- configured total, adjusted for voltage
+    }
+    state.sum_power = 0
+    return rv
+end
+
+--- Chargers just update usage provided.
+local function handle_charger(topic, payload)
+    local this_power = 0
+    local this_state = 8
+    for _,e in pairs(payload.senml.e) do
+        if e.n == "power" then this_power = e.v end
+        if e.n == "state" then this_state = e.v end
+    end
+    state.sum_power = state.sum_power + this_power
+
+    local status_map = {
+        "0-Available",
+        "1-Preparing_TagId_Ready",
+        "2-Preparing_EV_Ready",
+        "3-Charging",
+        "4-SuspendedEV",
+        "5-SuspendedEVSE",
+        "6-Finishing",
+        "7-Reserved",
+        "8-Unavailable",
+        "9-UnavailableFwUpdate",
+        "10-Faulted",
+        "11-UnavailableConnObj",
+    }
+    ugly.debug("Handle charger: %s (%s): %f current power", payload.deviceid, status_map[this_state+1], this_power)
+
     return true
 end
 
-local function handle_senml(topic, jpayload)
-    local payload, err = json.decode(jpayload)
+local function on_message_handler(mid, topic, jpayload, qos, retain)
+    local payload, err, senml
+    payload, err = json.decode(jpayload)
     if not payload then
         ugly.warning("Invalid json in message on topic: %s, %s", topic, err)
         return
     end
-    statsd:meter("msgs-processed", 1)
     if payload.hwc and payload.hwc.error then
+        -- FIXME - might have to flag incomplete status loop?
         ugly.debug("ignoring error report: %s", topic)
         statsd:increment("read-error")
         return
     end
-    if not payload.senml then
-        ugly.debug("Ignoring non-senml report: %s", topic)
-        statsd:increment("non-senml")
-        return
+    senml, err = validate_senml(payload.senml)
+    if not senml then
+        ugly.warning("SenML block not found or invalid? %s", err)
     end
-    -- for io-charging: look at configured ids here to drop up front
-
-    local rval, msg = add_senml(payload.senml)
-    if not rval then ugly.warning("Failed to process senml: %s", msg) end
-end
-
-
-mqtt.ON_MESSAGE = function(mid, topic, jpayload, qos, retain)
-    if mosq.topic_matches_sub(cfg.TOPIC_LISTEN_DATA, topic) then
-        return handle_senml(topic, jpayload)
+    statsd:meter("msgs-processed", 1)
+    -- we're probably going to want to look at the whole state, to determine if we have a full set of data
+    if mosq.topic_matches_sub(string.format(cfg.TOPIC_LISTEN_TEMPLATE, cfg.uci.mains_id), topic) then
+        -- Save it to a queue to work on outside message handler context.
+        state.work_item = handle_mains(topic, senml)
+    else
+        handle_charger(topic, payload)
     end
 end
 
@@ -169,5 +219,30 @@ mqtt_idle_timer = uloop.timer(function()
     end
     mqtt_idle_timer:set(cfg.MOSQ_IDLE_LOOP_MS)
 end, cfg.MOSQ_IDLE_LOOP_MS)
+
+local function load_config()
+    local x = uci.cursor(uci.get_confdir())
+    x:foreach(cfg.APP_NAME, "general", function(s)
+        if cfg.uci then
+            error("Duplicate 'general' section in uci config!")
+        end
+        cfg.uci = s
+    end)
+    -- FIXME - definitely need more modbus connection details here....
+end
+
+load_config()
+mqtt.ON_MESSAGE = on_message_handler
+ugly.debug("running with cfg: %s", pl.pretty.write(cfg))
+for _,v in pairs(cfg.uci.charger_ids) do
+    ugly.debug("Subscribing to charger id: %s", v)
+    local ok, err = mqtt:subscribe(string.format(cfg.TOPIC_LISTEN_TEMPLATE, v), 0)
+    if not ok then error("Failed to subscribe to charger topic: " .. err) end
+end
+
+local ok, err = mqtt:subscribe(string.format(cfg.TOPIC_LISTEN_TEMPLATE, cfg.uci.mains_id), 0)
+if not ok then error("Failed to subscribe to mains topic: " .. err) end
+
+
 
 uloop.run()
