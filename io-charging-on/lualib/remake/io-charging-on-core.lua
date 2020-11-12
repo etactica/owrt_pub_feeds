@@ -87,7 +87,7 @@ function AlpitronicHypercharger:_create(serial, mbunit, mbaddress, mbservice)
 end
 
 function AlpitronicHypercharger:__tostring()
-    return string.format("AlpitronicHypercharger<serial:%s, %d(%#x) @ %s:%s>", self.serial, self.mbunit, self.mbunit, self.mbaddress, tostring(self.mbservice))
+    return string.format("AlpitronicHypercharger<%s, %d(%#x) @ %s:%s>", self.serial, self.mbunit, self.mbunit, self.mbaddress, tostring(self.mbservice))
 end
 
 --- Set the available power on a charger.
@@ -191,11 +191,10 @@ end
 --- As all devices are read in turn, each time we get a mains reading, we've (at least attempted to) read
 --- all chargers as well.  Take all summed charging info since last time, and use that to generate the available
 local function handle_mains(topic, payload)
-    ugly.debug("Handle mains: %s", topic)
     -- NOTE, using the "sdevice" tree would be nice here! ;)
     -- Firstly, we have to scan the senml list to get all the per phase elements
     local power_phase = {{},{},{}}
-    for _,e in pairs(payload.e) do
+    for _,e in pairs(payload.senml.e) do
         for ph=1,3 do
             if e.n == string.format("volt/%d", ph) then power_phase[ph].v = e.v end
             if e.n == string.format("current/%d", ph) then power_phase[ph].i = e.v end
@@ -217,10 +216,11 @@ local function handle_mains(topic, payload)
         return a + (b.v * cfg.uci.mains_size)
     end, power_phase, 0)
 
-    ugly.notice("configured max: %f, used now total: %f", cfg_max_power, power_used)
-    ugly.notice("xxx: current charger sum used: %f, aux used :%f", state.sum_power, aux_used)
+    ugly.debug("configured max: %f, used now total: %f", cfg_max_power, power_used)
+    ugly.debug("xxx: current charger sum used: %f, aux used :%f", state.sum_power, aux_used)
     local avail_to_chargers = cfg_max_power - aux_used
-    ugly.notice("xxx: available to chargers = %f", avail_to_chargers)
+    ugly.debug("xxx: available to chargers = %f", avail_to_chargers)
+    ugly.info("mains: %s, max allowed: %.1f kW, usage (less chargers): %.1f kW, avail to chargers: %.1f kW", payload.deviceid, cfg_max_power/1000, power_used/1000, avail_to_chargers/1000)
 
     local rv = {
         power_avail = avail_to_chargers,
@@ -305,7 +305,7 @@ local function on_message_handler(mid, topic, jpayload, qos, retain)
     -- we're probably going to want to look at the whole state, to determine if we have a full set of data
     if mosq.topic_matches_sub(string.format(cfg.TOPIC_LISTEN_TEMPLATE, cfg.uci.mains_id), topic) then
         -- Save it to a queue to work on outside message handler context.
-        state.work_item = handle_mains(topic, senml)
+        state.work_item = handle_mains(topic, payload)
     else
         handle_charger(topic, payload)
     end
