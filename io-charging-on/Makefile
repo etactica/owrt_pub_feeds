@@ -57,13 +57,9 @@ define Package/$(PKG_NAME)/install
           $(INSTALL_DIR) $(1)$(LUCI_LIBRARYDIR) && \
           $(CP) $(PKG_BUILD_DIR)/luasrc/* $(1)$(LUCI_LIBRARYDIR)/ \
           || true
-	[ -d $(PKG_BUILD_DIR)/htdocs ] && \
-          $(INSTALL_DIR) $(1)$(HTDOCS) && \
-          $(CP) $(PKG_BUILD_DIR)/htdocs/* $(1)$(HTDOCS)/ \
-          || true
-	[ -d $(PKG_BUILD_DIR)/root ] && \
-          $(INSTALL_DIR) $(1)/ && \
-          $(CP) $(PKG_BUILD_DIR)/root/* $(1)/ \
+	[ -d $(PKG_BUILD_DIR)/lualib ] && \
+          $(INSTALL_DIR) $(1)$(LUA_LIBRARYDIR) && \
+          cp -pR $(PKG_BUILD_DIR)/lualib/* $(1)$(LUA_LIBRARYDIR)/ \
           || true
 	# Application itself, and it's packaging
 	$(CP) ./files/* $(1)/
