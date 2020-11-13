@@ -20,15 +20,11 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 CMAKE_INSTALL:=1
 
-define Package/$(PKG_NAME)/default
+define Package/$(PKG_NAME)
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=mqblynk - MQTT jsonpath to blynk
   DEPENDS:=+libjson-c +libjsonpath +libmosquittopp
-endef
-
-define Package/$(PKG_NAME)
-    $(Package/$(PKG_NAME)/default)
 endef
 
 define Package/$(PKG_NAME)/description
