@@ -86,6 +86,7 @@ local function handle_live_data(topic, jpayload)
     if payload.hwc and payload.hwc.error then
         ugly.debug("ignoring error report: %s", topic)
         statsd:increment("read-error")
+        statsd:increment("read-error." .. payload.hwc.deviceid)
         return
     end
     if not payload.readings then
