@@ -35,6 +35,11 @@ local state = {
     chargers = {},
 }
 
+local function timestamp_ms()
+    local tspec = Pt.clock_gettime(Pt.CLOCK_REALTIME)
+    return tspec.tv_sec * 1000 + math.floor(tspec.tv_nsec / 1e6)
+end
+
 local ChargerBase = {}
 ChargerBase.__index = ChargerBase
 
@@ -99,14 +104,20 @@ end
 -- @return true, or nil if it failed to write.  Callee can retry, report, or wait til next write.
 -- @return nil, or error message
 function AlpitronicHypercharger:set_available_power(power)
-    local ok, err = self.dev:connect()
-    if not ok then return nil, err end
+    local pre = timestamp_ms()
+    local function real()
+        local ok, err = self.dev:connect()
+        if not ok then return nil, err end
 
-    local regs = {mb.set_s32(power)}
-    ok, err = self.dev:write_registers(0, regs)
-    if not ok then return nil, err end
-    self.dev:disconnect()
-    return true
+        local regs = {mb.set_s32(power)}
+        ok, err = self.dev:write_registers(0, regs)
+        if not ok then return nil, err end
+        self.dev:disconnect()
+    end
+    local ok, err = real()
+    -- TODO - stringformat on every action is... not a great use of cpu power.
+    statsd:timer(string.format("chargers.%s.set-power", self.serial), timestamp_ms() - pre)
+    return ok, err
 end
 
 
@@ -216,11 +227,9 @@ local function handle_mains(topic, payload)
         return a + (b.v * cfg.uci.mains_size)
     end, power_phase, 0)
 
-    ugly.debug("configured max: %f, used now total: %f", cfg_max_power, power_used)
-    ugly.debug("xxx: current charger sum used: %f, aux used :%f", state.sum_power, aux_used)
     local avail_to_chargers = cfg_max_power - aux_used
-    ugly.debug("xxx: available to chargers = %f", avail_to_chargers)
-    ugly.info("mains: %s, max allowed: %.1f kW, usage (less chargers): %.1f kW, avail to chargers: %.1f kW", payload.deviceid, cfg_max_power/1000, power_used/1000, avail_to_chargers/1000)
+    ugly.info("mains: %s, max allowed: %.1f kW, usage (total): %.1f kW, avail to chargers: %.1f kW", payload.deviceid, cfg_max_power/1000, power_used/1000, avail_to_chargers/1000)
+    ugly.debug("xxx: current charger sum used: %f, aux used :%f", state.sum_power, aux_used)
 
     local rv = {
         power_avail = avail_to_chargers,
@@ -278,6 +287,7 @@ local function handle_charger(topic, payload)
     charger.this_power = this_power
     charger.this_state = this_state
     ugly.debug("Handle charger: %s (%s): %f current power", charger.serial, this_state, this_power)
+    statsd:gauge(string.format("chargers.%s.power", charger.serial), charger.this_power)
 
     state.sum_power = state.sum_power + this_power
 
@@ -366,9 +376,8 @@ local function do_main()
         -- do main loop... write work item to chargers
         if state.work_item then
             mqtt:publish(cfg.TOPIC_APP_STATE, json.encode(state.work_item), 1, true)
-            statsd:gauge("available-power", state.work_item.power_avail)
-            statsd:gauge("usage-total", state.work_item.usage_total)
-            statsd:gauge("usage-chargers", state.work_item.usage_chargers)
+            -- Publish all of it as gauges of inner health.
+            for k,v in pairs(state.work_item) do statsd:gauge(k, v) end
             for _,charger in pairs(state.chargers) do
                 ugly.debug("Writing avail: %f to charger: %s", state.work_item.power_avail, tostring(charger))
                 local ok, err = charger:set_available_power(state.work_item.power_avail)
@@ -376,7 +385,7 @@ local function do_main()
                     -- that's all we need though, we'll just retry next time, it's about all we _can_ do.
                     ugly.warning("Failed to set available power (%f W) on charger: %s: %s",
                             state.work_item.power_avail, tostring(charger), err)
-                    statsd:increment("charger." .. charger.serial .. ".write-failure")
+                    statsd:increment("chargers." .. charger.serial .. ".write-failure")
                 end
             end
             state.work_item = nil
