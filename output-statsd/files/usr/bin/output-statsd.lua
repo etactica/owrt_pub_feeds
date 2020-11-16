@@ -32,7 +32,7 @@ local cfg = {
     APP_NAME = "output-statsd",
     MOSQ_CLIENT_ID = string.format("output-statsd-%d", PU.getpid()),
     MOSQ_IDLE_LOOP_MS = 100,
-    TOPIC_LISTEN_DATA = "status/local/json/device/#",
+    TOPIC_LISTEN_DATA = "status/local/json/sdevice/#",
 }
 
 local function timestamp_ms()
@@ -61,66 +61,22 @@ if not mqtt:subscribe(cfg.TOPIC_LISTEN_DATA, 0) then
 end
 
 
-local function validate_entries(eee, bt)
-    local rval = true
-    for k,e in pairs(eee) do
-        if type(e) ~= "table" then rval = false; break end
 
-        if not e.v then rval = false; break end
-        if type(e.v) ~= "number" then rval = false; break end
-
-        if not e.n then rval = false; break end
-        if type(e.n) ~= "string" then rval = false; break end
-
-        if e.u and type(e.u) ~= "string" then rval = false; break end
-
-        if e.t and type(e.t) ~= "number" then rval = false; break end
-        if not e.t and not bt then rval = false; break; end
-        -- safe to modify here, it wasn't provided, so it will have no affect
-        if not e.t then e.t = 0 end
-    end
-    return rval
-end
-
--- will modify meta if necessary!
-local function validate_meta(eee)
-    if eee.bn and type(eee.bn) ~= "string" then return false end
-    -- safe to modify, not required, but need string concat to work
-    if not eee.bn then eee.bn = "" end
-
-    if eee.bt and type(eee.bt) ~= "number" then return false end
-    return true
-end
-
-local function validate_senml(senml)
-    if type(senml) ~= "table" then return nil, "Input wasn't a table" end
-    if type(senml.e) ~= "table" then return nil, "Senml Entries 'e' wasn't a table" end
-    if not validate_meta(senml) then return nil, "Metadata (bt,bn etc) were invalid" end
-    if not validate_entries(senml.e, senml.bt) then return nil, "Some entries were invalid, ignoring batch" end
-    if not senml.bt then senml.bt = 0 end
-    return senml
-end
-
---- Take a senml blob, and updates everything necessary for delta processing
--- Does validation on the input data
--- @param senml_in a table of senml.
--- @return[1] nil if the senml failed validation.
--- @return[1] errmsg why it failed validation
--- @return[2] true normal case.
-local function add_senml(senml_in)
-    local senml, err = validate_senml(senml_in)
-    if not senml then return nil, err end
-    for _,e in pairs(senml.e) do
-        local fulln = senml.bn .. e.n
+--- Take a set of live readings of "simple data" and makes appropriate statsd metrics
+-- @param "simple data" json form
+-- @return[1] true normal case.
+local function add_live_data(data)
+    for k,v in pairs(data.readings) do
+        local fulln = string.format("%s/%s", data.deviceid, k)
         -- translate MQTT '/' separated topic levels into statsd '.' separated
         fulln = fulln:gsub("/", ".")
-        ugly.debug("Adding gauge for %s with v %f", fulln, e.v)
-        statsd:gauge(fulln, e.v)
+        ugly.debug("Adding gauge for %s with v %f", fulln, v)
+        statsd:gauge(fulln, v)
     end
     return true
 end
 
-local function handle_senml(topic, jpayload)
+local function handle_live_data(topic, jpayload)
     local payload, err = json.decode(jpayload)
     if not payload then
         ugly.warning("Invalid json in message on topic: %s, %s", topic, err)
@@ -132,19 +88,19 @@ local function handle_senml(topic, jpayload)
         statsd:increment("read-error")
         return
     end
-    if not payload.senml then
-        ugly.debug("Ignoring non-senml report: %s", topic)
-        statsd:increment("non-senml")
+    if not payload.readings then
+        ugly.debug("no error, but no readings? very unexpected data! %s", topic)
+        statsd:increment("unexpected-format")
         return
     end
-    local rval, msg = add_senml(payload.senml)
-    if not rval then ugly.warning("Failed to process senml: %s", msg) end
+    local rval, msg = add_live_data(payload)
+    if not rval then ugly.warning("Failed to process readings: %s", msg) end
 end
 
 
 mqtt.ON_MESSAGE = function(mid, topic, jpayload, qos, retain)
     if mosq.topic_matches_sub(cfg.TOPIC_LISTEN_DATA, topic) then
-        return handle_senml(topic, jpayload)
+        return handle_live_data(topic, jpayload)
     end
 end
 

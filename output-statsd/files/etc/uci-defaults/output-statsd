@@ -6,7 +6,9 @@ CFG=output-statsd
 
 # Create an example file if it doesn't exist already.
 touch /etc/config/$CFG
-uci -q batch <<-EOF >/dev/null 
+uci -q batch <<-EOF >/dev/null
+		set mlifter.remake.include_simple_json='1'
+		commit mlifter
 		delete $CFG.@general[0]
 		add $CFG general
 		set $CFG.@general[0]=general
