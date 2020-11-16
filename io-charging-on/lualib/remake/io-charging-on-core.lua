@@ -131,8 +131,9 @@ function AlpitronicHypercharger:set_available_power(power)
 
         local regs = {mb.set_s32(power)}
         ok, err = self.dev:write_registers(0, regs)
-        if not ok then return nil, err end
-        self.dev:disconnect()
+        -- close no matter what, to not leak fds, and nothing we can do if it fails anywhere
+        self.dev:close()
+        return ok, err
     end
     local ok, err = real()
     -- TODO - stringformat on every action is... not a great use of cpu power.
