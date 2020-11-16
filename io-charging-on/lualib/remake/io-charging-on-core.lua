@@ -22,6 +22,7 @@ local cfg = {
     MOSQ_CLIENT_ID = string.format("io-charging-on-%d", PU.getpid()),
     MOSQ_IDLE_LOOP_MS = 100,
     APP_MAIN_LOOP_MS = 500,
+    MAX_CHARGER_AGE_MS = 6000, -- ~three successive failures, in normal config, unlikely to need to change this
     TOPIC_LISTEN_TEMPLATE = "status/local/json/device/%s/#",
     TOPIC_APP_STATE = "status/local/json/applications/" .. _APP_NAME .. "/state",
 }
@@ -31,7 +32,6 @@ local statsd
 
 -- Live variables, just kept in a table for sanity of access
 local state = {
-    sum_power = 0, -- Current running sum of power on all chargers.
     chargers = {},
 }
 
@@ -71,6 +71,26 @@ function ChargerBase:set_available_power(power)
     error("must be implemented by derived classes")
 end
 
+--- Return the power used by this charger, if valid, else 0.
+-- @tparam number ts the timestamp in milliseconds now
+-- @treturn number 0 if reading is too old
+-- @treturn number the last reported power if fresh
+function ChargerBase:valid_power(ts_ms)
+    local this_charger = 0
+    if ts_ms - self.ts < cfg.MAX_CHARGER_AGE_MS then
+        this_charger = self.power
+    end
+    return this_charger
+end
+
+function ChargerBase:update(ts_ms, power, state)
+    self.power = power
+    self.state = state
+    self.ts = ts_ms
+    ugly.debug("Handle charger: %s (%s): %f current power", self.serial, self.state, self.power)
+    statsd:gauge("chargers." .. self.serial .. ".power", self.power)
+
+end
 
 local AlpitronicHypercharger = {}
 AlpitronicHypercharger.__index = AlpitronicHypercharger
@@ -202,6 +222,10 @@ end
 --- As all devices are read in turn, each time we get a mains reading, we've (at least attempted to) read
 --- all chargers as well.  Take all summed charging info since last time, and use that to generate the available
 local function handle_mains(topic, payload)
+    if payload.hwc and payload.hwc.error then
+        statsd:increment("mains." .. payload.hwc.deviceid .. ".read-failure")
+        return
+    end
     -- NOTE, using the "sdevice" tree would be nice here! ;)
     -- Firstly, we have to scan the senml list to get all the per phase elements
     local power_phase = {{},{},{}}
@@ -213,38 +237,46 @@ local function handle_mains(topic, payload)
         end
     end
     -- now we have total power used....
-    local power_used = pl.tablex.reduce(function(a,b)
+    local power_used_total = pl.tablex.reduce(function(a,b)
         return a + (b.v * b.i * b.pf)
     end, power_phase, 0)
-    -- FIXME - this is... ok, but if mains fails for a while, the chargers will keep summing.
-    -- we really need to make sure we're only summing "one" iteration of all the chargers.
-    -- timestamp age is probably safest? take sum from all state.chargers, as long as no reading is more than 5 seconds from another?
-    local aux_used = power_used - state.sum_power
-    -- They are reporting this in _AMPS_ we need to get current power at current voltage, assuming pf1.0
+
+    -- Sum the reported usage of chargers, but only the ones that we have, and only if they're up to date.
+    local ts_now = timestamp_ms()
+    local power_used_chargers = pl.tablex.reduce(function(a,b)
+        return a + b:valid_power(ts_now)
+    end, pl.tablex.values(state.chargers), 0)
+
+    -- auxilliary is always just total less chargers, nice and simple...
+    local power_used_aux = power_used_total - power_used_chargers
+
+    -- They are configuring this in _AMPS_ we need to get current power at current voltage, assuming pf1.0
     -- Common usage is that "size" of a breaker is 630A breaker has 630A on each phase.
     -- We're dynamically adjusting the "system max power" a bit based on current supply voltage.
-    local cfg_max_power = pl.tablex.reduce(function(a,b)
+    local power_cfg_max = pl.tablex.reduce(function(a, b)
         return a + (b.v * cfg.uci.mains_size)
     end, power_phase, 0)
 
-    local avail_to_chargers = cfg_max_power - aux_used
-    ugly.info("mains: %s, max allowed: %.1f kW, usage (total): %.1f kW, avail to chargers: %.1f kW", payload.deviceid, cfg_max_power/1000, power_used/1000, avail_to_chargers/1000)
-    ugly.debug("xxx: current charger sum used: %f, aux used :%f", state.sum_power, aux_used)
+    local power_avail_chargers = power_cfg_max - power_used_aux
+    ugly.info("mains: %s, max allowed: %.1f kW, usage (total): %.1f kW, avail to chargers: %.1f kW", payload.deviceid, power_cfg_max /1000, power_used_total/1000, power_avail_chargers /1000)
+    ugly.debug("xxx: current charger sum used: %f, aux used :%f", power_used_chargers, power_used_aux)
 
     local rv = {
-        power_avail = avail_to_chargers,
-        usage_total = power_used,
-        usage_aux = aux_used,
-        usage_chargers = state.sum_power,
-        cfg_total_adj = cfg_max_power, -- configured total, adjusted for voltage
+        power_avail_chargers = power_avail_chargers,
+        power_used_total = power_used_total,
+        power_used_aux = power_used_aux,
+        power_used_chargers = power_used_chargers,
+        power_cfg_max = power_cfg_max, -- configured total, adjusted for voltage
     }
-    -- IMPORTANT! we've gotten a mains loop, reset the sum counters of chargers! (but see other fixmes!)
-    state.sum_power = 0
     return rv
 end
 
 --- Chargers just update usage provided.
 local function handle_charger(topic, payload)
+    if payload.hwc and payload.hwc.error then
+        statsd:increment("chargers." .. payload.hwc.deviceid .. ".read-failure")
+        return
+    end
     local this_power = 0
     local this_state = 8
     for _,e in pairs(payload.senml.e) do
@@ -281,38 +313,21 @@ local function handle_charger(topic, payload)
         ugly.info("Created new charger: %s", tostring(charger))
         state.chargers[charger.serial] = charger
     end
-
-    -- We... probably want to use the charger class better to track it's readings.
-    -- sequence numbers? timestamps with N second bounding?
-    charger.this_power = this_power
-    charger.this_state = this_state
-    ugly.debug("Handle charger: %s (%s): %f current power", charger.serial, this_state, this_power)
-    statsd:gauge(string.format("chargers.%s.power", charger.serial), charger.this_power)
-
-    state.sum_power = state.sum_power + this_power
+    charger:update(payload.timestamp_ms, this_power, this_state)
 
     return true
 end
 
 local function on_message_handler(mid, topic, jpayload, qos, retain)
-    local payload, err, senml
+    local payload, err
     payload, err = json.decode(jpayload)
     if not payload then
         ugly.warning("Invalid json in message on topic: %s, %s", topic, err)
         return
     end
-    if payload.hwc and payload.hwc.error then
-        -- FIXME - might have to flag incomplete status loop?
-        ugly.debug("ignoring error report: %s", topic)
-        statsd:increment("read-error")
-        return
-    end
-    senml, err = validate_senml(payload.senml)
-    if not senml then
-        ugly.warning("SenML block not found or invalid? %s", err)
-    end
+    -- this will modify the senml block if necessary to handle bn/n and bt/t joining
+    validate_senml(payload.senml)
     statsd:meter("msgs-processed", 1)
-    -- we're probably going to want to look at the whole state, to determine if we have a full set of data
     if mosq.topic_matches_sub(string.format(cfg.TOPIC_LISTEN_TEMPLATE, cfg.uci.mains_id), topic) then
         -- Save it to a queue to work on outside message handler context.
         state.work_item = handle_mains(topic, payload)
@@ -379,12 +394,12 @@ local function do_main()
             -- Publish all of it as gauges of inner health.
             for k,v in pairs(state.work_item) do statsd:gauge(k, v) end
             for _,charger in pairs(state.chargers) do
-                ugly.debug("Writing avail: %f to charger: %s", state.work_item.power_avail, tostring(charger))
-                local ok, err = charger:set_available_power(state.work_item.power_avail)
+                ugly.debug("Writing avail: %f to charger: %s", state.work_item.power_avail_chargers, tostring(charger))
+                local ok, err = charger:set_available_power(state.work_item.power_avail_chargers)
                 if not ok then
                     -- that's all we need though, we'll just retry next time, it's about all we _can_ do.
                     ugly.warning("Failed to set available power (%f W) on charger: %s: %s",
-                            state.work_item.power_avail, tostring(charger), err)
+                            state.work_item.power_avail_chargers, tostring(charger), err)
                     statsd:increment("chargers." .. charger.serial .. ".write-failure")
                 end
             end

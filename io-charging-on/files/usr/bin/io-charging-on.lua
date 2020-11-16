@@ -22,7 +22,7 @@ local ugly = require("remake.uglylog")
 ugly.initialize("io-charging-on", args.verbose or 4)
 
 core.init(args)
-local ok, err = pcall(core.main)
+local ok, err = xpcall(core.main, debug.traceback)
 if not ok then
     ugly.emerg("Crashed! %s", err)
     os.exit(1)
