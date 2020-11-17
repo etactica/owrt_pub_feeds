@@ -3,12 +3,29 @@
     "title": "Charging: ON.is",
     "order": 20,
     "action": {
-      "type": "view",
-      "path": "rme/io-charging-on"
+      "type": "firstchild"
     },
     "depends": {
       "acl": [ "io-charging-on" ],
       "uci": { "io-charging-on": true }
+    }
+  },
+
+  "admin/services/io-charging-on/settings": {
+    "title": "Settings",
+    "order": 20,
+    "action": {
+      "type": "view",
+      "path": "rme/io-charging-on"
+    }
+  },
+
+  "admin/services/io-charging-on/logs": {
+    "title": "Logs",
+    "order": 30,
+    "action": {
+      "type": "view",
+      "path": "rme/io-charging-on-logread"
     }
   }
 }
