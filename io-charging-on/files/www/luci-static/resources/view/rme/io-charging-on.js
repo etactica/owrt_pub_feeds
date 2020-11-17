@@ -103,7 +103,7 @@ return L.view.extend({
         }))
         .then(function(a) {
             self.mqclient = new Paho.MQTT.Client(location.hostname, 8083,
-                            "io-charging-on-" + (Math.random() + 1).toString(36).substring(2,8));
+                            "io-charging-on-cfgUI-" + (Math.random() + 1).toString(36).substring(2,8));
             self.mqclient.onConnectionLost = WsLostHandler;
             self.mqclient.onMessageArrived = WsOnMessage;
             WsDoConnect();
@@ -113,7 +113,6 @@ return L.view.extend({
         });
         // Wait here until the hwc is loaded.
         var waitForHWC = function(resolve, reject) {
-            console.log("waiting for hwc: ", self.hwc_attempts);
             if (self.hwc) {
                 resolve(self.hwc);
             } else {
@@ -143,7 +142,6 @@ return L.view.extend({
 
 	render: function(hwc) {
 		var m, s, o;
-		console.debug("hardware config is...", hwc);
 		// TODO - if loadresults is empty, and we've got the right warning text from the load(), then just let people enter ids?
 
 		m = new form.Map('io-charging-on', _('IO Charging ON.is'), desc);
