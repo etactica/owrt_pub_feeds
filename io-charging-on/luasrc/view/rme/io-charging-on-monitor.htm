@@ -1,0 +1,53 @@
+<%+header%>
+
+<h2><a id="content" name="content"><%:Simple application monitor%></a></h2>
+<div id="browser_not_supported" style="color:red;display:none" data-bind="visible: errNotSupported()">
+    <p><%:Your browser does not support the live data that this page needs.  You need IE 10 or
+        greater, or any recent version of Chrome, Safari, Firefox or Opera.%>
+    <p><small><%:(Specifically, you need support for WebSockets)%></small>
+</div>
+<div id="err_could_not_connect" style="color:red;display:none" data-bind="visible: errNotConnected()">
+    <p><%:Could not connect, or lost connection to the message broker on the gateway.
+        If this happens all the time, perhaps WebSockets on port 8083 is firewalled?%>
+    <p><%:It could also indicate an unexpected/unhandled error on the gateway itself%>
+        <span class="extra" data-bind="text: errNotConnected"></span>
+</div>
+
+<fieldset class="cbi-section">
+    <legend><%:App state%></legend>
+    <table width="100%" class="cbi-section-table">
+        <thead>
+        <tr class="cbi-section-table-titles">
+            <th class="cbi-section-table-cell"><%:Timestamp%></th>
+            <th class="cbi-section-table-cell"><%:Raw message%></th>
+        </tr>
+        </thead>
+        <tbody data-bind="foreach: messages">
+        <tr class="cbi-section-table-row cbi-rowstyle-2">
+            <td style="border-top:solid 2px #404040"><span data-bind="text: ts"></span></td>
+            <td style="border-top:solid 2px #404040"><pre data-bind="text: raw"></pre></td>
+        </tr>
+
+        </tbody>
+    </table>
+</fieldset>
+
+<script type="text/javascript" src="/resources/knockout.js" charset="utf-8"></script>
+<script type="text/javascript" src="/resources/paho/mqttws31.js"></script>
+
+<script type="text/javascript" src="/js/io-charging-on-monitor.js?v=<%=pcdata(rme_rel)%>"></script>
+
+<script type="text/javascript">
+luci_urls = {
+    gif_error: "<%=resource%>/cbi/reset.gif",
+    gif_find: "<%=resource%>/cbi/find.gif",
+    gif_loading: "<%=resource%>/icons/loading.gif",
+    gif_save: "<%=resource%>/cbi/save.gif",
+    device_details: "<%=luci.dispatcher.build_url('home/device')%>",
+    cabinet_model: "<%=luci.dispatcher.build_url('home/wizard/cabinet_model')%>"
+};
+
+</script>
+
+<%+footer%>
+

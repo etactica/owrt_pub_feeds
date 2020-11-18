@@ -27,5 +27,13 @@
       "type": "view",
       "path": "rme/io-charging-on-logread"
     }
+  },
+  "admin/services/io-charging-on/monitor": {
+    "title": "Monitor",
+    "order": 30,
+    "action": {
+      "type": "template",
+      "path": "rme/io-charging-on-monitor"
+    }
   }
 }

@@ -260,7 +260,7 @@ local function handle_mains(topic, payload)
     end, power_phase, 0)
 
     local power_avail_chargers = power_cfg_max - power_used_aux
-    ugly.info("mains: %s, max allowed: %.1f kW, usage (total): %.1f kW, avail to chargers: %.1f kW", payload.deviceid, power_cfg_max /1000, power_used_total/1000, power_avail_chargers /1000)
+    ugly.notice("mains: %s, max allowed: %.1f kW, usage (total): %.1f kW, avail to chargers: %.1f kW", payload.deviceid, power_cfg_max /1000, power_used_total/1000, power_avail_chargers /1000)
     ugly.debug("xxx: current charger sum used: %f, aux used :%f", power_used_chargers, power_used_aux)
 
     local rv = {
@@ -316,7 +316,7 @@ local function handle_charger(topic, payload)
         end
         -- TODO - make different ones if we like....
         charger = AlpitronicHypercharger(payload.deviceid, unitid, mbc.address, mbc.service)
-        ugly.info("Created new charger: %s", tostring(charger))
+        ugly.notice("Created new charger: %s", tostring(charger))
         state.chargers[charger.serial] = charger
     end
     charger:update(payload.timestamp_ms, this_power, this_state)

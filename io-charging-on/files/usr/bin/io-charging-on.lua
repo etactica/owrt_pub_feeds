@@ -12,7 +12,7 @@ local args = pl.lapp [[
     all connected chargers.  Orku Natturunnar implementation
 
     -H,--mqtt_host (default "localhost") MQTT host to listen to
-    -v,--verbose (0..7 default 4) Logging level, higher == more
+    -v,--verbose (0..7 default 5) Logging level, higher == more
     -S,--statsd_host (default "localhost") StatsD server address
     --statsd_port (default 8125) StatsD port
     --statsd_namespace (default "io-charging-on") Namespace for this data
