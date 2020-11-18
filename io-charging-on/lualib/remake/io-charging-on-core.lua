@@ -128,6 +128,7 @@ function AlpitronicHypercharger:set_available_power(power)
     local function real()
         local ok, err = self.dev:connect()
         if not ok then return nil, err end
+        self.dev:set_slave(self.mbunit)
 
         local regs = {mb.set_s32(power)}
         ok, err = self.dev:write_registers(0, regs)
@@ -306,8 +307,12 @@ local function handle_charger(topic, payload)
         local mbdev = payload.hwc.mbDevice
         local mbc = cfg.mbc[mbdev]
         if not mbc then
-            -- this... shouldn't happen?  We only get mqtt messages from mlifter, and mlifter has them all?
-            error("Charger has no Modbus connection information! Application error!")
+            -- This _should_ only happen with fake devices, on the implicit "local" connection
+            if mbdev == "local" then
+                mbc = {address = "localhost", service = "1502"}
+            else
+                error("Charger has no Modbus connection information! Application error!")
+            end
         end
         -- TODO - make different ones if we like....
         charger = AlpitronicHypercharger(payload.deviceid, unitid, mbc.address, mbc.service)
@@ -356,6 +361,17 @@ local function load_config()
 end
 
 local function do_main()
+    load_config()
+    ugly.debug("running with cfg: %s", pl.pretty.write(cfg))
+    if not cfg.uci.charger_ids or #cfg.uci.charger_ids == 0 then
+        ugly.notice("No chargers to monitor, exiting.")
+        os.exit(0)
+    end
+    if not cfg.uci.mains_id then
+        ugly.notice("No mains to monitor, exiting.")
+        os.exit(0)
+    end
+
     local mqtt = mosq.new(cfg.MOSQ_CLIENT_ID, true)
 
     mqtt:will_set(cfg.TOPIC_APP_STATE, nil, 1, true)
@@ -411,9 +427,7 @@ local function do_main()
     end, cfg.APP_MAIN_LOOP_MS)
 
 
-    load_config()
     mqtt.ON_MESSAGE = on_message_handler
-    ugly.debug("running with cfg: %s", pl.pretty.write(cfg))
     for _,v in pairs(cfg.uci.charger_ids) do
         ugly.debug("Subscribing to charger id: %s", v)
         local ok, err = mqtt:subscribe(string.format(cfg.TOPIC_LISTEN_TEMPLATE, v), 0)
