@@ -20,6 +20,12 @@ local args = pl.lapp [[
     -S,--statsd_host (default "localhost") StatsD server address
     --statsd_port (default 8125) StatsD port
     --statsd_namespace (default "live") Namespace for this data
+    -I,--ignore_model Ignore the cabinet model.
+        By default, we attempt to create metrics based on the cabinet model
+        This does mean that if you edit your model, your metrics will change,
+        but that was probably what you wanted anyway!
+        With this flag, the cabinet model will be ignored, and metrics will be
+        published using the fallback hardware identifiers (deviceid.metric.channel)
 ]]
 
 local statsd = require("statsd")({
@@ -33,6 +39,7 @@ local cfg = {
     MOSQ_CLIENT_ID = string.format("output-statsd-%d", PU.getpid()),
     MOSQ_IDLE_LOOP_MS = 100,
     TOPIC_LISTEN_DATA = "status/local/json/sdevice/#",
+    TOPIC_LISTEN_META = "status/local/json/cabinet/#",
 }
 
 local function timestamp_ms()
@@ -42,7 +49,7 @@ end
 
 -- Live variables, just kept in a table for sanity of access
 local state = {
-
+    cabinet_model = {},
 }
 
 ugly.initialize(cfg.APP_NAME, args.verbose or 4)
@@ -60,6 +67,14 @@ if not mqtt:subscribe(cfg.TOPIC_LISTEN_DATA, 0) then
     os.exit(1)
 end
 
+if args.ignore_model then
+    ugly.notice("Cabinet model usage disabled, using hwid metric names only")
+else
+    if not mqtt:subscribe(cfg.TOPIC_LISTEN_META, 0) then
+        ugly.err("Aborting, unable to subscribe to meta data stream")
+        os.exit(1)
+    end
+end
 
 
 --- Take a set of live readings of "simple data" and makes appropriate statsd metrics
@@ -76,13 +91,7 @@ local function add_live_data(data)
     return true
 end
 
-local function handle_live_data(topic, jpayload)
-    local payload, err = json.decode(jpayload)
-    if not payload then
-        ugly.warning("Invalid json in message on topic: %s, %s", topic, err)
-        return
-    end
-    statsd:meter("msgs-processed", 1)
+local function handle_live_data(topic, payload)
     if payload.hwc and payload.hwc.error then
         ugly.debug("ignoring error report: %s", topic)
         statsd:increment("read-error")
@@ -91,17 +100,52 @@ local function handle_live_data(topic, jpayload)
     end
     if not payload.readings then
         ugly.debug("no error, but no readings? very unexpected data! %s", topic)
-        statsd:increment("unexpected-format")
+        statsd:increment("unexpected-format.noreadings")
         return
     end
     local rval, msg = add_live_data(payload)
     if not rval then ugly.warning("Failed to process readings: %s", msg) end
 end
 
+local function handle_live_meta(topic, payload)
+    local cabinet = payload.cabinet
+    if not cabinet then
+        ugly.warning("No cabinet in cabinet model, ignoring on topic: %s", topic)
+        statsd:increment("unexpected-format.nocabinet")
+        return
+    end
+    local devid = payload.deviceid
+    if not devid then
+        ugly.warning("No deviceid in topic?! can't assign to cabinet model")
+        statsd:increment("unexpected-format.nodevid")
+        return
+    end
+
+    -- if there is an existing cabinet model for this device, just _replace_ it wholesale.
+    state.cabinet_model[devid] = {}
+    -- just keep the original branches, with a cabinet pointer on each one
+    for _, b in pairs(payload.branches) do
+        b.cabinet = cabinet
+        table.insert(state.cabinet_model[devid], b)
+    end
+    ugly.debug("Saved internal cabinet model of %s", pl.pretty.write(state.cabinet_model[devid]))
+
+end
 
 mqtt.ON_MESSAGE = function(mid, topic, jpayload, qos, retain)
+    local payload, err = json.decode(jpayload)
+    if not payload then
+        ugly.notice("Ignoring non json message on topic: %s: %s", topic, err)
+        statsd:increment("unexpected-format.notjson")
+        return
+    end
+    statsd:meter("msgs-processed", 1)
+    if mosq.topic_matches_sub(cfg.TOPIC_LISTEN_META, topic) then
+        return handle_live_meta(topic, payload)
+    end
+
     if mosq.topic_matches_sub(cfg.TOPIC_LISTEN_DATA, topic) then
-        return handle_live_data(topic, jpayload)
+        return handle_live_data(topic, payload)
     end
 end
 
