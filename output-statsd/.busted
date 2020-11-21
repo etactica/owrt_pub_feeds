@@ -1,0 +1,5 @@
+return {
+	_all = {
+		lpath = './files/usr/lib/lua/?.lua',
+	}
+}
