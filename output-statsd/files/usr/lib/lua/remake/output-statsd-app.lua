@@ -89,6 +89,8 @@ function M:add_live_data(data)
     for _,branch in pairs(model.branches) do
         local ampsize = branch.ampsize
         local label = branch.label
+        -- if label has . in it, replace with _ to not create submetrics unintentionally
+        label = label:gsub("%.", "_")
         local cabname = branch.cabinet
         local cum_vars = {}
         for _,p in pairs(branch.points) do
