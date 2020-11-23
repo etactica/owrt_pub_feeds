@@ -5,7 +5,7 @@ module("luci.controller.rme.output-statsd", package.seeall)
 local pl = require("pl.import_into")()
 
 function index()
-    entry({"admin", "services", "output-statsd"}, cbi("rme/output-statsd"), "Output-StatsD", 20)
+    entry({"admin", "services", "output-statsd"}, view("rme/output-statsd"), "Output-StatsD", 20)
     entry({"admin", "services", "output-statsd", "diag"}, call("action_diag"), nil)
 end
 
