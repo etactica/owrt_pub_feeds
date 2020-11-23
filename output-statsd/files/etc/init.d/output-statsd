@@ -17,7 +17,9 @@ append_only() {
 add_instance() {
 	local cfg="$1"
 	local enabled
+	local ignore_model
 	config_get_bool enabled "$cfg" enabled 0
+	config_get_bool ignore_model "$cfg" ignore_model 0
 	if [ $enabled -eq 0 ]; then
 		monit unmonitor "$APP"
 		printf "%s is disabled, not starting\n" "$APP"
@@ -26,6 +28,7 @@ add_instance() {
 		procd_set_param command output-statsd.lua
 		procd_set_param file /etc/config/$APP
 		procd_set_param pidfile /var/run/$APP.pid
+		[ $ignore_model -eq 1 ] && procd_append_param command --ignore_model
 		append_only "$cfg" statsd_host "-S"
 		append_only "$cfg" statsd_port "--statsd_port"
 		append_only "$cfg" statsd_namespace "--statsd_namespace"
