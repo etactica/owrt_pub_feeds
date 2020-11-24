@@ -3,7 +3,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=output-statsd
-PKG_VERSION:=1.0
+PKG_VERSION:=1.0-$(shell git describe --long --dirty)
 PKG_RELEASE:=1
 
 include $(INCLUDE_DIR)/package.mk
