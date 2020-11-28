@@ -95,7 +95,7 @@ function M:add_live_data(data)
         local cum_vars = {}
         for _,p in pairs(branch.points) do
             -- handle anything we know we can just handle outright per phase one by one.
-            local perphase = {"current", "volt", "pf"}
+            local perphase = {"current", "volt", "pf", "power"}
             for _,type in pairs(perphase) do
                 local key = string.format("%s/%d", type, p.reading + 1)
                 if data.readings[key] then
@@ -117,7 +117,7 @@ function M:add_live_data(data)
                 data.readings[key] = nil
             end
         end
-        for _,k in pairs({"cumulative_wh", "cumulative_varh"}) do
+        for _,k in pairs({"cumulative_wh", "cumulative_varh", "power_sum"}) do
             if not cum_vars[k] then
                 -- try and see if we have it directly, as we would from a meter type device
                 cum_vars[k] = data.readings[k]
