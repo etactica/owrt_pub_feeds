@@ -153,7 +153,9 @@ function M:handle_live_data(topic, payload)
     if payload.hwc and payload.hwc.error then
         ugly.debug("ignoring error report: %s", topic)
         self.statsd:increment("read-error")
-        self.statsd:increment("read-error." .. payload.hwc.deviceid)
+        local did = "unknown"
+        if payload.hwc.deviceid then did = payload.hwc.deviceid end
+        self.statsd:increment("read-error." .. did)
         return
     end
     if not payload.readings then
