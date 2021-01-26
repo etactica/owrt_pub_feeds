@@ -17,6 +17,8 @@ add_data_types() {
 	local interval="$3"
 	local username="$4"
 	uci -q add_list mosquitto.$newcfg.topic="/interval/$interval/+/$dtype/# out 1 status/local/json $username/status"
+	# handle the split variables for energy on a bar
+	[ "$dtype" = "cumulative_wh" ] && add_data_types wh_in $newcfg $interval $username
 }
 
 add_output() {
@@ -47,9 +49,8 @@ EOF
 	[ -n "$interval" ] && {
 		config_load output-senseone # "context" was still mosquitto at this point
 		config_get dtypes $cfg store_types
-		if [ -z $dtypes ]; then
+		if [ -z "$dtypes" ]; then
 			add_data_types cumulative_wh "$newcfg" $interval $username
-			add_data_types wh_in "$newcfg" $interval $username
 		else
 			config_list_foreach "$cfg" store_types add_data_types "$newcfg" $interval $username
 		fi
