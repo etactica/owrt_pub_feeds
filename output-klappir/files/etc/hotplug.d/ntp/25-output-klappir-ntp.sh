@@ -1,5 +1,4 @@
 #!/bin/sh
-. /lib/functions/procd.sh
 
 [ "$ACTION" = stratum ] || exit 0
 
