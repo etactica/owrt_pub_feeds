@@ -71,6 +71,21 @@ function ChargerBase:set_available_power(power)
     error("must be implemented by derived classes")
 end
 
+--- Return the new allowed power we should assign to this charger.
+-- @tparam number power_avail_chargers power total to be allocated to chargers now
+-- @tparam number power_used_chargers power total currently consumed by all chargers
+-- @treturn number what new value to assign to _this_ charger.
+function ChargerBase:calculate_allowed_power(power_avail_chargers, power_used_chargers)
+    local delta = power_avail_chargers - power_used_chargers
+    if delta >= 0 then
+        -- undersubscribed, keep what _we're_ using, plus the difference up to the cap.
+        return delta + self.power
+    else
+        -- oversubscribed, need to shed from all equally.
+        return self.power + delta * (self.power / power_used_chargers)
+    end
+end
+
 --- Return the power used by this charger, if valid, else 0.
 -- @tparam number ts the timestamp in milliseconds now
 -- @treturn number 0 if reading is too old
@@ -411,8 +426,9 @@ local function do_main()
             -- Publish all of it as gauges of inner health.
             for k,v in pairs(state.work_item) do statsd:gauge(k, v) end
             for _,charger in pairs(state.chargers) do
-                ugly.debug("Writing avail: %f to charger: %s", state.work_item.power_avail_chargers, tostring(charger))
-                local ok, err = charger:set_available_power(state.work_item.power_avail_chargers)
+                local new_power = charger:calculate_allowed_power(state.work_item.power_avail_chargers, state.work_item.power_used_chargers)
+                ugly.debug("Writing avail: %f to charger: %s", new_power, tostring(charger))
+                local ok, err = charger:set_available_power(new_power)
                 if not ok then
                     -- that's all we need though, we'll just retry next time, it's about all we _can_ do.
                     ugly.warning("Failed to set available power (%f W) on charger: %s: %s",
