@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openocd-next
-PKG_SOURCE_VERSION:=762ddcb749
-PKG_VERSION:=v2020-09-$(PKG_SOURCE_VERSION)
+PKG_SOURCE_VERSION:=c3993d318
+PKG_VERSION:=v2021-09-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
@@ -20,7 +20,7 @@ PKG_SOURCE_URL:=git://git.code.sf.net/p/openocd/code
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
-PKG_MAINTAINER:=Paul Fertser <fercerpav@gmail.com>
+PKG_MAINTAINER:=Karl Palsson <karlp@etactica.com>
 PKG_CPE_ID:=cpe:/a:openocd:open_on-chip_debugger
 
 PKG_BUILD_PARALLEL:=1
