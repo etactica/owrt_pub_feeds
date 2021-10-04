@@ -153,6 +153,8 @@ return L.view.extend({
 		o.value("pf", _("Power Factor (interval mean)"));
 		o.value("temp", _("Temperature (interval mean)"));
 		o.value("pulse_count", _("Pulse count"));
+		o.value("power_mean", _("Power (interval mean)"));
+		o.value("power_max", _("Power (interval maximum)"));
 
 		o = s.taboption("advanced", form.Value, "flush_interval_ms", _("How often to attempt message flushing and/or reconnect"),
 			_("This is the rate (in milliseconds) at which our message queue will be flushed to the service, and "

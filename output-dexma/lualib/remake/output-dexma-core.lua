@@ -51,6 +51,7 @@ local default_cfg = {
 		"current",
 		"volt",
 		"pf",
+		"power",
 	}
 }
 
@@ -77,6 +78,8 @@ local DEXMA_KEYS = {
 	{un="current_max", dt="current", f="max", di=425},
 	{un="current_mean", dt="current", f="mean", di=426},
 	{un="pulse_count", dt="pulse_count", f="max", di=502},
+	{un="power_mean", dt="power", f="mean", di=401},
+	{un="power_max", dt="power", f="max", di=418},
 	{un="temp", dt="temp", f="mean", di=701},
 	{un="pf", dt="pf", f="mean", di=412},
 }
