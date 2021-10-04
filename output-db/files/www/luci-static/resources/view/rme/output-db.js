@@ -70,6 +70,7 @@ return L.view.extend({
 		o.value("voltage", _("Voltage"));
 		o.value("current", _("Current"));
 		o.value("pf", _("Power Factor"));
+		o.value("power", _("Power"));
 		o.value("frequency", _("Frequency"));
 		o.value("temp", _("Temperature"));
 		o.value("flownet", _("Net Flow (m³)"))
