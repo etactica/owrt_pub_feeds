@@ -99,7 +99,7 @@ return L.view.extend({
                 var markError = function(tgt, descr, details) {
                     node_key.firstChild.classList.add("cbi-input-invalid");
                     node_token.firstChild.classList.add("cbi-input-invalid");
-                    var cross = E('img', { 'src': L.resource('cbi/reset.gif') });
+                    var cross = E('span', { 'class': "check-fail" }, "✘");
 					tgt.insertAdjacentElement("afterEnd", E("div", [E("h6", {class: "alert-message"}, descr), E("pre", details)]));
                     tgt.insertAdjacentElement("afterEnd", cross);
                 };
@@ -108,9 +108,9 @@ return L.view.extend({
                     if (rv.stdout.indexOf("OK") == 0) {
 			            node_key.firstChild.classList.remove("cbi-input-invalid");
 			            node_token.firstChild.classList.remove("cbi-input-invalid");
-	                    var tick = E('img', { 'src': L.resource('cbi/save.gif') });
+	                    var tick = E('span', { 'class': "check-ok" }, "✓");
 	                    node_key.insertAdjacentElement("beforeEnd", tick);
-	                    node_token.insertAdjacentElement("beforeEnd", tick.cloneNode());
+	                    node_token.insertAdjacentElement("beforeEnd", tick.cloneNode(true));
 	                    evtarget.insertAdjacentElement("afterEnd", E("h6", _("Validation successful")));
                     } else {
 	                    markError(evtarget, _("Credentials were rejected: "), rv.stdout);
