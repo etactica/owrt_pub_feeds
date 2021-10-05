@@ -34,22 +34,8 @@
     </table>
 </fieldset>
 
-<script type="text/javascript" src="/resources/knockout.js" charset="utf-8"></script>
-<script type="text/javascript" src="/resources/paho/mqttws31.js"></script>
-
-<script type="text/javascript" src="/js/io-charging-on-monitor.js?v=<%=pcdata(rme_rel)%>"></script>
-
-<script type="text/javascript">
-luci_urls = {
-    gif_error: "<%=resource%>/cbi/reset.gif",
-    gif_find: "<%=resource%>/cbi/find.gif",
-    gif_loading: "<%=resource%>/icons/loading.gif",
-    gif_save: "<%=resource%>/cbi/save.gif",
-    device_details: "<%=luci.dispatcher.build_url('home/device')%>",
-    cabinet_model: "<%=luci.dispatcher.build_url('home/wizard/cabinet_model')%>"
-};
-
-</script>
-
+<script src="/resources/knockout.js"></script>
+<script src="/resources/paho/mqttws31.js"></script>
+<script src="/js/io-charging-on-monitor.js?v=<%=pcdata(rme_rel)%>"></script>
 <%+footer%>
 
