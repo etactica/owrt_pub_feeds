@@ -15,20 +15,20 @@
 <div>
 	<div data-bind="visible: active">
 		<div>
-			<img src="<%=resource%>/cbi/save.gif" height="16" alt="<%:success icon%>"/>
+			<span class="check-ok">✓</span>
 			<%:Process appears to be running.%>
 		</div>
 		<h3><%:Data point summary%></h3>
 		<div data-bind="visible: dids().length == 0">
-			<img src="<%=media%>/emblem-important.png" height="16" alt="<%:failure icon%>"/>
+			<span class="check-warning">!</span>
 			<%:No data points are currently being monitored.  Unless the service has only just started, this is
 			unexpected.  Have you enabled some data points in the %><a href="<%=luci.dispatcher.build_url('admin/services/output-dexma')%>"><%:configuration%></a>
 		</div>
 		<div data-bind="visible: dids().length > 0">
-			<ul>
-				<li><img src="<%=resource%>/cbi/save.gif" height="16" alt="<%:success icon%>"/>
+			<ul style="list-style: none">
+				<li><span class="check-ok" style="width: 2ch;display:inline-block">✓</span>
 					<%: Data points with cabinet model names: %><span data-bind="text: totalWith().length"></span> </li>
-				<li><img src="<%=media%>/emblem-important.png" height="16" alt="<%:caution icon%>"/>
+				<li><span class="check-warning" style="width: 2ch;display:inline-block">!</span>
 					<%: Data points %><em><%:without%></em> <%:cabinet model names: %><span data-bind="text: totalWithout().length"></span>
 					<a data-bind="visible: totalWithout().length > 0" href="<%= luci.dispatcher.build_url('home/wizard/cabinet_model')%>"><%:Edit the Cabinet Model%></a></li>
 			</ul>
@@ -51,7 +51,7 @@
 				</tr>
 				<!-- ko foreach: posts -->
 				<tr data-bind="visible: ok">
-					<td><img src="<%=resource%>/cbi/save.gif" height="16" alt="<%:success icon%>"/></td>
+					<td><span class="check-ok">✓</span></td>
 					<td><span data-bind="text: new Date(at())"></span> </td>
 					<td><span data-bind="text: new Date(ts())"></span> </td>
 					<td><span data-bind="text: n"></span> </td>
@@ -59,9 +59,7 @@
 					<td></td>
 				</tr>
 				<tr data-bind="visible: !ok()">
-					<td>
-						<img src="<%=resource%>/cbi/reset.gif" height="16" alt="<%:fail icon%>"/>
-					</td>
+					<td><span class="check-fail">✘</span></td>
 					<td><span data-bind="text: new Date(at())"></span> </td>
 					<td><span data-bind="text: new Date(ts())"></span> </td>
 					<td><span data-bind="text: n"></span> </td>
@@ -74,7 +72,7 @@
 			</table>
 		</div>
 		<div data-bind="visible: posts().length == 0">
-			<h3><img src="<%=media%>/emblem-important.png" height="16" alt="<%:failure icon%>"/>
+			<h3><span class="check-warning">!</span>
 				<%:No information on recent posts%></h3>
 			<p><%:Perhaps the process has just started, or the first interval has not yet completed?:%>
 		</div>
