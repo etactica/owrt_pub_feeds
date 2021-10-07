@@ -3,6 +3,7 @@
 --]]
 module("luci.controller.rme.output-db", package.seeall)
 local pl = require("pl.import_into")()
+local uci = require("uci")
 
 function index()
     entry({"admin", "services", "output-db"}, view("rme/output-db"), _("Output-Database"), 20)
