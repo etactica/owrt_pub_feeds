@@ -13,7 +13,7 @@ define Package/$(PKG_NAME)
     CATEGORY:=Remake
     TITLE:=$(PKG_NAME) - message output daemon
     URL:=http://github.com/etactica/owrt_pub_feeds/output-openenergi
-    DEPENDS:=+ca-certificates
+    DEPENDS:=+ca-certificates +luci-compat
 endef
 
 define Package/$(PKG_NAME)/description

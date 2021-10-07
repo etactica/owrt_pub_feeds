@@ -14,7 +14,7 @@ define Package/$(PKG_NAME)
     TITLE:=$(PKG_NAME) - message output daemon
     URL:=http://github.com/etactica/owrt_pub_feeds/output-klappir
 	PKGARCH:=all
-    DEPENDS:=+ca-certificates
+    DEPENDS:=+ca-certificates +luci-compat
 endef
 
 define Package/$(PKG_NAME)/description
