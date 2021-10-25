@@ -23,8 +23,8 @@ return L.view.extend({
 		s.tab("general", _("General Settings"));
 		s.tab("advanced", _("Advanced Settings"));
 		s.tab("queries", _("SQL Queries"), _("The ability to tailor the sql queries used can make it easier to connect to an existing database."));
-		s.tab("schema", _("Database Schema"), _("The database schema itself"))
-		s.tab("statsd", _("StatsD"), _("Metrics on operation can be sent to a listening StatsD server, such as graphite"))
+		s.tab("schema", _("Database Schema"), _("The database schema itself"));
+		s.tab("statsd", _("StatsD"), _("Metrics on operation can be sent to a listening StatsD server, such as graphite"));
 
         o = s.taboption("general", form.Flag, "enabled", _("Enable this instance"), _("The service will not start until this is checked"));
         o.rmempty = false;
@@ -34,23 +34,23 @@ return L.view.extend({
 		driver.value('postgres', _('Postgres'));
 		driver.value('mysql', _('MySQL/MariaDB'));
 
-		o = s.taboption("general", TrimmedValue, "dbname", _("Database name"), _("The name of the database you wish to connect to. <br>For postgres, this can also be a full connection string."))
-		o.placeholder = "datasink"
+		o = s.taboption("general", TrimmedValue, "dbname", _("Database name"), _("The name of the database you wish to connect to. <br>For postgres, this can also be a full connection string."));
+		o.placeholder = "datasink";
 
-		o = s.taboption("general", TrimmedValue, "dbuser", _("Database username"), _("The username to use when connecting to the database"))
-		o.placeholder = "some-user-name"
+		o = s.taboption("general", TrimmedValue, "dbuser", _("Database username"), _("The username to use when connecting to the database"));
+		o.placeholder = "some-user-name";
 
-		o = s.taboption("general", TrimmedValue, "dbpass", _("Database password"), _("The password for your database user"))
-		o.placeholder = "some-db-password"
+		o = s.taboption("general", TrimmedValue, "dbpass", _("Database password"), _("The password for your database user"));
+		o.placeholder = "some-db-password";
 		o.password = true;
 
-		o = s.taboption("general", form.Value, "dbhost", _("Database hostname"), _("Hostname of your database server"))
-		o.placeholder = "my-db-instance.some-zone.rds.amazonws.com"
-		o.datatype = "host"
+		o = s.taboption("general", form.Value, "dbhost", _("Database hostname"), _("Hostname of your database server"));
+		o.placeholder = "my-db-instance.some-zone.rds.amazonws.com";
+		o.datatype = "host";
 
-		o = s.taboption("general", form.Value, "dbport", _("Database port"), _("Port your database server runs on. You can normally leave this blank"))
-		o.placeholder = _("default")
-		o.datatype = "port"
+		o = s.taboption("general", form.Value, "dbport", _("Database port"), _("Port your database server runs on. You can normally leave this blank"));
+		o.placeholder = _("default");
+		o.datatype = "port";
 
 		o = s.taboption("advanced", form.ListValue, "interval", _("Interval to monitor and forward"), _("Default is 15 minute, but you can select finer/coarser grained"));
 		o.optional = true;
@@ -73,9 +73,9 @@ return L.view.extend({
 		o.value("power", _("Power"));
 		o.value("frequency", _("Frequency"));
 		o.value("temp", _("Temperature"));
-		o.value("flownet", _("Net Flow (m³)"))
-		o.value("flowrate", _("Flow rate (m³/h)"))
-		o.value("pulsecount", _("Pulse count"))
+		o.value("flownet", _("Net Flow (m³)"));
+		o.value("flowrate", _("Flow rate (m³/h)"));
+		o.value("pulsecount", _("Pulse count"));
 
 		o = s.taboption("advanced", form.Flag, "schema_create", _("Create Schema"),
 			_("Whether we should attempt to create tables and schemas when we start. Do not use this if you have an existing database."));
@@ -222,19 +222,19 @@ return L.view.extend({
 			}
 		};
 
-		o = s.taboption("statsd", TrimmedValue, "statsd_namespace", _("Namespace for StatsD reporting"))
-		o.placeholder = "apps.output-db.<instanceid>"
-		o.optional = true
+		o = s.taboption("statsd", TrimmedValue, "statsd_namespace", _("Namespace for StatsD reporting"));
+		o.placeholder = "apps.output-db.<instanceid>";
+		o.optional = true;
 
-		o = s.taboption("statsd", form.Value, "statsd_host", _("Hostname to send stats"))
-		o.placeholder = "localhost"
-		o.datatype = "host"
-		o.optional = true
+		o = s.taboption("statsd", form.Value, "statsd_host", _("Hostname to send stats"));
+		o.placeholder = "localhost";
+		o.datatype = "host";
+		o.optional = true;
 
-		o = s.taboption("statsd", form.Value, "statsd_port", _("UDP port to send stats"))
-		o.placeholder = 8125
-		o.datatype = "port"
-		o.optional = true
+		o = s.taboption("statsd", form.Value, "statsd_port", _("UDP port to send stats"));
+		o.placeholder = 8125;
+		o.datatype = "port";
+		o.optional = true;
 
 		return m.render();
 	}
