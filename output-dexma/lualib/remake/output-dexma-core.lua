@@ -451,7 +451,7 @@ local function httppost(url, data, userheaders, opts)
 	end
 	https.TIMEOUT = 10 -- Default is 60, which is _way_ too long for our little single threaded brain.
 	local blen = #reqbody
-	ugly.debug("posting %d bytes body: %s", blen, reqbody)
+	ugly.debug("posting %d bytes to url: %s, body: %s", blen, url, reqbody)
 	headers["content-length"] = blen
 	local http_req = {
 		method = opts.method,
@@ -579,7 +579,11 @@ local function flush_qd()
 			httpok, c, h, body = true, 200, nil, "fake post was ok :)"
 			ugly.info("NotPosting to dexma: %s", pl.pretty.write(data.values))
 		else
-			httpok, c, h, body = httppost(url, data.values, headers, {verify={}})
+			if (cfg.uci.no_verify) then
+				httpok, c, h, body = httppost(url, data.values, headers, {verify={}})
+			else
+				httpok, c, h, body = httppost(url, data.values, headers)
+			end
 		end
 		if httpok then
 			statsd:increment(string.format("http-post.code-%d", c))

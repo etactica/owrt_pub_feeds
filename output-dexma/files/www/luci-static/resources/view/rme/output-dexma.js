@@ -173,10 +173,17 @@ return L.view.extend({
 		o.datatype = "uinteger";
 		o.placeholder = 500;
 
+		o = s.taboption("advanced", form.Flag, "_show_developer", _("Show developer debugging"),
+			_("Shows some developer debug options that should never be needed in normal use"));
+		o.write = function() {};
 		o = s.taboption("advanced", form.Value, "url_template", _("Override the Dexma Insertion API endpoint"),
 			_("This should only be used for development and debugging!"));
 		o.placeholder = "https://is3.dexcell.com/readings?source_key=%s";
 		o.optional = true;
+		o.depends("_show_developer", "1");
+		o = s.taboption("advanced", form.Flag, "no_verify", _("Turn off TLS peer verification"),
+			_("This should only be used when testing with self signed certificates!"));
+		o.depends("_show_developer", "1");
 
 		o = s.taboption("statsd", TrimmedValue, "statsd_namespace", _("Namespace for StatsD reporting"))
 		o.placeholder = "apps.output-dexma"
