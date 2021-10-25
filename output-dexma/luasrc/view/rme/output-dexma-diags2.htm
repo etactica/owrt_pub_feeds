@@ -25,13 +25,30 @@
 			unexpected.  Have you enabled some data points in the %><a href="<%=luci.dispatcher.build_url('admin/services/output-dexma')%>"><%:configuration%></a>
 		</div>
 		<div data-bind="visible: dids().length > 0">
-			<ul style="list-style: none">
-				<li><span class="check-ok" style="width: 2ch;display:inline-block">✓</span>
-					<%: Data points with cabinet model names: %><span data-bind="text: totalWith().length"></span> </li>
-				<li><span class="check-warning" style="width: 2ch;display:inline-block">!</span>
-					<%: Data points %><em><%:without%></em> <%:cabinet model names: %><span data-bind="text: totalWithout().length"></span>
-					<a data-bind="visible: totalWithout().length > 0" href="<%= luci.dispatcher.build_url('home/wizard/cabinet_model')%>"><%:Edit the Cabinet Model%></a></li>
-			</ul>
+				<p><span class="check-ok" style="width: 2ch;display:inline-block">✓</span>
+					<a href="#" data-bind="visible: !totalWithShow(), click: totalWithShow.bind($root, true)">
+						▶<%: Data points with cabinet model names: %><span data-bind="text: totalWith().length"></span></a>
+					<a href="#" data-bind="visible: totalWithShow(), click: totalWithShow.bind($root, false)">
+						▼<%: Data points with cabinet model names: %><span data-bind="text: totalWith().length"></span></a>
+					<div data-bind="visible: totalWithShow">
+						<ul data-bind="foreach: totalWith">
+							<li><span data-bind="text: label"></span></li>
+						</ul>
+					</div>
+				</p>
+				<p><span class="check-warning" style="width: 2ch;display:inline-block">!</span>
+					<a href="#" data-bind="visible: !totalWithoutShow(), click: totalWithoutShow.bind($root, true)">
+						▶<%: Data points %><em><%:without%></em> <%:cabinet model names: %><span data-bind="text: totalWithout().length"></span></a>
+					<a href="#" data-bind="visible: totalWithoutShow(), click: totalWithoutShow.bind($root, false)">
+						▼<%: Data points %><em><%:without%></em> <%:cabinet model names: %><span data-bind="text: totalWithout().length"></span></a>
+					<div data-bind="visible: totalWithoutShow">
+						<ul data-bind="foreach: totalWithout">
+							<li><span data-bind="text: label"></span></li>
+						</ul>
+					</div>
+			<p><%: Devices without a cabinet model name may not be a problem, if they are simply be device level attributes such as temperature.
+				However, they may indicate that the cabinet model is incomplete, and you are missing important data point names. %>
+					<a data-bind="visible: totalWithout().length > 0" href="<%= luci.dispatcher.build_url('home/wizard/cabinet_model')%>"><%:Edit the Cabinet Model%></a></p>
 		</div>
 
 		<div data-bind="visible: qd() > 0">

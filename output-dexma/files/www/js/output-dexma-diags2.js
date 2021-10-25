@@ -34,6 +34,8 @@ function PageModel(pagename) {
             return !did.hasModel();
         });
     });
+    self.totalWithShow = ko.observable(false);
+    self.totalWithoutShow = ko.observable(false);
 
     // Wraps the errNotConnected to also clear our state if we reconnect so we don't
     // cache old data if the broker restarted
