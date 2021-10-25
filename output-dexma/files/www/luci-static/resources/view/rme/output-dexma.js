@@ -173,6 +173,11 @@ return L.view.extend({
 		o.datatype = "uinteger";
 		o.placeholder = 500;
 
+		o = s.taboption("advanced", form.Value, "url_template", _("Override the Dexma Insertion API endpoint"),
+			_("This should only be used for development and debugging!"));
+		o.placeholder = "https://is3.dexcell.com/readings?source_key=%s";
+		o.optional = true;
+
 		o = s.taboption("statsd", TrimmedValue, "statsd_namespace", _("Namespace for StatsD reporting"))
 		o.placeholder = "apps.output-dexma"
 		o.optional = true
