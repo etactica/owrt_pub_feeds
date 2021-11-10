@@ -15,7 +15,7 @@ local args = pl.lapp [[
     triggers will be replaced!
 
     -f,--file (default "/tmp/remake.d/et-remote.status.json") File to watch
-    -l,--led (default "eg200:red:etactica") LED name in sysfs
+    -l,--led (default "red:etactica") LED name in sysfs
     -v,--verbose (0..7 default 5) Logging level, higher == more
 ]]
 
