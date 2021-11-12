@@ -1,0 +1,39 @@
+{
+  "admin/services/output-hass": {
+    "title": "Output-HomeAssistant",
+    "order": 20,
+    "action": {
+      "type": "firstchild"
+    },
+    "depends": {
+      "acl": [ "output-hass" ],
+      "uci": { "output-hass": true }
+    }
+  },
+
+  "admin/services/output-hass/settings": {
+    "title": "Settings",
+    "order": 20,
+    "action": {
+      "type": "view",
+      "path": "output-hass"
+    }
+  },
+
+  "admin/services/output-hass/diags": {
+    "title": "Logs",
+    "action": {
+      "type": "view",
+      "path": "output-hass-diags"
+    }
+  },
+
+  "admin/services/output-hass/logs": {
+    "title": "Logs",
+    "order": 30,
+    "action": {
+      "type": "view",
+      "path": "output-hass-logs"
+    }
+  }
+}

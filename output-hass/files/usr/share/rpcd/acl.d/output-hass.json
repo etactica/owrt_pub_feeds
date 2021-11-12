@@ -1,0 +1,11 @@
+{
+	"output-hass": {
+		"description": "Grant UCI access for app",
+		"read": {
+			"uci": [ "output-hass" ]
+		},
+		"write": {
+			"uci": [ "output-hass" ]
+		}
+	}
+}

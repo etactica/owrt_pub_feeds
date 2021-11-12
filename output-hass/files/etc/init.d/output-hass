@@ -1,0 +1,49 @@
+#!/bin/sh /etc/rc.common
+START=85
+USE_PROCD=1
+APP=output-hass
+
+# Usage: append_only cfg uci_name option_name
+# appends "option_name uci-variable" to the commandline, only if it existed.
+# (Allows application defaults without having to provide them here)
+append_only() {
+	local cfg="$1"
+	local var="$2"
+	local opt="$3"
+	config_get val $cfg $var
+	[ -n "$val" ] && procd_append_param command "$opt" "${val}"
+}
+
+add_instance() {
+	local cfg="$1"
+	local enabled
+	local ignore_model
+	config_get_bool enabled "$cfg" enabled 0
+	config_get_bool ignore_model "$cfg" ignore_model 0
+	if [ $enabled -eq 0 ]; then
+	  # FIXME - rm monit stub for this instance and reload monit?
+		#monit unmonitor "$APP.$1"
+		printf "%s.%s is disabled, not starting\n" "$APP" "$1"
+	else
+		procd_open_instance
+		procd_set_param command output-hass.lua -i $1
+		procd_set_param file /etc/config/$APP
+		procd_set_param pidfile /var/run/$APP.$1.pid
+		[ $ignore_model -eq 1 ] && procd_append_param command --ignore_model
+		# and now also set up the mq bridge!!!
+		#append_only "$cfg" hass_mqhost "-H"
+		#append_only "$cfg" hass_mqport "--hass_port"
+		#append_only "$cfg" hass_namespace "--hass_namespace"
+		procd_close_instance
+		# FIXME  generate a new monit stub for this instance and reload monit instead
+		#monit monitor "$APP"
+	fi
+}
+
+start_service() {
+	config_load $APP && config_foreach add_instance instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger $APP
+}
