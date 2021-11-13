@@ -31,7 +31,7 @@ return L.view.extend({
 		s.addremove = true;
 
 		s.tab("general", _("General Settings"));
-		s.tab("mqtt", _("MQTT Settings"));
+		s.tab("mqtt", _("MQTT Settings"), _("This is the connection details for the Home Assistant MQTT broker."));
 		s.tab("statsd", _("StatsD"), _("Metrics on operation can be sent to a listening StatsD server, such as graphite"))
 
         o = s.taboption("general", form.Flag, "enabled", _("Enable this instance"), _("The service will not start until this is checked"));
@@ -77,7 +77,7 @@ return L.view.extend({
 		o = s.taboption("mqtt", TrimmedValue, "mq_user", _("MQTT username"), _("The username to use when connecting to the remote MQTT broker, may be blank"));
 		o.placeholder = "some-user-name";
 
-		o = s.taboption("mqtt", TrimmedValue, "mq_pass", _("Database password"), _("The password to use when connecting to the remote MQTT broker, may be blank"));
+		o = s.taboption("mqtt", TrimmedValue, "mq_pass", _("MQTT password"), _("The password to use when connecting to the remote MQTT broker, may be blank"));
 		o.placeholder = "some-password";
 		o.password = true;
 

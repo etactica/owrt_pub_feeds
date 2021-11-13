@@ -16,15 +16,7 @@
     "order": 20,
     "action": {
       "type": "view",
-      "path": "output-hass"
-    }
-  },
-
-  "admin/services/output-hass/diags": {
-    "title": "Logs",
-    "action": {
-      "type": "view",
-      "path": "output-hass-diags"
+      "path": "rme/output-hass"
     }
   },
 
@@ -33,7 +25,7 @@
     "order": 30,
     "action": {
       "type": "view",
-      "path": "output-hass-logs"
+      "path": "rme/output-hass-logs"
     }
   }
 }

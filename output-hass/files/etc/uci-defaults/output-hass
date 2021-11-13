@@ -1,21 +1,4 @@
 #!/bin/sh
 # Karl Palsson, <karlp@tweak.net.au> Nov 2021
-
-CFG=output-hass
-
-[ -f /etc/config/$CFG ] && exit 0
-
-# Create an example file if it doesn't exist already.
-touch /etc/config/$CFG
-uci -q batch <<-EOF >/dev/null
-		delete $CFG.@instance[0]
-		add $CFG instance
-		set $CFG.@instance[0]=instance
-		set $CFG.@instance[0].enabled=0
-		commit $CFG
-EOF
-
-# Helps us work if we're installed later
-rm -f /tmp/luci-indexcache
-
+touch /etc/config/output-hass
 exit 0
