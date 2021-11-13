@@ -1,0 +1,5 @@
+check process output-hass.INSTANCE with pidfile /var/run/output-hass.INSTANCE.pid
+	start program = "/etc/init.d/output-hass start"
+	stop program = "/etc/init.d/output-hass stop"
+        if totalmemory is greater than 40% for 3 cycles then restart
+	group output-hass

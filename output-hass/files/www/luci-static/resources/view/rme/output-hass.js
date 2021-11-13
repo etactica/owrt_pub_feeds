@@ -64,25 +64,27 @@ return L.view.extend({
 		o.value("power_max", _("Power (interval maximum)"));
 
 
-		o = s.taboption("mqtt", TrimmedValue, "mq_host", _("MQTT Host"), _("Host of the HomeAssistant MQTT broker"));
+		o = s.taboption("mqtt", TrimmedValue, "mqtt_host", _("MQTT Host"), _("Host of the HomeAssistant MQTT broker"));
 		o.datatype = "host";
 
-		o = s.taboption("mqtt", TrimmedValue, "mq_port", _("MQTT Port"));
+		o = s.taboption("mqtt", TrimmedValue, "mqtt_port", _("MQTT Port"));
 		o.placeholder = "1883";
 		o.datatype = "port";
 
-		o = s.taboption("mqtt", TrimmedValue, "discovery_prefix", _("Discovery Prefix"), _("What is the prefix used for MQTT discovery on your broker.  (You probably don't have to change this)"))
+		o = s.taboption("mqtt", TrimmedValue, "mqtt_discovery_prefix", _("Discovery Prefix"), _("What is the prefix used for MQTT discovery on your broker.  (You probably don't have to change this)"))
 		o.placeholder = "homeassistant";
+		o = s.taboption("mqtt", TrimmedValue, "mqtt_data_prefix", _("Data Prefix"), _("What topic tree to bridge our data to.  This affects the <em>data</em> only, and is only interesting if you have multiple overlapping data sources"))
+		o.placeholder = "etactica/data";
 
-		o = s.taboption("mqtt", TrimmedValue, "mq_user", _("MQTT username"), _("The username to use when connecting to the remote MQTT broker, may be blank"));
+		o = s.taboption("mqtt", TrimmedValue, "mqtt_user", _("MQTT username"), _("The username to use when connecting to the remote MQTT broker, may be blank"));
 		o.placeholder = "some-user-name";
 
-		o = s.taboption("mqtt", TrimmedValue, "mq_pass", _("MQTT password"), _("The password to use when connecting to the remote MQTT broker, may be blank"));
+		o = s.taboption("mqtt", TrimmedValue, "mqtt_pass", _("MQTT password"), _("The password to use when connecting to the remote MQTT broker, may be blank"));
 		o.placeholder = "some-password";
 		o.password = true;
 
-		o = s.taboption("mqtt", form.Flag, "mq_use_tls", _("Use TLS"), _("Use SSL/TLS for the broker connection"));
-		o = s.taboption("mqtt", TrimmedValue, "mq_cafile", _("CA file"), _("If TLS is enabled, use this to verify the broker cert if provided.  Otherwise, use system CA bundle"));
+		o = s.taboption("mqtt", form.Flag, "mqtt_use_tls", _("Use TLS"), _("Use SSL/TLS for the broker connection"));
+		o = s.taboption("mqtt", TrimmedValue, "mqtt_cafile", _("CA file"), _("If TLS is enabled, use this to verify the broker cert if provided.  Otherwise, use system CA bundle"));
 
 		// TODO - have we covered enough mqtt bridge connection options here?  do we need tls-psk options as well?
 		// Things that people may nerd out and want to use:

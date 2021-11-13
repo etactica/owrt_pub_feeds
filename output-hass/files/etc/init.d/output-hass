@@ -3,15 +3,63 @@ START=85
 USE_PROCD=1
 APP=output-hass
 
-# Usage: append_only cfg uci_name option_name
-# appends "option_name uci-variable" to the commandline, only if it existed.
-# (Allows application defaults without having to provide them here)
-append_only() {
+remove_output() {
 	local cfg="$1"
-	local var="$2"
-	local opt="$3"
-	config_get val $cfg $var
-	[ -n "$val" ] && procd_append_param command "$opt" "${val}"
+	local instance="$2"
+	local connection
+	config_get connection "$cfg" connection
+	[ "$connection" = "output-hass.${instance}" ] && uci -q delete mosquitto.$cfg
+}
+
+# FIXME - we need to know things like power_mean or power_max so we know what tosend in the discovery metadata
+# but the topic to be _bridged_ is simply "power" regardless.  (we just pull different fields out...)
+# but we can't split on _ as that breaks cumulative_wh and so on....
+# do we really need to map lists again?!
+add_data_types() {
+	local dtype="$1"
+	local newcfg="$2"
+	local interval="$3"
+	local remote_prefix="$4"
+	[ "$dtype" = "power_mean" ] && dtype=power
+	[ "$dtype" = "power_max" ] && dtype=power
+	[ "$dtype" = "current_mean" ] && dtype=current
+	[ "$dtype" = "current_max" ] && dtype=current
+	uci -q add_list mosquitto.$newcfg.topic="/interval/$interval/+/$dtype/# out 1 status/local/json $remote_prefix/status"
+	# handle the split variables for energy on a bar
+	[ "$dtype" = "cumulative_wh" ] && add_data_types wh_in $newcfg $interval $remote_prefix
+}
+
+add_output() {
+	local cfg="$1"
+	local newcfg mqtt_host mqtt_port mqtt_user mqtt_pass mqtt_use_tls mqtt_cafile mqtt_data_prefix
+	# XXX notification topics for availability?
+	newcfg=$(uci add mosquitto bridge)
+	config_get mqtt_host $cfg mqtt_host
+	config_get mqtt_port $cfg mqtt_port 1883
+	config_get mqtt_data_prefix $cfg mqtt_data_prefix "etactica"
+	uci -q set mosquitto.$newcfg.connection="output-hass.${cfg}"
+	uci -q set mosquitto.$newcfg.address="$mqtt_host:$mqtt_port"
+	uci -q set mosquitto.$newcfg.cleansession=1
+
+  config_get dtypes $cfg store_types
+  config_get interval $cfg interval
+  if [ -z "$dtypes" ]; then
+    add_data_types cumulative_wh "$newcfg" $interval $mqtt_data_prefix
+  else
+    config_list_foreach "$cfg" store_types add_data_types "$newcfg" $interval $mqtt_data_prefix
+  fi
+  config_get mqtt_user $cfg mqtt_user
+  config_get mqtt_pass $cfg mqtt_pass
+  config_get_bool mqtt_use_tls $cfg mqtt_use_tls 0
+  config_get mqtt_cafile $cfg mqtt_cafile
+  [ -n "$mqtt_user" ] && uci -q set mosquitto.$newcfg.remote_username="$mqtt_user"
+  [ -n "$mqtt_pass" ] && uci -q set mosquitto.$newcfg.remote_password="$mqtt_pass"
+  [ $mqtt_use_tls -eq 0 ] || {
+    [ -n "$mqtt_cafile" ] && uci -q set mosquitto.$newcfg.cafile="$mqtt_cafile"
+    [ -z "$mqtt_cafile" ] && uci -q set mosquitto.$newcfg.capath=/etc/ssl/certs
+  }
+
+	uci -q commit
 }
 
 add_instance() {
@@ -20,28 +68,33 @@ add_instance() {
 	local ignore_model
 	config_get_bool enabled "$cfg" enabled 0
 	config_get_bool ignore_model "$cfg" ignore_model 0
+	# We always remove it, and re-add it if needed.
+ 	config_load mosquitto && config_foreach remove_output bridge "$1"
+ 	# restore our own app config context
+ 	config_load $APP
+
 	if [ $enabled -eq 0 ]; then
-	  # FIXME - rm monit stub for this instance and reload monit?
-		#monit unmonitor "$APP.$1"
-		printf "%s.%s is disabled, not starting\n" "$APP" "$1"
+		printf "%s:%s is disabled, not starting\n" "$APP" "$cfg"
+		monit unmonitor "$APP.$cfg"
 	else
+	  add_output "$cfg"
 		procd_open_instance
-		procd_set_param command output-hass.lua -i $1
+		procd_set_param command output-hass.lua -i $cfg
 		procd_set_param file /etc/config/$APP
-		procd_set_param pidfile /var/run/$APP.$1.pid
+		procd_set_param pidfile /var/run/$APP.$cfg.pid
 		[ $ignore_model -eq 1 ] && procd_append_param command --ignore_model
-		# and now also set up the mq bridge!!!
-		#append_only "$cfg" hass_mqhost "-H"
-		#append_only "$cfg" hass_mqport "--hass_port"
-		#append_only "$cfg" hass_namespace "--hass_namespace"
 		procd_close_instance
-		# FIXME  generate a new monit stub for this instance and reload monit instead
-		#monit monitor "$APP"
+		[ -f /etc/monit.d/$APP.$cfg.process.check ] || {
+			sed s/INSTANCE/$cfg/g /usr/share/$APP/monit.process.check.template > /etc/monit.d/$APP.$cfg.process.check
+			monit reload
+		}
+		monit monitor "$APP.$cfg"
 	fi
 }
 
 start_service() {
 	config_load $APP && config_foreach add_instance instance
+	reload_config
 }
 
 service_triggers() {
