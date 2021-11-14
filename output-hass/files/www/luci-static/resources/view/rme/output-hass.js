@@ -44,26 +44,22 @@ return L.view.extend({
 		o.value("5min", "5 Minute");
 		o.value("15min", "15 Minute");
 		o.value("60min", "60 Minute");
-		o.placeholder = "Default (15 Minute)";
+		o.placeholder = "Default (1 Minute)";
 
         // FIXME - we're still hating this, we really need better selection of aggregates and totals and so on...
 		o = s.taboption("general", form.MultiValue, "store_types", _("Data types to store"), _("Home Assistant doesn't charge for unused points, but it can make a mess and take up more storage, so better to only pick what you want"));
 		o.multiple = true;
 		o.optional = true;
 		o.placeholder = _("Default (Active Energy)");
-		o.value("_all", _("All types seen"))
-		o.value("cumulative_wh", _("Active Energy"));
-		o.value("cumulative_varh", _("Reactive Energy"));
+//		o.value("_all", _("All types seen"))
+		o.value("energy", _("Active Energy"));
+//		o.value("reactive_energy", _("Reactive Energy"));
 		o.value("voltage", _("Voltage (interval mean)"));
 		o.value("current", _("Current (interval mean)"));
-//		o.value("current_mean", _("Current (interval mean)"));
-//		o.value("current_max", _("Current (interval maximum)"));
 		o.value("pf", _("Power Factor (interval mean)"));
-		o.value("temp", _("Temperature (interval mean)"));
-		o.value("pulse_count", _("Pulse count"));
+		o.value("temperature", _("Temperature (interval mean)"));
+//		o.value("pulse_count", _("Pulse count"));
 		o.value("power", _("Power (interval mean)"));
-//		o.value("power_mean", _("Power (interval mean)"));
-//		o.value("power_max", _("Power (interval maximum)"));
 
 
 		o = s.taboption("mqtt", TrimmedValue, "mqtt_host", _("MQTT Host"), _("Host of the HomeAssistant MQTT broker"));

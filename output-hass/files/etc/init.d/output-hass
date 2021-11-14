@@ -18,8 +18,11 @@ add_data_types() {
 	local interval="$3"
 	local remote_prefix="$4"
 	[ "$dtype" = "voltage" ] && dtype=volt
+	[ "$dtype" = "temperature" ] && dtype=temp
+	[ "$dtype" = "energy" ] && dtype=cumulative_wh
 	uci -q add_list mosquitto.$newcfg.topic="/interval/$interval/+/$dtype/# out 1 status/local/json $remote_prefix/status"
 	# handle the split variables for energy on a bar
+	# fail... [ "$dtype" = "cumulative_wh" ] && uci -q add_list mosquitto.$newcfg.topic="/# out 1 status/local/json/interval/$interval/+/$dtype $remote_prefix/status/interval/$interval/+/wh_in"
 	[ "$dtype" = "cumulative_wh" ] && add_data_types wh_in $newcfg $interval $remote_prefix
 }
 
@@ -37,7 +40,7 @@ add_output() {
 	uci -q set mosquitto.$newcfg.cleansession=1
 
   config_get dtypes $cfg store_types
-  config_get interval $cfg interval
+  config_get interval $cfg interval 1min
   if [ -z "$dtypes" ]; then
     add_data_types cumulative_wh "$newcfg" $interval $mqtt_data_prefix
   else

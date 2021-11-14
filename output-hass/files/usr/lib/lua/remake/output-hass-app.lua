@@ -16,6 +16,21 @@ local ugly = require("remake.uglylog")
 local M = {}
 M.__index = M
 
+-- key is by logical hass name, _NOT_ by et-topic names
+-- keys are:
+-- * u for unit, in hass terms.
+-- * perp for "per point", true if you need one of these per point
+-- * et for the etactica topic key.
+local data_types = {
+    power = {u="W", perp=true, et="power", state_class="measurement"},
+    current = {u="A", perp=true, et="current", state_class="measurement"},
+    voltage = {u="V", perp=true, et="volt", state_class="measurement"},
+    temperature = {u="°C", perp=false, et="temp", state_class="measurement"},
+    -- Energy sux.  we have wh_in, per point onbars, and cumulative_wh, total, on meters....
+    -- do we get silly and try looking for three phase breakers only? that's a bit of a risky hole...
+    energy = {u="Wh", perp=false, et="cumulative_wh", state_class="total_increasing"}, -- FIXME wh_in as well? the gift that gives...
+}
+
 -- Many of these will be overridden (again) by the cli default args
 local cfg_defaults = {
     APP_NAME = "output-hass",
@@ -107,20 +122,6 @@ function M:handle_on_connect(rc)
     end
 end
 
-local units = {
-    power = "W",
-    current = "A",
-    voltage = "V",
-    temp = "°C",
-}
-
--- FAK, we need this shit in the init scripts too!
-local dtype2et_topic = {
-    power = "power",
-    current = "current",
-    voltage = "volt",
-}
-
 local expiry = {
     ["1min"] = 60*1.5,
     ["5min"] = 60*5*1.5,
@@ -144,35 +145,53 @@ function M:handle_live_meta(topic, payload)
 
     -- we keep no state, we just reformat and republish cabinet data as config data.
     local interval = self.opts.uci.interval
-    for _, b in pairs(payload.branches) do
-        -- we have no idea whether a "branch" can produce what we want?!
-        -- for energy, kinda safe, but this is goign to be a shitty integration for things that plugins can do...
-        for _,dtype in pairs(self.opts.uci.store_types) do
-            if #b.points == 1 or #b.points == 3 then
+    for _, dt_key in pairs(self.opts.uci.store_types) do
+        local dt = data_types[dt_key]
+        if dt.perp then
+            -- we have no idea whether a "branch" can produce what we want?!
+            -- for energy, kinda safe, but this is goign to be a shitty integration for things that plugins can do...
+            for _, b in pairs(payload.branches) do
+                ugly.debug("Considering dtype: %s for dev:branch:%s:%s", dt_key, devid, b.label)
                 -- make three sensors, and, if dtype is an aggregate, make up something fancy?
                 for i,_ in ipairs(b.points) do
                     -- XXX, gateid or devid could create illegal hass uuids?
-                    local uid = string.format("%s_%s_%s_%d", self.opts.uci.gateid, devid, dtype, b.points[i].reading)
+                    local uid = string.format("%s_%s_%s_%d", self.opts.uci.gateid, devid, dt_key, b.points[i].reading + 1)
                     local blob = {
-                        device_class = dtype, -- careful, must make our types match hass docs!
-                        name = string.format("%s_%s_%s_ph%d", cabinet, b.label, dtype, b.points[i].phase),
+                        device_class = dt_key,
+                        name = string.format("%s_%s_%s_ph%d", cabinet, b.label, dt_key, b.points[i].phase),
                         state_topic = string.format("%s/status/interval/%s/%s/%s/%d",
-                                self.opts.uci.mqtt_data_prefix, interval, devid, dtype2et_topic[dtype], b.points[i].phase),
-                        unit_of_measurement = units[dtype],
+                                self.opts.uci.mqtt_data_prefix, interval, devid, data_types[dt_key].et, b.points[i].reading + 1),
+                        unit_of_measurement = data_types[dt_key].u,
                         value_template = "{{ value_json.mean }}",
                         unique_id = uid,
                         expire_after = expiry[interval],
                         -- model = FIXME -needs hwc,
                         -- manufacturer = FIXME -needs hwc,
-                        -- via_device = gateid?
+                        via_device = self.opts.uci.gateid,
+                        state_class = data_types[dt_key].state_class,
                     }
                     self.mqtt:publish(string.format("ext/output-hass/%s/discovery/sensor/%s/config", self.opts.instance, uid), json.encode(blob))
                     self.statsd:increment("sensor-config.published")
                 end
-            else
-                ugly.warning("Unhandled point count for branch %s_%s", cabinet, b.label)
             end
-
+        else
+            -- device level information, we don't even have cabinet model data for this, so we make it up...
+            local uid = string.format("%s_%s_%s", self.opts.uci.gateid, devid, dt_key)
+            local blob = {
+                device_class = dt_key,
+                name = string.format("%s_%s_%s", cabinet, devid, dt_key),
+                state_topic = string.format("%s/status/interval/%s/%s/%s",
+                        self.opts.uci.mqtt_data_prefix, interval, devid, data_types[dt_key].et),
+                unit_of_measurement = data_types[dt_key].u,
+                value_template = "{{ value_json.mean }}",
+                unique_id = uid,
+                expire_after = expiry[interval],
+                -- model = FIXME -needs hwc,
+                -- manufacturer = FIXME -needs hwc,
+                via_device = self.opts.uci.gateid,
+            }
+            self.mqtt:publish(string.format("ext/output-hass/%s/discovery/sensor/%s/config", self.opts.instance, uid), json.encode(blob))
+            self.statsd:increment("sensor-config.published")
         end
     end
     ugly.info("Updated sensor config for all branches of device: %s", devid)
