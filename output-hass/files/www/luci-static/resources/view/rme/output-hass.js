@@ -40,10 +40,10 @@ return L.view.extend({
 
 		o = s.taboption("general", form.ListValue, "interval", _("Interval to monitor and forward"), _("Default is 15 minute, but you can select finer/coarser grained"));
 		o.optional = true;
-		o.value("1", "1 Minute");
-		o.value("5", "5 Minute");
-		o.value("15", "15 Minute");
-		o.value("60", "60 Minute");
+		o.value("1min", "1 Minute");
+		o.value("5min", "5 Minute");
+		o.value("15min", "15 Minute");
+		o.value("60min", "60 Minute");
 		o.placeholder = "Default (15 Minute)";
 
         // FIXME - we're still hating this, we really need better selection of aggregates and totals and so on...
@@ -55,13 +55,15 @@ return L.view.extend({
 		o.value("cumulative_wh", _("Active Energy"));
 		o.value("cumulative_varh", _("Reactive Energy"));
 		o.value("voltage", _("Voltage (interval mean)"));
-		o.value("current_mean", _("Current (interval mean)"));
-		o.value("current_max", _("Current (interval maximum)"));
+		o.value("current", _("Current (interval mean)"));
+//		o.value("current_mean", _("Current (interval mean)"));
+//		o.value("current_max", _("Current (interval maximum)"));
 		o.value("pf", _("Power Factor (interval mean)"));
 		o.value("temp", _("Temperature (interval mean)"));
 		o.value("pulse_count", _("Pulse count"));
-		o.value("power_mean", _("Power (interval mean)"));
-		o.value("power_max", _("Power (interval maximum)"));
+		o.value("power", _("Power (interval mean)"));
+//		o.value("power_mean", _("Power (interval mean)"));
+//		o.value("power_max", _("Power (interval maximum)"));
 
 
 		o = s.taboption("mqtt", TrimmedValue, "mqtt_host", _("MQTT Host"), _("Host of the HomeAssistant MQTT broker"));

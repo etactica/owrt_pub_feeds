@@ -4,6 +4,7 @@ Karl Palsson, Nov 2021 <karlp@tweak.net.au>
 
 --]]
 
+local uci = require("uci")
 local json = require("cjson.safe")
 -- cjson specific
 json.encode_sparse_array(true)
@@ -32,6 +33,27 @@ local cfg_defaults = {
 function M.init(opts_in, statsd)
     local opts = opts_in or {}
     local finalopts = pl.tablex.union(cfg_defaults, opts)
+
+    local x = uci.cursor(uci.get_confdir())
+    x:foreach(finalopts.APP_NAME, "instance", function(s)
+        if s[".name"] == opts.instance then
+            finalopts.uci = s
+        end
+    end)
+    if not finalopts.uci then
+        error("can't start an instance without an instance config!")
+    end
+    if not finalopts.uci.mqtt_data_prefix then finalopts.uci.mqtt_data_prefix = "etactica" end
+
+    -- gateway id
+    local first = true
+    x:foreach("system", "system", function(s)
+        if first then
+            first = false
+            finalopts.uci.gateid = s.rme_stablemac
+        end
+    end)
+
     local i = {
         opts = finalopts,
         statsd = statsd,
@@ -85,6 +107,26 @@ function M:handle_on_connect(rc)
     end
 end
 
+local units = {
+    power = "W",
+    current = "A",
+    voltage = "V",
+    temp = "°C",
+}
+
+-- FAK, we need this shit in the init scripts too!
+local dtype2et_topic = {
+    power = "power",
+    current = "current",
+    voltage = "volt",
+}
+
+local expiry = {
+    ["1min"] = 60*1.5,
+    ["5min"] = 60*5*1.5,
+    ["15min"] = 60*15*1.5,
+    ["60min"] = 60*60*1.5,
+}
 
 function M:handle_live_meta(topic, payload)
     local cabinet = payload.cabinet
@@ -100,17 +142,40 @@ function M:handle_live_meta(topic, payload)
         return
     end
 
-    -- if there is an existing cabinet model for this device, just _replace_ it wholesale.
-    self.models[devid] = {cabinet = cabinet, branches = {}}
-    -- just keep the original branches, with a cabinet pointer on each one
+    -- we keep no state, we just reformat and republish cabinet data as config data.
+    local interval = self.opts.uci.interval
     for _, b in pairs(payload.branches) do
-        b.cabinet = cabinet
-        table.insert(self.models[devid].branches, b)
-    end
-    --ugly.debug("Saved internal cabinet model of %s: %s", devid, pl.pretty.write(self.models[devid]))
+        -- we have no idea whether a "branch" can produce what we want?!
+        -- for energy, kinda safe, but this is goign to be a shitty integration for things that plugins can do...
+        for _,dtype in pairs(self.opts.uci.store_types) do
+            if #b.points == 1 or #b.points == 3 then
+                -- make three sensors, and, if dtype is an aggregate, make up something fancy?
+                for i,_ in ipairs(b.points) do
+                    -- XXX, gateid or devid could create illegal hass uuids?
+                    local uid = string.format("%s_%s_%s_%d", self.opts.uci.gateid, devid, dtype, b.points[i].reading)
+                    local blob = {
+                        device_class = dtype, -- careful, must make our types match hass docs!
+                        name = string.format("%s_%s_%s_ph%d", cabinet, b.label, dtype, b.points[i].phase),
+                        state_topic = string.format("%s/status/interval/%s/%s/%s/%d",
+                                self.opts.uci.mqtt_data_prefix, interval, devid, dtype2et_topic[dtype], b.points[i].phase),
+                        unit_of_measurement = units[dtype],
+                        value_template = "{{ value_json.mean }}",
+                        unique_id = uid,
+                        expire_after = expiry[interval],
+                        -- model = FIXME -needs hwc,
+                        -- manufacturer = FIXME -needs hwc,
+                        -- via_device = gateid?
+                    }
+                    self.mqtt:publish(string.format("ext/output-hass/%s/discovery/sensor/%s/config", self.opts.instance, uid), json.encode(blob))
+                    self.statsd:increment("sensor-config.published")
+                end
+            else
+                ugly.warning("Unhandled point count for branch %s_%s", cabinet, b.label)
+            end
 
-    -- FIXME - actually implement this!
-    -- need to reformat into as many pieces as required of hass style config messages, publish back to ourself, and let the mqtt bridge mapping take care of the rest.
+        end
+    end
+    ugly.info("Updated sensor config for all branches of device: %s", devid)
 
 end
 
