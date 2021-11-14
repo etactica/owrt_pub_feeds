@@ -22,13 +22,13 @@ M.__index = M
 -- * perp for "per point", true if you need one of these per point
 -- * et for the etactica topic key.
 local data_types = {
-    power = {u="W", perp=true, et="power", state_class="measurement"},
-    current = {u="A", perp=true, et="current", state_class="measurement"},
-    voltage = {u="V", perp=true, et="volt", state_class="measurement"},
-    temperature = {u="°C", perp=false, et="temp", state_class="measurement"},
+    power = {u="W", perp=true, et="power", state_class="measurement", f="mean"},
+    current = {u="A", perp=true, et="current", state_class="measurement", f="mean"},
+    voltage = {u="V", perp=true, et="volt", state_class="measurement", f="mean"},
+    temperature = {u="°C", perp=false, et="temp", state_class="measurement", f="mean"},
     -- Energy sux.  we have wh_in, per point onbars, and cumulative_wh, total, on meters....
     -- do we get silly and try looking for three phase breakers only? that's a bit of a risky hole...
-    energy = {u="Wh", perp=false, et="cumulative_wh", state_class="total_increasing"}, -- FIXME wh_in as well? the gift that gives...
+    energy = {u="Wh", perp=false, et="cumulative_wh", state_class="total_increasing", f="max"}, -- FIXME wh_in as well? the gift that gives...
 }
 
 -- Many of these will be overridden (again) by the cli default args
@@ -162,7 +162,7 @@ function M:handle_live_meta(topic, payload)
                         state_topic = string.format("%s/status/interval/%s/%s/%s/%d",
                                 self.opts.uci.mqtt_data_prefix, interval, devid, data_types[dt_key].et, b.points[i].reading + 1),
                         unit_of_measurement = data_types[dt_key].u,
-                        value_template = "{{ value_json.mean }}",
+                        value_template = string.format("{{ value_json.%s }}", data_types[dt_key].f),
                         unique_id = uid,
                         expire_after = expiry[interval],
                         -- model = FIXME -needs hwc,
@@ -183,7 +183,7 @@ function M:handle_live_meta(topic, payload)
                 state_topic = string.format("%s/status/interval/%s/%s/%s",
                         self.opts.uci.mqtt_data_prefix, interval, devid, data_types[dt_key].et),
                 unit_of_measurement = data_types[dt_key].u,
-                value_template = "{{ value_json.mean }}",
+                value_template = string.format("{{ value_json.%s }}", data_types[dt_key].f),
                 unique_id = uid,
                 expire_after = expiry[interval],
                 -- model = FIXME -needs hwc,
