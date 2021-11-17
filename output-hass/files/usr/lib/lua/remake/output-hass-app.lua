@@ -170,7 +170,7 @@ function M:handle_live_meta(topic, payload)
                         via_device = self.opts.uci.gateid,
                         state_class = data_types[dt_key].state_class,
                     }
-                    self.mqtt:publish(string.format("ext/output-hass/%s/discovery/sensor/%s/config", self.opts.instance, uid), json.encode(blob))
+                    self.mqtt:publish(string.format("ext/output-hass/%s/discovery/sensor/%s/config", self.opts.instance, uid), json.encode(blob), 1 , true)
                     self.statsd:increment("sensor-config.published")
                 end
             end
@@ -191,7 +191,7 @@ function M:handle_live_meta(topic, payload)
                 via_device = self.opts.uci.gateid,
                 state_class = data_types[dt_key].state_class,
             }
-            self.mqtt:publish(string.format("ext/output-hass/%s/discovery/sensor/%s/config", self.opts.instance, uid), json.encode(blob))
+            self.mqtt:publish(string.format("ext/output-hass/%s/discovery/sensor/%s/config", self.opts.instance, uid), json.encode(blob), 1, true)
             self.statsd:increment("sensor-config.published")
         end
     end
