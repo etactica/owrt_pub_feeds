@@ -28,7 +28,7 @@ local data_types = {
     temperature = {u="°C", perp=false, et="temp", state_class="measurement", f="mean"},
     -- Energy sux.  we have wh_in, per point onbars, and cumulative_wh, total, on meters....
     -- do we get silly and try looking for three phase breakers only? that's a bit of a risky hole...
-    energy = {u="Wh", perp=false, et="cumulative_wh", state_class="total_increasing", f="max"}, -- FIXME wh_in as well? the gift that gives...
+    energy = {u="Wh", perp=false, et="cumulative_wh", state_class="total", f="max"}, -- FIXME wh_in as well? the gift that gives...
 }
 
 -- Many of these will be overridden (again) by the cli default args
@@ -165,10 +165,18 @@ function M:handle_live_meta(topic, payload)
                         value_template = string.format("{{ value_json.%s }}", data_types[dt_key].f),
                         unique_id = uid,
                         expire_after = expiry[interval],
-                        -- model = FIXME -needs hwc,
-                        -- manufacturer = FIXME -needs hwc,
-                        via_device = self.opts.uci.gateid,
                         state_class = data_types[dt_key].state_class,
+                        device = {
+                            --configuration_url = string.format("http://hello.example.org/%s", self.opts.uci.gateid),
+                            name = devid,
+                            identifiers = { devid }, -- I think this should be bar id?
+                            connections = {
+                                {"etactica", self.opts.uci.gateid },
+                            },
+                            --via_device = "etactica_"..self.opts.uci.gateid, - only works for other mqtt devics :(
+                            -- model = FIXME -needs hwc,
+                            manufacturer = "ohass-manu", -- fixme, hwc
+                        },
                     }
                     self.mqtt:publish(string.format("ext/output-hass/%s/discovery/sensor/%s/config", self.opts.instance, uid), json.encode(blob), 1 , true)
                     self.statsd:increment("sensor-config.published")
@@ -176,6 +184,7 @@ function M:handle_live_meta(topic, payload)
             end
         else
             -- device level information, we don't even have cabinet model data for this, so we make it up...
+            ugly.debug("Considering dtype: %s for dev level%s", dt_key, devid)
             local uid = string.format("%s_%s_%s", self.opts.uci.gateid, devid, dt_key)
             local blob = {
                 device_class = dt_key,
@@ -186,10 +195,18 @@ function M:handle_live_meta(topic, payload)
                 value_template = string.format("{{ value_json.%s }}", data_types[dt_key].f),
                 unique_id = uid,
                 expire_after = expiry[interval],
-                -- model = FIXME -needs hwc,
-                -- manufacturer = FIXME -needs hwc,
-                via_device = self.opts.uci.gateid,
                 state_class = data_types[dt_key].state_class,
+                device = {
+                    --configuration_url = string.format("http://hello.example.org/%s", self.opts.uci.gateid),
+                    name = devid,
+                    identifiers = { devid }, -- I think this should be bar id?
+                    connections = {
+                        {"etactica", self.opts.uci.gateid },
+                    },
+                    --via_device = "etactica_"..self.opts.uci.gateid, -- only works for other mqtt devics :(
+                    -- model = FIXME -needs hwc,
+                    --manufacturer = "ohass-manu", -- fixme, hwc
+                },
             }
             self.mqtt:publish(string.format("ext/output-hass/%s/discovery/sensor/%s/config", self.opts.instance, uid), json.encode(blob), 1, true)
             self.statsd:increment("sensor-config.published")
