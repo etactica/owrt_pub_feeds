@@ -18,9 +18,7 @@ so this should be a very lightweight process.
 
 ## (incomplete) TODO
 
-* poke hass's mdns discovery so that you can find an EG at least?  (I think,
-  if we explicitly make an integration and push upstream that just declares the _rme-sg._tcp
-  mdns type, that lets you "add" etactica, and jump to our URL from there to "enable" this service packaged here....)
+* Better linking of our mdns/zeroconf discovery and the mqtt discovery
 * data type selection better.  (global issue)
-* actually implement it...
 * see if there are better options for how the config discovery topics should be bundled...
+* branding https://developers.home-assistant.io/blog/2020/05/08/logos-custom-integrations/
