@@ -82,6 +82,7 @@ return L.view.extend({
 		o.value("volt", _("Voltage"));
 		o.value("current", _("Current"));
 		o.value("pf", _("Power Factor"));
+		o.value("frequency", _("Frequency"));
 		o.value("power", _("Power"));
 		o.value("temp", _("Temperature"));
 		o.value("pulse_count", _("Pulse count"));
