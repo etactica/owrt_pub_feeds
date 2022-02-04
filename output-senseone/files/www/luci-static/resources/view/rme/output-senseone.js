@@ -86,6 +86,8 @@ return L.view.extend({
 		o.value("power", _("Power"));
 		o.value("temp", _("Temperature"));
 		o.value("pulse_count", _("Pulse count"));
+		o.value("humidity", _("Humidity"));
+		o.value("dewpoint", _("Dew Point"));
 		o.editable = true;
 
 		return m.render();
