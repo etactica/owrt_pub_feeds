@@ -15,7 +15,7 @@ local args = pl.lapp [[
     -v,--verbose (0..7 default 5) Logging level, higher == more
     -S,--statsd_host (default "localhost") StatsD server address
     --statsd_port (default 8125) StatsD port
-    --statsd_namespace (default "io-charging-on") Namespace for this data
+    --statsd_namespace (default "apps.io-charging-on") Namespace for this data
 ]]
 
 local ugly = require("remake.uglylog")

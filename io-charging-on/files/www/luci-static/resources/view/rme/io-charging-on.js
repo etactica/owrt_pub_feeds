@@ -233,7 +233,7 @@ return L.view.extend({
 
 
 		o = s.taboption("statsd", TrimmedValue, "statsd_namespace", _("Namespace for StatsD reporting"))
-		o.placeholder = "io-charging-on"
+		o.placeholder = "apps.io-charging-on"
 		o.optional = true
 
 		o = s.taboption("statsd", form.Value, "statsd_host", _("Hostname to send stats"))
