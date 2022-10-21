@@ -49,17 +49,84 @@ return L.view.extend({
 		o = s.taboption("general", form.Flag, "enabled", _("Enable this service"), _("The service will not start until this is checked"));
 		o.rmempty = false;
 
-		o = s.taboption("general", TrimmedValue, "username", _("The MQTT bridge username"),
+		var user = s.taboption("general", TrimmedValue, "username", _("The MQTT bridge username"),
 			_("Provided by SenseOne, unique for your account"));
-		o.placeholder = "example-username";
+		user.placeholder = "example-username";
 
-		o = s.taboption("general", TrimmedValue, "password", _("The MQTT bridge password"),
+		var password = s.taboption("general", TrimmedValue, "password", _("The MQTT bridge password"),
 			_("Provided by SenseOne, unique for your account"));
-		o.placeholder = "example-private";
+		password.placeholder = "example-private";
 
-		o = s.taboption("general", TrimmedValue, "address", _("The MQTT broker address"),
+		var host = s.taboption("general", TrimmedValue, "address", _("The MQTT broker address"),
 			_("Provided by SenseOne, normally standard"));
-		o.placeholder = "mqtt.senseonetech.com:8883"
+		host.placeholder = "mqtt.senseonetech.com:8883";
+
+		var b = s.taboption("general", form.Button, "_testcred", _("Test your credentials"), _("This will attempt to validate your credentials with SenseOne"));
+        b.inputtitle = _("Test credentials");
+        b.inputstyle = 'apply';
+        b.onclick = function(ev, sid) {
+            var btn = ev.target;
+            btn.classList.add('spinning');
+			var test_user = user.formvalue(sid);
+			var test_password = password.formvalue(sid);
+			var test_host = host.formvalue(sid)
+			var node_user = m.findElement('id', user.cbid(sid));
+			var node_password = m.findElement('id', password.cbid(sid));
+			var node_host = m.findElement('id', host.cbid(sid));
+
+            var clearResults = function(tgt) {
+	            while (node_user.firstChild.nextSibling) { node_user.firstChild.nextSibling.remove() }
+	            while (node_password.firstChild.nextSibling) { node_password.firstChild.nextSibling.remove() }
+	            while (node_host.firstChild.nextSibling) { node_host.firstChild.nextSibling.remove() }
+                while (tgt.nextSibling) {
+                    tgt.nextSibling.remove();
+                }
+            }
+            clearResults(btn);
+
+            // This is the way we inject commands, hi ho, hi ho....
+            // but.... if you are logged in with access here, you could just be calling fs.exec yourself....
+            var real = `mqtts://${test_user}:${test_password}@${test_host}/test/validate_credentials`;
+            ui.showModal(_('Testing credentials'), [ E('p', { 'class': 'spinning' }, _('Contacting SenseOne and testing your credentials')) ]);
+            // Dexma doesn't allow CORS (bug filed) so we do it on the server
+            console.log("attempting to connect with ", real);
+            var markError = function(tgt, descr, details) {
+                node_user.firstChild.classList.add("cbi-input-invalid");
+                node_password.firstChild.classList.add("cbi-input-invalid");
+                node_host.firstChild.classList.add("cbi-input-invalid");
+                var cross = E('span', { 'class': "check-fail" }, "✘");
+                tgt.insertAdjacentElement("afterEnd", E("div", [E("h6", {class: "alert-message"}, descr), E("pre", details)]));
+                tgt.insertAdjacentElement("afterEnd", cross);
+            };
+            var r = fs.exec("mosquitto_sub", ["-L", real, "--cafile", "/etc/ssl/certs/senseonetech-mqtt.crt", "-E"]);
+            r.then(L.bind(function(evtarget, rv) {
+                if (rv.code == 0) {
+                    // if the pub succeeded, we're definitely good
+		            node_user.firstChild.classList.remove("cbi-input-invalid");
+		            node_password.firstChild.classList.remove("cbi-input-invalid");
+		            node_host.firstChild.classList.remove("cbi-input-invalid");
+                    var tick = E('span', { 'class': "check-ok" }, "✓");
+                    node_user.insertAdjacentElement("beforeEnd", tick);
+                    node_password.insertAdjacentElement("beforeEnd", tick.cloneNode(true));
+                    node_host.insertAdjacentElement("beforeEnd", tick.cloneNode(true));
+                    evtarget.insertAdjacentElement("afterEnd", E("h6", _("Validation successful")));
+                } else {
+                    // mosquitto_pub itself failed.  stderr now has the useful error, not the progress meter.
+                    markError(evtarget, _("Failed to test credentials: " + rv.code), rv.stderr);
+                }
+                ui.hideModal();
+            }, this, ev.target), function(rv) {
+                // You land here if the XHR times out, for instance.
+                markError(ev.target, _("Failed to test credentials"), rv.message);
+                ui.hideModal();
+            }
+            ).catch(function(e) {
+                // This is an unexpected internal failure, try again?
+                ui.addNotification(null, E('p', _("Failed to test credentials, perhaps try again?: ") + e), 'warning');
+                ui.hideModal();
+            });
+        }
+
 
 		o = s.taboption("advanced", form.ListValue, "interval", _("Interval to monitor and forward"),
 			_("There's a modest bandwidth reduction to use 60minute, but it's not significant."));
