@@ -11,24 +11,13 @@ remove_output() {
 	[ "$connection" = "senseone" ] && uci -q delete mosquitto.$cfg
 }
 
-add_data_types() {
-	local dtype="$1"
-	local newcfg="$2"
-	local interval="$3"
-	local username="$4"
-	uci -q add_list mosquitto.$newcfg.topic="/interval/$interval/+/$dtype/# out 1 status/local/json $username/status"
-	# handle the split variables for energy on a bar
-	[ "$dtype" = "cumulative_wh" ] && add_data_types wh_in $newcfg $interval $username
-}
-
 add_output() {
 	local cfg="$1"
 	local username="$2"
 	local password="$3"
 	local address="$4"
-	local interval="$5"
-	local include_live="$6"
-	local insecure="$7"
+	local include_live="$5"
+	local insecure="$6"
 	local gateid
 	gateid=$(uci -q get system.@system[0].rme_stablemac)
 	local newcfg
@@ -40,23 +29,15 @@ add_output() {
 		set mosquitto.$newcfg.attempt_unsubscribe=false
 		set mosquitto.$newcfg.notification_topic=$username/bridge/$gateid/state
 		set mosquitto.$newcfg.try_private=false
-		set mosquitto.$newcfg.remote_username="$username"
-		set mosquitto.$newcfg.remote_password="$password"
-		add_list mosquitto.$newcfg.topic="/alert/new/# out 1 status/local/json $username/status"
-		add_list mosquitto.$newcfg.topic="/alert/expired/# out 1 status/local/json $username/status"
-		add_list mosquitto.$newcfg.topic="/cabinet/# out 1 status/local/json $username/status"
+		add_list mosquitto.$newcfg.topic="# out 1 ext/output-senseone/out/ $username/"
 EOF
-	[ -n "$interval" ] && {
-		config_load output-senseone # "context" was still mosquitto at this point
-		config_get dtypes $cfg store_types
-		if [ -z "$dtypes" ]; then
-			add_data_types cumulative_wh "$newcfg" $interval $username
-		else
-			config_list_foreach "$cfg" store_types add_data_types "$newcfg" $interval $username
-		fi
+	[ -z "$password" ] || {
+		echo "password was set, applying it."
+		uci -q set mosquitto.$newcfg.remote_username="$username"
+		uci -q set mosquitto.$newcfg.remote_password="$password"
 	}
 	[ "$include_live" = "true" ] && uci -q add_list mosquitto.$newcfg.topic="/device/# out 1 status/local/json $username/status"
-	[ "$insecure" = "true" ] || uci -q set mosquitto.$newcfg.cafile=/etc/ssl/certs/senseonetech-mqtt.crt
+	[ "$insecure" -eq 1 ] || uci -q set mosquitto.$newcfg.cafile=/etc/ssl/certs/senseonetech-mqtt.crt
 	uci -q commit
 }
 
@@ -68,41 +49,45 @@ add_instance() {
 	config_get password "$cfg" password
 	config_get address "$cfg" address "mqtt.senseonetech.com:8883"
 	config_get interval "$cfg" interval "15min"
+	config_get_bool insecure "$cfg" insecure 0
 	# We always remove it, and re-add it if needed.
 	config_load mosquitto && config_foreach remove_output bridge
 	if [ $enabled -eq 0 ]; then
 		echo "Disabling SenseOne"
 		rm -f /etc/cron.d/daily/republish_cabinet_model.lua
-		monit unmonitor output-senseone
+		monit unmonitor output-senseone-proc
+		monit unmonitor output-senseone-mqtt
 	else
 		[ -z "$username" ] && { echo "username is required!"; return 1;}
-		[ -z "$password" ] && { echo "password is required!"; return 1;}
+		[ -z "$password" ] && [ "$insecure" -eq 0 ] && { echo "password is required!"; return 1;}
 		assert_ntp_up;
 		echo "Enabling SenseOne"
 		case "$username" in
 			etactica_hq)
-				add_output $cfg $username $password $address $interval true
+				add_output $cfg $username $password $address true
 				;;
 			marel_iceland)
-				add_output $cfg $username $password $address "" true true
+				add_output $cfg $username $password $address true 1
 				;;
 			*)
-				add_output $cfg $username $password $address $interval
+				add_output "$cfg" "$username" "$password" "$address" false "$insecure"
 				;;
 		esac
 		[ -f /etc/cron.d/daily/republish_cabinet_model.lua ] || ln -s /usr/bin/republish_cabinet_model.lua /etc/cron.d/daily/
-		monit monitor output-senseone
+		monit monitor output-senseone-proc
+		monit monitor output-senseone-mqtt
 	fi
 	uci commit
 	reload_config
+	procd_open_instance
+	procd_set_param command output-senseone.lua
+	procd_append_param command --interval "$interval"
+	procd_set_param respawn
+	procd_set_param file /etc/config/output-senseone
+	procd_close_instance
 }
 
 start_service() {
-	procd_open_instance
-	# Just something that succeeds
-	procd_set_param command true
-	procd_set_param file /etc/config/output-senseone
-	procd_close_instance
 	config_load output-senseone && config_foreach add_instance general
 }
 

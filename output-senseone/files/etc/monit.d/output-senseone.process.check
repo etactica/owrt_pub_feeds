@@ -1,4 +1,11 @@
-check program output-senseone with path "/bin/grep 'connection senseone' /tmp/mosquitto.generated.conf"
+check program output-senseone-mqtt with path "/bin/grep 'connection senseone' /tmp/mosquitto.generated.conf"
 	with timeout 5 seconds
 	if status != 0 then exec "/etc/init.d/output-senseone restart"
+	group output-senseone
+
+check process output-senseone-proc matching '/usr/bin/lua /usr/bin/output-senseone'
+	start program = "/etc/init.d/output-senseone start"
+	stop program = "/etc/init.d/output-senseone stop"
+        if totalmemory is greater than 40% for 3 cycles then restart
+        if totalcpu is greater than 40% for 3 cycles then restart
 	group output-senseone

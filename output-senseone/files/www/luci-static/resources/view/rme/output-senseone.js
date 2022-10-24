@@ -45,6 +45,7 @@ return L.view.extend({
 
 		s.tab("general", _("General Settings"));
 		s.tab("advanced", _("Advanced Settings"));
+		s.tab("statsd", _("StatsD"));
 
 		o = s.taboption("general", form.Flag, "enabled", _("Enable this service"), _("The service will not start until this is checked"));
 		o.rmempty = false;
@@ -86,10 +87,15 @@ return L.view.extend({
 
             // This is the way we inject commands, hi ho, hi ho....
             // but.... if you are logged in with access here, you could just be calling fs.exec yourself....
-            var real = `mqtts://${test_user}:${test_password}@${test_host}/test/validate_credentials`;
+            var protocol = "mqtts"
+            if (insecure.formvalue(sid)) {
+                protocol = "mqtt"
+            }
+            var real = `${protocol}://${test_user}:${test_password}@${test_host}/test/validate_credentials`;
+            if (test_password.length == 0) {
+                real = `${protocol}://${test_host}/test/validate_credentials`;
+            }
             ui.showModal(_('Testing credentials'), [ E('p', { 'class': 'spinning' }, _('Contacting SenseOne and testing your credentials')) ]);
-            // Dexma doesn't allow CORS (bug filed) so we do it on the server
-            console.log("attempting to connect with ", real);
             var markError = function(tgt, descr, details) {
                 node_user.firstChild.classList.add("cbi-input-invalid");
                 node_password.firstChild.classList.add("cbi-input-invalid");
@@ -98,7 +104,11 @@ return L.view.extend({
                 tgt.insertAdjacentElement("afterEnd", E("div", [E("h6", {class: "alert-message"}, descr), E("pre", details)]));
                 tgt.insertAdjacentElement("afterEnd", cross);
             };
-            var r = fs.exec("mosquitto_sub", ["-L", real, "--cafile", "/etc/ssl/certs/senseonetech-mqtt.crt", "-E"]);
+            var args = ["-L", real, "-E"];
+            if (!insecure.formvalue(sid)) {
+                args.push("--cafile", "/etc/ssl/certs/senseonetech-mqtt.crt")
+            }
+            var r = fs.exec("mosquitto_sub", args);
             r.then(L.bind(function(evtarget, rv) {
                 if (rv.code == 0) {
                     // if the pub succeeded, we're definitely good
@@ -139,13 +149,18 @@ return L.view.extend({
 		o.placeholder = "Default (15 Minute)";
 
 		o = s.taboption("advanced", form.DynamicList, "store_types", _("Data types to store"),
-			_("Remember, you are charged per data point, so only enable data points you're interested in."));
+			_("Remember, you are charged per data point, so only enable data points you're interested in." +
+			  "<br>For custom datapoints, enter the mqtt metric name, eg <tt>energy_wh_in</tt>.  " +
+			  "<br>For remapping points to a different value enter in the form <tt>mqtt_metric_in=mqtt_metric_out</tt>"));
 		o.multiple = true;
 		o.optional = true;
 		o.placeholder = _("Default (Active Energy)");
 		o.value("+", _("Everything!"));
-		o.value("cumulative_wh", _("Active Energy"));
+		o.value("cumulative_wh", _("Active Energy (from cumulative)"));
 		o.value("cumulative_varh", _("Reactive Energy"));
+		o.value("energy_in_wh", _("Active Energy Import"));
+		o.value("energy_out_wh", _("Active Energy Export"));
+		o.value("energy_in_wh=cumulative_wh", _("Active Energy Import (report as cumulative)"));
 		o.value("volt", _("Voltage"));
 		o.value("current", _("Current"));
 		o.value("pf", _("Power Factor"));
@@ -156,6 +171,28 @@ return L.view.extend({
 		o.value("humidity", _("Humidity"));
 		o.value("dewpoint", _("Dew Point"));
 		o.editable = true;
+
+		o = s.taboption("advanced", form.Flag, "_show_developer", _("Show developer debugging"),
+			_("Shows some developer debug options that should never be needed in normal use"));
+		o.write = function() {};
+		var insecure = s.taboption("advanced", form.Flag, "insecure", _("Don't use TLS for MQTT connections"),
+			_("This should only be used when testing with local replacements for senseone"));
+		insecure.depends("_show_developer", "1");
+
+
+		o = s.taboption("statsd", TrimmedValue, "statsd_namespace", _("Namespace for StatsD reporting"))
+		o.placeholder = "apps.output-senseone"
+		o.optional = true
+
+		o = s.taboption("statsd", form.Value, "statsd_host", _("Hostname to send stats"))
+		o.placeholder = "localhost"
+		o.datatype = "host"
+		o.optional = true
+
+		o = s.taboption("statsd", form.Value, "statsd_port", _("UDP port to send stats"))
+		o.placeholder = 8125
+		o.datatype = "port"
+		o.optional = true
 
 		return m.render();
 	}
