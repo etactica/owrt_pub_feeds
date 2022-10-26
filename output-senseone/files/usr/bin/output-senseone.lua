@@ -29,9 +29,10 @@ local cfg = {
 	DEFAULT_STATSD_HOST = "localhost",
 	DEFAULT_STATSD_PORT = 8125,
 	DEFAULT_STATSD_NAMESPACE = "apps.output-senseone",
+	opts = args,
 }
 
-ugly.initialize(cfg.APP_NAME, args.verbose or 4)
+ugly.initialize(cfg.APP_NAME, cfg.opts.verbose or 4)
 
 local function cfg_validate(c)
     -- Load UCI config too
@@ -83,28 +84,6 @@ local statsd = require("statsd")({
 mosq.init()
 local mqtt = mosq.new(cfg.MOSQ_CLIENT_ID, true)
 
-if not mqtt:connect(args.host, 1883, 60) then
-    ugly.err("Aborting, unable to make MQTT connection")
-    os.exit(1)
-end
-
-ugly.debug("subscribing to %s", cfg.TOPIC_LISTEN_DATA)
-if not mqtt:subscribe(cfg.TOPIC_LISTEN_DATA, 0) then
-    ugly.err("Aborting, unable to subscribe to live data stream")
-    os.exit(1)
-end
-
-if not mqtt:subscribe(cfg.TOPIC_LISTEN_ALERTS, 0) then
-    ugly.err("Aborting, unable to subscribe to alerts")
-    os.exit(1)
-end
-
-if not mqtt:subscribe(cfg.TOPIC_LISTEN_CABINET, 0) then
-    ugly.err("Aborting, unable to subscribe to cabinet model")
-    os.exit(1)
-end
-
-
 local function handle_data(topic, jpayload)
     statsd:meter("msgs.input-data", 1)
     local extra = pl.stringx.replace(topic, "status/local/json", "")
@@ -141,6 +120,37 @@ mqtt.ON_MESSAGE = function(mid, topic, jpayload, qos, retain)
     local extra = pl.stringx.replace(topic, "status/local/json", "")
     mqtt:publish(cfg.TOPIC_PUBLISH_BASE .. extra, jpayload, 1, false)
     statsd:increment("msgs.alerts-sent")
+end
+
+mqtt.ON_CONNECT = function(ok, code, errs)
+	local mid
+	ugly.debug("connect returned: %s %d %s", tostring(ok), code, errs)
+	if not ok then
+		ugly.err("Aborting, connected, but refused access: %d:%s", code, errs)
+		os.exit(1)
+	end
+	mid, code, errs = mqtt:subscribe(cfg.TOPIC_LISTEN_DATA, 0)
+	if not mid then
+		ugly.err("Aborting, unable to subscribe to data stream: %d:%s", code, errs)
+		os.exit(1)
+	end
+	mid, code, errs = mqtt:subscribe(cfg.TOPIC_LISTEN_CABINET, 0)
+	if not mid then
+		ugly.err("Aborting, unable to subscribe to cabinet data stream: %d:%s", code, errs)
+		os.exit(1)
+	end
+	mid, code, errs = mqtt:subscribe(cfg.TOPIC_LISTEN_ALERTS, 0)
+	if not mid then
+		ugly.err("Aborting, unable to subscribe to alerts: %d:%s", code, errs)
+		os.exit(1)
+	end
+	ugly.notice("MQTT (RE)Connected happily to %s", cfg.opts.host)
+	statsd:increment("mqtt.connected")
+end
+
+if not mqtt:connect(cfg.opts.host, 1883, 60) then
+	ugly.err("Aborting, unable to make MQTT connection")
+	os.exit(1)
 end
 
 mqtt:loop_forever()
