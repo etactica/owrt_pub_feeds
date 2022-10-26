@@ -10,8 +10,7 @@ var desc = _(""
 	+ "You should have created a virtual gateway, and obtained your gateway Identifier/Token security pairs."
    	+ "Please see the following Dexma guides on setting these up"
    	+ "<ul>"
-   	+ '<li><a href="http://support.dexmatech.com/customer/portal/articles/372837-howto-add-and-configure-a-virtual-gateway">Create a virtual gateway</a>'
-  	+ '<li><a href="http://support.dexmatech.com/customer/portal/articles/1745489-howto-obtain-mac-and-token-from-a-gateway">Obtain gateway ID/Token</a>'
+   	+ '<li><a href="https://support.dexma.com/hc/en-gb/articles/360011575920">Specific EG200 instructions</a>'
    	+ "</ul>"
    	+ '<h4>About Dexma <img src="/resources/images/dexma.png" width="156" height="65" style="vertical-align: middle"/></h4>'
    	+ "From their website:"
