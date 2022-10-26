@@ -84,7 +84,7 @@ add_instance() {
 	uci commit
 	reload_config
 	procd_open_instance
-	procd_set_param command output-senseone.lua
+	procd_set_param command output-senseone
 	procd_append_param command --interval "$interval"
 	procd_set_param respawn
 	procd_set_param file /etc/config/output-senseone
