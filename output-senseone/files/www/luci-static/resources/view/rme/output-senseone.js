@@ -172,6 +172,9 @@ return L.view.extend({
 		o.value("dewpoint", _("Dew Point"));
 		o.editable = true;
 
+		o = s.taboption("advanced", form.Flag, "include_gateid", _("Include Gateway ID in bridge topics"),
+			_("This allows the same modbus addresses to be re-used with an account, but should only be " +
+			"enabled after confirming your account is configured for this with SenseOne"));
 		o = s.taboption("advanced", form.Flag, "_show_developer", _("Show developer debugging"),
 			_("Shows some developer debug options that should never be needed in normal use"));
 		o.write = function() {};

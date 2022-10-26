@@ -16,12 +16,15 @@ add_output() {
 	local username="$2"
 	local password="$3"
 	local address="$4"
-	local include_live="$5"
-	local insecure="$6"
+	local include_gateid="$5"
+	local include_live="$6"
+	local insecure="$7"
 	local gateid
 	gateid=$(uci -q get system.@system[0].rme_stablemac)
 	local newcfg
 	newcfg=$(uci add mosquitto bridge)
+	_PREFIX="$username"
+	[ "$include_gateid" -eq 1 ] && _PREFIX="$username/$gateid"
 	uci -q batch <<-EOF
 		set mosquitto.$newcfg.connection=senseone
 		set mosquitto.$newcfg.address="$address"
@@ -29,14 +32,14 @@ add_output() {
 		set mosquitto.$newcfg.attempt_unsubscribe=false
 		set mosquitto.$newcfg.notification_topic=$username/bridge/$gateid/state
 		set mosquitto.$newcfg.try_private=false
-		add_list mosquitto.$newcfg.topic="# out 1 ext/output-senseone/out/ $username/"
+		add_list mosquitto.$newcfg.topic="# out 1 ext/output-senseone/out/ $_PREFIX/"
 EOF
 	[ -z "$password" ] || {
 		echo "password was set, applying it."
 		uci -q set mosquitto.$newcfg.remote_username="$username"
 		uci -q set mosquitto.$newcfg.remote_password="$password"
 	}
-	[ "$include_live" = "true" ] && uci -q add_list mosquitto.$newcfg.topic="/device/# out 1 status/local/json $username/status"
+	[ "$include_live" = "true" ] && uci -q add_list mosquitto.$newcfg.topic="/device/# out 1 status/local/json $_PREFIX/status"
 	[ "$insecure" -eq 1 ] || uci -q set mosquitto.$newcfg.cafile=/etc/ssl/certs/senseonetech-mqtt.crt
 	uci -q commit
 }
@@ -50,6 +53,7 @@ add_instance() {
 	config_get address "$cfg" address "mqtt.senseonetech.com:8883"
 	config_get interval "$cfg" interval "15min"
 	config_get_bool insecure "$cfg" insecure 0
+	config_get_bool include_gateid "$cfg" include_gateid 0
 	# We always remove it, and re-add it if needed.
 	config_load mosquitto && config_foreach remove_output bridge
 	if [ $enabled -eq 0 ]; then
@@ -64,13 +68,13 @@ add_instance() {
 		echo "Enabling SenseOne"
 		case "$username" in
 			etactica_hq)
-				add_output $cfg $username $password $address true
+				add_output $cfg $username $password $address $include_gateid true
 				;;
 			marel_iceland)
-				add_output $cfg $username $password $address true 1
+				add_output $cfg $username $password $address $include_gateid true 1
 				;;
 			*)
-				add_output "$cfg" "$username" "$password" "$address" false "$insecure"
+				add_output "$cfg" "$username" "$password" "$address" "$include_gateid" false "$insecure"
 				;;
 		esac
 		[ -f /etc/cron.d/daily/republish_cabinet_model.lua ] || ln -s /usr/bin/republish_cabinet_model.lua /etc/cron.d/daily/
