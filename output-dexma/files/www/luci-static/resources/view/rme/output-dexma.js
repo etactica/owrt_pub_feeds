@@ -12,7 +12,9 @@ var desc = _(""
    	+ "<ul>"
    	+ '<li><a href="https://support.dexma.com/hc/en-gb/articles/360011575920">Specific EG200 instructions</a>'
    	+ "</ul>"
-   	+ '<h4>About Dexma <img src="/resources/images/dexma.png" width="156" height="65" style="vertical-align: middle"/></h4>'
+   	+ '<h4>About Dexma <a href="http://www.dexma.com/" target="_blank">'
+   	+ '<img src="/resources/images/dexma.png" width="230" height="65" style="vertical-align: middle" alt="dexma logo"/>'
+   	+ '</a></h4>'
    	+ "From their website:"
    	+ "<blockquote>"
    	+ "DEXMA Energy Intelligence is a leading provider of energy management solutions for buildings in the commercial and"
