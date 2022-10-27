@@ -74,6 +74,7 @@ return L.view.extend({
 			var node_user = m.findElement('id', user.cbid(sid));
 			var node_password = m.findElement('id', password.cbid(sid));
 			var node_host = m.findElement('id', host.cbid(sid));
+			var is_insecure = (insecure.formvalue(sid) == "1");
 
             var clearResults = function(tgt) {
 	            while (node_user.firstChild.nextSibling) { node_user.firstChild.nextSibling.remove() }
@@ -88,7 +89,7 @@ return L.view.extend({
             // This is the way we inject commands, hi ho, hi ho....
             // but.... if you are logged in with access here, you could just be calling fs.exec yourself....
             var protocol = "mqtts"
-            if (insecure.formvalue(sid)) {
+            if (is_insecure) {
                 protocol = "mqtt"
             }
             var real = `${protocol}://${test_user}:${test_password}@${test_host}/test/validate_credentials`;
@@ -105,7 +106,7 @@ return L.view.extend({
                 tgt.insertAdjacentElement("afterEnd", cross);
             };
             var args = ["-L", real, "-E"];
-            if (!insecure.formvalue(sid)) {
+            if (!is_insecure) {
                 args.push("--cafile", "/etc/ssl/certs/senseonetech-mqtt.crt")
             }
             var r = fs.exec("mosquitto_sub", args);
