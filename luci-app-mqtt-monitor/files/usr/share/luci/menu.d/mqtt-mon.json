@@ -1,0 +1,18 @@
+{
+  "admin/services/mqtt-mon": {
+    "title": "Friendly mqtt-mon",
+    "order": 20,
+    "action": {
+      "type": "firstchild"
+    }
+  },
+
+  "admin/services/mqtt-mon/monitor": {
+    "title": "Monitor",
+    "order": 30,
+    "action": {
+      "type": "template",
+      "path": "mqtt-mon-monitor"
+    }
+  },
+}

@@ -1,0 +1,64 @@
+{% include('header') %}
+
+<h2>{{_('MQTT monitor')}} </h2>
+<div id="browser_not_supported" style="color:red;display:none" data-bind="visible: errNotSupported()">
+	<p><%:Your browser does not support the live data that this page needs.  You need IE 10 or
+		greater, or any recent version of Chrome, Safari, Firefox or Opera.%>
+	<p><small><%:(Specifically, you need support for WebSockets)%></small>
+</div>
+<div id="err_could_not_connect" style="color:red;display:none" data-bind="visible: errNotConnected()">
+	<p><%:Could not connect, or lost connection to the message broker on the gateway.
+		If this happens all the time, perhaps WebSockets on port 8083 is firewalled?%>
+	<p><%:It could also indicate an unexpected/unhandled error on the gateway itself%>
+		<span class="extra" data-bind="text: errNotConnected"></span>
+</div>
+
+<div id="actions">
+	<form data-bind="submit: subscribe">
+		<div class="cbi-value">
+			<label class="cbi-value-title" for="input_subscription">{{_("Topic to subscribe to")}}</label>
+			<div class="cbi-value-field">
+				<input id="input_subscription" type="text" data-bind="textInput: subscription">
+				<button id="subscribe" class="cbi-button cbi-input-add" type="button" data-bind="click: subscribe">{{_("Add subscription")}}</button>
+			</div>
+		</div>
+	</form>
+</div>
+TODO: checkboxes to interpret as json or something?
+
+<div>
+	<h3>Active Subscriptions: <span data-bind="text: subscriptions().length"></span></h3>
+	<ul data-bind="foreach: subscriptions">
+		<li>
+			{# get a real X icon? #}
+			<button type="button" class="cbi-button cbi-input-remote" data-bind="click: $parent.unsubscribe">✘</button>
+			<span data-bind="text: $data"></span>
+		</li>
+	</ul>
+</div>
+
+<table>
+	<thead>
+	{# clickable headers? #}
+	<tr>
+		<th>Timestamp</th>
+		<th>Topic</th>
+		<th>Message</th>
+	</tr>
+	</thead>
+	<tbody data-bind="foreach: messages">
+	<tr>
+		<td data-bind="text: ts().toISOString()"></td>
+		<td data-bind="text: topic"></td>
+		<td data-bind="text: raw"></td>
+	</tr>
+	</tbody>
+</table>
+
+<script type="text/javascript" src="/resources/knockout.js" charset="utf-8"></script>
+<script type="text/javascript" src="/resources/jquery.min.js"></script>
+<script type="text/javascript" src="/resources/paho/mqttws31.js"></script>
+
+<script type="text/javascript" src="{{ resource }}/mqtt-mon-monitor.js"></script>
+
+{% include('footer') %}
