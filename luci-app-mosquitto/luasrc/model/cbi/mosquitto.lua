@@ -94,6 +94,10 @@ s.addremove = true
 s.anonymous = true
 s:option(Value, "port", _("Port")).datatype = "port"
 
+o = s:option(Value, "bind", _("Bind address/host/socket"),
+	_("Bind this listener to a specific IP address or hostname. Must be IP for websockets! To use a UDS, port must be 0!"))
+o.optional = true
+
 o = s:option(ListValue, "protocol", _("Protocol to use when listening"))
 o:value("", "Default")
 o:value("mqtt", _("MQTT"))

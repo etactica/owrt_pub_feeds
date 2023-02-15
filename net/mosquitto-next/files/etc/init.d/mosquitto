@@ -119,11 +119,12 @@ add_listener() {
         echo "Ignoring listener section without port"
         return
     fi
+    config_get bind "$1" bind
     config_get_bool no_remote "$1" no_remote_access 0
     if [ "$no_remote" -eq 1 ]; then
         echo "listener $port 127.0.0.1" >> $TCONF
     else
-        echo "listener $port" >> $TCONF
+        echo "listener $port $bind" >> $TCONF
     fi
 
     append_if "$1" http_dir
